@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: zys-goldfields-intake
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python scraper.py && python seed_profiles.py
+    startCommand: python intake_app.py --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PUBLIC_MODE
+        value: "1"

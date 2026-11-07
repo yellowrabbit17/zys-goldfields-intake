@@ -1,0 +1,146 @@
+# Ready-to-File Conservation Grant Submission & RCD Handoff Packet
+
+- **Dossier Reference:** `ZYS-ELD-08914002`
+- **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
+- **Packet Generated:** `2026-11-07 01:34 UTC`
+- **Workflow Mode:** 100% Zero-Call Digital Intake & Asynchronous Agency Handoff
+
+---
+
+## Executive Parcel & Grant Control Sheet
+
+| Filing Parameter | Verified Client & Solicitation Record |
+| :--- | :--- |
+| **Landowner / Applicant** | **Elena & Marcus Vance** (`vance.family@sierraridgeoak.com`) |
+| **Jurisdiction & Parcel APN** | **El Dorado County, CA** — Assessor's Parcel Number (`APN`): **`089-140-027-000`** |
+| **Verified Parcel Acreage** | **45 Acres** (Degraded Oak Woodland & Nonindustrial Forestland) |
+| **Primary Matched Grant** | **California Forest Improvement Program** |
+| **Administering Agency** | California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments |
+| **Published Funding Pool** | 75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects) |
+| **Target Solicitation Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
+| **Filing Pathway** | Direct Private Landowner / Rancher Application |
+| **Engineered Grant Request** | **\$63,330** (out of \$71,800 total project budget) |
+| **Advisory Fee Authorization** | `[x]` **Agreed to 7% Contingent No-Win / No-Fee Terms** (`2026-11-07T01:34:24Z`) — \$4,433 due *only* upon grant award (\$0 upfront) |
+| **Official Solicitation Link** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
+
+#### Secondary Pre-Screened Stackable / Backup Grants
+| Rank | Grant Program | Agency | Available Funding | Deadline |
+| :---: | :--- | :--- | :--- | :--- |
+| #2 | Climate Adaptation and Resiliency Program | California Wildlife Conservation Board (WCB) — California Climate Investments | Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects) | Rolling (Open Solicitation - applications accepted continuously) |
+| #3 | Landscape Scale Restoration Grant Program for Non-Federal Lands (USDA-FS-2026-LSR) | Forest Service (Federal) | \$100,000 - \$600,000 per award; \$11,340,000 total program funding | 2027-01-26 |
+
+---
+
+## Part A: Pre-Filled Project Narrative & Budget Engineering
+
+### A.1 Project Abstract & Statutory Eligibility Statement
+**Applicant Elena & Marcus Vance** requests **\$63,330** in conservation funding under the **California Forest Improvement Program** (California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments) to implement multi-benefit ecological restoration and working-lands stewardship across **45 contiguous acres** in **El Dorado County, CA** (**APN `089-140-027-000`**).
+
+**Eligibility Verification:**
+- Strong ecological alignment across forest & oak woodland, soil health & climate resilience.
+- Dedicated California state conservation funding applicable to El Dorado County.
+- Parcel size (45 acres) satisfies statutory 20-5,000 acre requirement.
+- Private landowners/individuals are directly eligible applicants.
+
+### A.2 Baseline Land Condition & Resource Problem Statement
+Field-reported baseline assessment submitted digitally by the landowner for APN `089-140-027-000` (45 acres, El Dorado County) documents the following urgent resource concerns:
+
+> "45-acre degraded blue oak, black oak, and ponderosa pine woodland in El Dorado County experiencing post-drought canopy mortality, heavy manzanita/buckbrush fuel buildup, and seasonal gully soil erosion."
+
+Without targeted public cost-share intervention, degraded vegetative cover, hydrological stress, invasive understory fuel loading, and soil erosion across this 45-acre El Dorado County foothill/watershed parcel will continue to impair carbon storage, downstream water quality, and native wildlife habitat resilience.
+
+### A.3 Technical Scope of Work & Phased Implementation Schedule
+The project executes the landowner's stated conservation objectives:
+
+> "Complete a Registered Professional Forester (RPF) Forest Management Plan, mechanical understory fuels thinning, native oak and ponderosa pine reforestation, gully erosion stabilization, and deer/songbird wildlife habitat restoration."
+
+- **Phase 1 — Technical Verification & GIS Conservation Plan (Months 1–2):** Local County Resource Conservation District (RCD) / NRCS conservation planner or Registered Professional Forester (RPF) verifies APN `089-140-027-000` parcel boundaries, soil map units, cultural/biological clearances, and practice specifications.
+- **Phase 2 — Site Preparation, Fuels / Barrier Remediation & Earthwork (Months 3–6):** Execute brush/fuel load reduction, hydrological/erosion stabilization, and structural habitat prep across priority treatment units within the 45-acre parcel.
+- **Phase 3 — Native Revegetation, Reforestation & Soil Health Seeding (Months 7–10):** Install locally adapted native tree/shrub stock and perennial cover aligned with agency practice standards.
+- **Phase 4 — Photo-Point Monitoring, Survival Verification & Grant Closeout (Months 11–18):** Complete agency inspection sign-off, reimbursement invoicing, and multi-year stewardship verification.
+
+### A.4 Quantified Conservation & Climate Outcomes
+- **Treated Conservation Footprint:** `45 acres` permanently enhanced in El Dorado County (`APN 089-140-027-000`).
+- **Greenhouse Gas & Soil Carbon Impact:** Accelerated woody biomass carbon sequestration, reduced catastrophic wildfire emissions risk, and improved soil organic matter retention.
+- **Watershed & Biodiversity Co-Benefits:** Stabilized seasonal surface runoff, enhanced riparian/upland wildlife corridor connectivity, and sustained native pollinator/avian forage.
+
+### A.5 Engineered Line-Item Project Budget (California Forest Improvement Program)
+
+| Line Item / Conservation Practice | Quantity / Basis | Unit Rate | Total Cost | Grant Request | Landowner Match / In-Kind |
+| :--- | :--- | :--- | ---: | ---: | ---: |
+| 1. RPF Forest Management Plan & Archaeological/CEQA Review | 1 parcel (45 ac) | \$7,800 lump sum | \$7,800 | **\$7,020** | \$780 |
+| 2. Mechanical Brush Thinning, Fuelbreak & Stand Improvement | 45 acres | \$620 / acre | \$27,900 | **\$25,110** | \$2,790 |
+| 3. Post-Drought Native Oak & Ponderosa Pine Reforestation | 45 acres (~150 stems/ac) | \$480 / acre | \$21,600 | **\$19,440** | \$2,160 |
+| 4. Seasonal Gully Stabilization, Waterbars & Soil Mulching | 45 acres | \$191 / acre | \$8,600 | **\$6,450** | \$2,150 |
+| 5. Registered Professional Forester (RPF) Layout & Inspection | Technical supervision | 12% of field practices | \$5,900 | **\$5,310** | \$590 |
+| **TOTAL DIRECT PROJECT BUDGET** | **45 Acres (APN `089-140-027-000`)** | **—** | **\$71,800** | **\$63,330** | **\$8,470** |
+
+> **Grant Accounting & 7% Contingent Fee Compliance Note:** In strict compliance with federal `2 CFR Part 200` and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (\$63,330 grant request; \$8,470 landowner cost-share/in-kind). **ZYS GoldFields PRO LLC** charges **\$0 upfront** and invoices its separate **7% contingent advisory fee (\$4,433)** privately upon executed grant award, leaving an estimated **\$58,897 net grant benefit** for the property.
+
+---
+
+## Part B: Ready-to-Send County RCD & USDA NRCS Handoff Package
+
+### B.1 Ready-to-Send Dispatch Email (Copy & Send — Zero Phone Calls Required)
+
+- **To:** `info@eldoradorcd.org` (El Dorado County & Georgetown Divide Resource Conservation Districts)
+- **CC:** `vance.family@sierraridgeoak.com` (Elena & Marcus Vance — Landowner); USDA NRCS Placerville Service Center
+- **Subject:** `Technical Planner Assignment & Grant Filing Handoff — APN 089-140-027-000 (45 Acres, El Dorado County) — California Forest Improvement Program`
+
+```text
+Dear Conservation Planning Team at El Dorado County & Georgetown Divide Resource Conservation Districts,
+
+On behalf of Elena & Marcus Vance (copied), owner of a 45-acre parcel in El Dorado County, CA (Assessor's Parcel Number: 089-140-027-000), ZYS GoldFields PRO LLC is submitting the attached pre-screened Conservation Grant Application Narrative and Engineered Budget ($63,330 target grant request) for the active solicitation:
+
+  Program:  California Forest Improvement Program
+  Agency:   California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments
+  Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)
+  Pathway:  Direct Private Landowner / Rancher Application
+
+We respectfully request that El Dorado County & Georgetown Divide Resource Conservation Districts (in coordination with the USDA NRCS Placerville Service Center) assign a staff Conservation Planner / Registered Professional Forester (in coordination with CAL FIRE Amador-El Dorado Unit (AEU) Forestry Assistance Specialist) to:
+  1. Generate the final GIS parcel boundary & treatment-unit map for APN 089-140-027-000;
+  2. Confirm agency practice codes / RPF or NRCS technical sign-off against our pre-engineered $71,800 scope; and
+  3. Execute the Co-Sponsor / Technical Assistance endorsement for portal submission ahead of the 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1) deadline.
+
+All landowner authorizations, baseline condition statements, and budget tables are complete in the attached Co-Sponsor Memorandum so your planner can proceed asynchronously via email without scheduling introductory phone calls. Please reply-all with the assigned planner's email and any standard landowner signature forms required by your district.
+
+Sincerely,
+
+ZYS GoldFields PRO LLC
+Conservation & Agricultural Grant Advisory
+Dossier Ref: ZYS-ELD-08914002
+```
+
+---
+
+### B.2 Formal Co-Sponsor & Technical Assistance Handoff Memorandum
+
+**MEMORANDUM FOR TECHNICAL PLANNER ASSIGNMENT & CO-SPONSORSHIP**
+
+- **TO:** District Manager & Lead Conservation Planner, **El Dorado County & Georgetown Divide Resource Conservation Districts** (100 Forni Road, Suite A, Placerville, CA 95667)  
+- **CONCURRENT COPY:** District Conservationist, **USDA NRCS Placerville Service Center** (100 Forni Road, Suite A, Placerville, CA 95667)  
+- **FROM:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*  
+- **CLIENT / LANDOWNER:** **Elena & Marcus Vance** (`vance.family@sierraridgeoak.com`)  
+- **PARCEL IDENTIFICATION:** **APN `089-140-027-000`** · **45 Acres** · **El Dorado County, CA**  
+- **TARGET SOLICITATION:** **California Forest Improvement Program** (*Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)*)  
+- **DATE:** `2026-11-07 01:34 UTC`  
+
+#### 1. Purpose of Handoff
+This Memorandum transmits a pre-qualified, landowner-authorized conservation project package prepared by **ZYS GoldFields PRO LLC** for **Elena & Marcus Vance** (`APN 089-140-027-000`, 45 acres in El Dorado County). All intake screening, statutory acreage/geographic eligibility checks, narrative drafting, and preliminary cost-share engineering (**\$63,330** grant request / **\$71,800** total project cost) have been completed digitally.
+
+#### 2. Requested RCD / USDA NRCS Technical Actions
+To complete agency submission prior to **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)**, we request assignment of a district conservation planner or forestry specialist to execute the following technical steps via email workflow:
+
+1. **GIS Parcel & Soil Unit Verification:** Plot APN `089-140-027-000` (45 acres) in Web Soil Survey / CalMapper and attach standard conservation practice map polygons matching Section A.3.
+2. **Practice Standard / Forester Certification:** Verify practice unit rates in Section A.5 against current El Dorado County RCD / NRCS / CAL FIRE payment schedules.
+3. **Co-Sponsor / Partner Endorsement:** Where **California Forest Improvement Program** utilizes `Direct Private Landowner / Rancher Application`, attach standard RCD co-sponsor resolution or technical partner letter and upload/transmit final package to `California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments`.
+
+#### 3. Digital Landowner Authorization & Advisory Terms Attestation
+- **Authorized Landowner:** `Elena & Marcus Vance` (`vance.family@sierraridgeoak.com`)
+- **Parcel Attestation:** Landowner attests ownership/management authority over APN `089-140-027-000` (45 acres, El Dorado County, CA).
+- **Advisory Fee Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-07T01:34:24Z`), with **\$0** upfront fees and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
+
+---
+Prepared & Certified by:  
+**ZYS GoldFields PRO LLC**  
+*Conservation & Agricultural Grant Advisory*
