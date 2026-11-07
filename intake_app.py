@@ -10,12 +10,14 @@ from __future__ import annotations
 import argparse
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import io
 import json
 import logging
 import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
+import zipfile
 
 from pydantic import ValidationError
 
@@ -501,9 +503,14 @@ def render_portal_html() -> str:
       <section class="sheet" aria-labelledby="form-heading">
         <div class="sheet-toolbar">
           <h2 id="form-heading">Parcel &amp; Conservation Scope</h2>
-          <button type="button" id="btn-prefill-vance" class="btn-ghost">
-            Load Sample Parcel (Vance — El Dorado 45 ac)
-          </button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a id="btn-repo-zip" href="/api/repo-archive.zip" download="zys-goldfields-intake.zip" class="btn-ghost" style="text-decoration:none;">
+              Download GitHub Repo (.zip)
+            </a>
+            <button type="button" id="btn-prefill-vance" class="btn-ghost">
+              Load Sample Parcel (Vance — El Dorado 45 ac)
+            </button>
+          </div>
         </div>
 
         <form id="intake-form" action="/submit" method="post" novalidate>
@@ -621,10 +628,14 @@ def render_portal_html() -> str:
     const confirmPanel = document.getElementById('confirmation-panel');
     const previewEl = document.getElementById('packet-preview');
     const prefillBtn = document.getElementById('btn-prefill-vance');
+    const repoZipBtn = document.getElementById('btn-repo-zip');
     const copyBtn = document.getElementById('btn-copy-packet');
 
     // Auto-populate fields when a prospect clicks their personalized ?name=...&email=...&county=...&acres=... link
     const urlParams = new URLSearchParams(window.location.search);
+    if (PUBLIC_MODE) {{
+      if (repoZipBtn) repoZipBtn.style.display = 'none';
+    }}
     if (PUBLIC_MODE || urlParams.has('name') || urlParams.has('org')) {{
       prefillBtn.style.display = 'none';
     }}
@@ -764,6 +775,8 @@ def _process_intake_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
         "county": saved.county,
         "matched_grant_id": primary.grant.id,
         "matched_grant_title": primary.grant.title,
+        "probability_score": f"{primary.score}/100",
+        "score_rationale": primary.score_rationale,
         "agency": primary.grant.agency,
         "deadline": primary.grant.deadline,
         "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
@@ -817,6 +830,51 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/prospects":
             prospects = [p.model_dump() for p in fetch_all_prospects(DEFAULT_DB_PATH)]
             self._send_json(HTTPStatus.OK, {"count": len(prospects), "prospects": prospects})
+            return
+
+        if parsed.path == "/api/repo-archive.zip":
+            if os.environ.get("PUBLIC_MODE", "0") == "1":
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint disabled in public mode."})
+                return
+            repo_root = Path(__file__).resolve().parent
+            export_names = (
+                ".gitignore",
+                "Procfile",
+                "README.md",
+                "admin_packager.py",
+                "california_prospects.csv",
+                "client_submission_packet.md",
+                "config.json",
+                "db.py",
+                "grants.db",
+                "intake_app.py",
+                "matcher.py",
+                "models.py",
+                "outreach_pitches.md",
+                "prospect_hunter.py",
+                "render.yaml",
+                "requirements.txt",
+                "run_pipeline.py",
+                "runtime.txt",
+                "scraper.py",
+                "seed_profiles.py",
+                "start_public_tunnel.sh",
+            )
+            buf = io.BytesIO()
+            with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for rel_name in export_names:
+                    fp = repo_root / rel_name
+                    if fp.exists():
+                        zf.write(fp, arcname=rel_name)
+                for pkt in sorted(PACKETS_ARCHIVE_DIR.glob("*.md")):
+                    zf.write(pkt, arcname=f"packets/{pkt.name}")
+            zip_bytes = buf.getvalue()
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Disposition", 'attachment; filename="zys-goldfields-intake.zip"')
+            self.send_header("Content-Length", str(len(zip_bytes)))
+            self.end_headers()
+            self.wfile.write(zip_bytes)
             return
 
         if parsed.path == "/api/intakes":

@@ -4,6 +4,7 @@
   "min_acreage": 5.0,
   "max_acreage": 5000.0,
   "min_grant_amount": 25000,
+  "min_probability_score": 75,
   "top_k_per_profile": 3,
   "success_fee_percent": 7.0,
   "firm_name": "ZYS GoldFields PRO LLC",

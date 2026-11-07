@@ -84,11 +84,33 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
                 conservation_focus TEXT NOT NULL,
                 top_matched_grant TEXT NOT NULL,
                 matched_grant_deadline TEXT NOT NULL,
+                probability_score INTEGER NOT NULL DEFAULT 0,
+                acreage_score INTEGER NOT NULL DEFAULT 0,
+                entity_score INTEGER NOT NULL DEFAULT 0,
+                ecological_score INTEGER NOT NULL DEFAULT 0,
+                comatch_score INTEGER NOT NULL DEFAULT 0,
+                score_breakdown TEXT NOT NULL DEFAULT '',
+                score_rationale TEXT NOT NULL DEFAULT '',
                 personalized_intake_url TEXT NOT NULL,
                 registry_source TEXT NOT NULL
             )
             """
         )
+        existing_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(california_prospects)").fetchall()
+        }
+        new_cols = [
+            ("probability_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("acreage_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("entity_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("ecological_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("comatch_score", "INTEGER NOT NULL DEFAULT 0"),
+            ("score_breakdown", "TEXT NOT NULL DEFAULT ''"),
+            ("score_rationale", "TEXT NOT NULL DEFAULT ''"),
+        ]
+        for col_name, col_ddl in new_cols:
+            if col_name not in existing_cols:
+                conn.execute(f"ALTER TABLE california_prospects ADD COLUMN {col_name} {col_ddl}")
         conn.commit()
 
 
@@ -238,7 +260,7 @@ def upsert_prospects(
     db_path: Path | str = DEFAULT_DB_PATH,
     reset_existing: bool = True,
 ) -> int:
-    """Persist verified California prospects into california_prospects table."""
+    """Persist verified Tier-1 California prospects into california_prospects table."""
     init_db(db_path)
     rows = list(prospects)
     with get_connection(db_path) as conn:
@@ -250,9 +272,12 @@ def upsert_prospects(
                 prospect_id, organization_name, category, county, service_counties,
                 city, state, contact_email, phone, website, ein,
                 estimated_acreage, land_type, conservation_focus,
-                top_matched_grant, matched_grant_deadline, personalized_intake_url, registry_source
+                top_matched_grant, matched_grant_deadline,
+                probability_score, acreage_score, entity_score, ecological_score,
+                comatch_score, score_breakdown, score_rationale,
+                personalized_intake_url, registry_source
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(prospect_id) DO UPDATE SET
                 organization_name = excluded.organization_name,
                 category = excluded.category,
@@ -269,6 +294,13 @@ def upsert_prospects(
                 conservation_focus = excluded.conservation_focus,
                 top_matched_grant = excluded.top_matched_grant,
                 matched_grant_deadline = excluded.matched_grant_deadline,
+                probability_score = excluded.probability_score,
+                acreage_score = excluded.acreage_score,
+                entity_score = excluded.entity_score,
+                ecological_score = excluded.ecological_score,
+                comatch_score = excluded.comatch_score,
+                score_breakdown = excluded.score_breakdown,
+                score_rationale = excluded.score_rationale,
                 personalized_intake_url = excluded.personalized_intake_url,
                 registry_source = excluded.registry_source
             """,
@@ -290,6 +322,13 @@ def upsert_prospects(
                     p.conservation_focus,
                     p.top_matched_grant,
                     p.matched_grant_deadline,
+                    p.probability_score,
+                    p.acreage_score,
+                    p.entity_score,
+                    p.ecological_score,
+                    p.comatch_score,
+                    p.score_breakdown,
+                    p.score_rationale,
                     p.personalized_intake_url,
                     p.registry_source,
                 )
@@ -301,7 +340,7 @@ def upsert_prospects(
 
 
 def fetch_all_prospects(db_path: Path | str = DEFAULT_DB_PATH) -> list[ProspectRecord]:
-    """Load all verified California prospects from grants.db."""
+    """Load all verified California prospects from grants.db ranked highest probability score to lowest."""
     init_db(db_path)
     with get_connection(db_path) as conn:
         cur = conn.execute(
@@ -309,9 +348,12 @@ def fetch_all_prospects(db_path: Path | str = DEFAULT_DB_PATH) -> list[ProspectR
             SELECT prospect_id, organization_name, category, county, service_counties,
                    city, state, contact_email, phone, website, ein,
                    estimated_acreage, land_type, conservation_focus,
-                   top_matched_grant, matched_grant_deadline, personalized_intake_url, registry_source
+                   top_matched_grant, matched_grant_deadline,
+                   probability_score, acreage_score, entity_score, ecological_score,
+                   comatch_score, score_breakdown, score_rationale,
+                   personalized_intake_url, registry_source
             FROM california_prospects
-            ORDER BY category, county, organization_name
+            ORDER BY probability_score DESC, estimated_acreage DESC, organization_name ASC
             """
         )
         return [ProspectRecord(**dict(row)) for row in cur.fetchall()]

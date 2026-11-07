@@ -25,6 +25,12 @@ class MatcherConfig(BaseModel):
     min_acreage: float = Field(default=0.0, ge=0.0, description="Minimum landowner parcel acreage")
     max_acreage: float = Field(default=100000.0, gt=0.0, description="Maximum landowner parcel acreage")
     min_grant_amount: int = Field(default=0, ge=0, description="Minimum grant award/program dollar amount")
+    min_probability_score: int = Field(
+        default=75,
+        ge=0,
+        le=100,
+        description="Minimum Grant Win Probability Score (0-100) required to retain a Tier-1 candidate",
+    )
     top_k_per_profile: int = Field(default=3, ge=1, le=20, description="Max matches generated per landowner")
     success_fee_percent: float = Field(default=7.0, gt=0.0, le=50.0, description="Contingent success fee %")
     firm_name: str = Field(default="ZYS GoldFields PRO LLC")
@@ -93,18 +99,46 @@ class LandownerProfile(BaseModel):
         return cleaned
 
 
+class ProbabilityScoreBreakdown(BaseModel):
+    """4-pillar weighted Grant Win Probability Score (0-100) for statutory & competitive evaluation."""
+
+    total_score: int = Field(..., ge=0, le=100, description="Composite Grant Win Probability Score (0-100)")
+    acreage_threshold_pts: int = Field(..., ge=0, le=30, description="Criterion A: Acreage & Threshold Fit (0-30)")
+    entity_eligibility_pts: int = Field(..., ge=0, le=25, description="Criterion B: Entity & Tax-Exempt Eligibility (0-25)")
+    ecological_priority_pts: int = Field(..., ge=0, le=25, description="Criterion C: Ecological & Geographic Priority Fit (0-25)")
+    scale_comatch_pts: int = Field(..., ge=0, le=20, description="Criterion D: Funding-to-Scale & Co-Match Feasibility (0-20)")
+    hard_disqualified: bool = Field(default=False, description="True if candidate violates a hard statutory limit")
+    disqualification_reason: str = Field(default="", description="Reason if hard_disqualified is True")
+    score_rationale: str = Field(..., min_length=5, description="1-sentence rationale explaining win probability")
+
+    def summary_tag(self) -> str:
+        return (
+            f"Acreage {self.acreage_threshold_pts}/30 | "
+            f"Entity {self.entity_eligibility_pts}/25 | "
+            f"Eco/Geo {self.ecological_priority_pts}/25 | "
+            f"Co-Match {self.scale_comatch_pts}/20"
+        )
+
+
 class GrantMatch(BaseModel):
-    """Scored pairing between a landowner profile and an active conservation grant."""
+    """Scored pairing between a landowner/prospect profile and an active conservation grant."""
 
     profile: LandownerProfile
     grant: GrantRecord
-    score: float = Field(..., ge=0)
+    score: int = Field(..., ge=0, le=100, description="Grant Win Probability Score (0-100)")
+    probability_breakdown: Optional[ProbabilityScoreBreakdown] = Field(default=None)
+    score_rationale: str = Field(default="", description="1-sentence win probability rationale")
     matched_terms: list[str] = Field(default_factory=list)
     application_pathway: str
     rationale: list[str] = Field(default_factory=list)
     recommended_project_focus: str
     estimated_award_dollars: int = Field(default=100000, ge=0)
     fee_example: str
+    contact_email: str = Field(default="")
+    organization_category: str = Field(default="")
+    ein: str = Field(default="")
+    website: str = Field(default="")
+    personalized_intake_url: str = Field(default="")
 
 
 class ClientIntake(BaseModel):
@@ -146,7 +180,7 @@ class ClientIntake(BaseModel):
 
 
 class ProspectRecord(BaseModel):
-    """Verified California wildlife sanctuary, land trust, or conservation ranch prospect."""
+    """Verified Tier-1 California wildlife sanctuary, land trust, or conservation ranch prospect."""
 
     prospect_id: str = Field(..., min_length=2)
     organization_name: str = Field(..., min_length=2)
@@ -164,6 +198,13 @@ class ProspectRecord(BaseModel):
     conservation_focus: str = Field(..., min_length=5)
     top_matched_grant: str = Field(default="")
     matched_grant_deadline: str = Field(default="")
+    probability_score: int = Field(default=0, ge=0, le=100, description="Grant Win Probability Score (0-100)")
+    acreage_score: int = Field(default=0, ge=0, le=30)
+    entity_score: int = Field(default=0, ge=0, le=25)
+    ecological_score: int = Field(default=0, ge=0, le=25)
+    comatch_score: int = Field(default=0, ge=0, le=20)
+    score_breakdown: str = Field(default="")
+    score_rationale: str = Field(default="", description="1-sentence rationale explaining win probability")
     personalized_intake_url: str = Field(default="")
     registry_source: str = Field(..., min_length=3)
 

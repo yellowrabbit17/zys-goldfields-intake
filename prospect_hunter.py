@@ -862,13 +862,12 @@ def build_california_prospects_dataset(
 
     # Sort cleanly by category (Wildlife Sanctuary, Conservation Ranch, Land Trust) then County
     cat_order = {"Wildlife Sanctuary": 0, "Conservation Ranch": 1, "Land Trust": 2}
-    indexed = sorted(
-        zip(combined, ein_map),
-        key=lambda pair: (cat_order.get(pair[0]["category"], 9), pair[0]["county"], pair[0]["name"]),
-    )
+    indexed = list(zip(combined, ein_map))
+    total_evaluated = len(indexed)
+    dropped_candidates: list[tuple[str, str, int, str]] = []
+    qualified_tuples: list[tuple[int, float, str, dict[str, Any], str, Any]] = []
 
-    records: list[ProspectRecord] = []
-    for idx, (row, ein_str) in enumerate(indexed, start=1):
+    for row, ein_str in indexed:
         ein_final = ein_str
         if not ein_final:
             if row["category"] == "Conservation Ranch" and "trust" not in row["name"].lower() and "pieranch" not in row["website"]:
@@ -876,45 +875,91 @@ def build_california_prospects_dataset(
             else:
                 ein_final = "CA Registered Nonprofit"
 
-        # Match against live grants in grants.db
+        raw_acreage = float(row["acreage"])
         synthetic_profile = LandownerProfile(
             name=row["name"],
             state="CA",
             county=row["county"],
-            acreage=min(float(row["acreage"]), 4900.0),
+            acreage=raw_acreage,
             land_type=row["land_type"],
             features=row["focus"],
         )
-        matches = match_single_profile(
+
+        # Hard config acreage / state / county check
+        if not (cfg.min_acreage <= raw_acreage <= cfg.max_acreage):
+            dropped_candidates.append(
+                (
+                    row["name"],
+                    row["county"],
+                    0,
+                    f"Acreage ({raw_acreage:g} ac) outside config range {cfg.min_acreage:g}-{cfg.max_acreage:g} ac",
+                )
+            )
+            continue
+
+        # Evaluate across all active grants enforcing min_probability_score (75/100) & statutory limits
+        tier1_matches = match_single_profile(
             synthetic_profile,
             grants,
             config=cfg,
             top_k_override=1,
+            entity_category=row["category"],
+            ein=ein_final,
+            contact_email=row["email"],
+            website=row["website"],
+            enforce_min_score=True,
         )
-        if not matches and grants:
-            relaxed_cfg = cfg.model_copy(update={"min_grant_amount": 0})
-            matches = match_single_profile(
+        if not tier1_matches:
+            # Inspect best sub-threshold score for transparent audit logging
+            unfiltered = match_single_profile(
                 synthetic_profile,
                 grants,
-                config=relaxed_cfg,
+                config=cfg,
                 top_k_override=1,
+                entity_category=row["category"],
+                ein=ein_final,
+                enforce_min_score=False,
             )
+            best_sub = unfiltered[0].score if unfiltered else 0
+            drop_note = (
+                f"Best probability score {best_sub}/100 below {cfg.min_probability_score}/100 cutoff ({ein_final}, {raw_acreage:g} ac)"
+                if unfiltered
+                else f"Hard statutory eligibility failure across all active grants ({ein_final}, {raw_acreage:g} ac)"
+            )
+            dropped_candidates.append((row["name"], row["county"], best_sub, drop_note))
+            logger.info("DROPPED [%2d/100] %-44s | %s", best_sub, row["name"][:44], drop_note)
+            continue
 
-        top_grant_title = matches[0].grant.title if matches else "California Climate Adaptation and Resiliency Program"
-        top_grant_deadline = matches[0].grant.deadline if matches else "Rolling (Open Solicitation)"
+        best_match = tier1_matches[0]
+        qualified_tuples.append(
+            (
+                best_match.score,
+                raw_acreage,
+                row["name"],
+                row,
+                ein_final,
+                best_match,
+            )
+        )
 
+    # Strictly rank surviving Tier-1 candidates from highest Probability Score to lowest
+    qualified_tuples.sort(key=lambda item: (-item[0], -item[1], item[2]))
+
+    records: list[ProspectRecord] = []
+    for idx, (prob_score, raw_acreage, _, row, ein_final, best_match) in enumerate(qualified_tuples, start=1):
+        bd = best_match.probability_breakdown
         query_params = urlencode(
             {
                 "name": row["name"],
                 "email": row["email"],
                 "county": row["county"],
-                "acres": int(row["acreage"]) if float(row["acreage"]).is_integer() else row["acreage"],
+                "acres": int(raw_acreage) if raw_acreage.is_integer() else raw_acreage,
             }
         )
         intake_link = f"{public_base}/?{query_params}"
 
         prospect = ProspectRecord(
-            prospect_id=f"CA-PROS-{idx:03d}",
+            prospect_id=f"CA-T1-{idx:03d}",
             organization_name=row["name"],
             category=row["category"],
             county=row["county"],
@@ -925,11 +970,18 @@ def build_california_prospects_dataset(
             phone=row["phone"],
             website=row["website"],
             ein=ein_final,
-            estimated_acreage=float(row["acreage"]),
+            estimated_acreage=raw_acreage,
             land_type=row["land_type"],
             conservation_focus=row["focus"],
-            top_matched_grant=top_grant_title,
-            matched_grant_deadline=top_grant_deadline,
+            top_matched_grant=best_match.grant.title,
+            matched_grant_deadline=best_match.grant.deadline,
+            probability_score=prob_score,
+            acreage_score=bd.acreage_threshold_pts if bd else 0,
+            entity_score=bd.entity_eligibility_pts if bd else 0,
+            ecological_score=bd.ecological_priority_pts if bd else 0,
+            comatch_score=bd.scale_comatch_pts if bd else 0,
+            score_breakdown=bd.summary_tag() if bd else "",
+            score_rationale=best_match.score_rationale,
             personalized_intake_url=intake_link,
             registry_source=row["source"],
         )
@@ -953,6 +1005,13 @@ def build_california_prospects_dataset(
         "conservation_focus",
         "top_matched_grant",
         "matched_grant_deadline",
+        "probability_score",
+        "acreage_score",
+        "entity_score",
+        "ecological_score",
+        "comatch_score",
+        "score_breakdown",
+        "score_rationale",
         "personalized_intake_url",
         "registry_source",
     ]
@@ -964,7 +1023,10 @@ def build_california_prospects_dataset(
 
     upsert_prospects(records, db_path=db_path, reset_existing=True)
     logger.info(
-        "Wrote %d verified California prospects to %s and grants.db.",
+        "Evaluated %d California leads: dropped %d (<%d/100 or statutory fail), retained %d Tier-1 candidates -> %s",
+        total_evaluated,
+        len(dropped_candidates),
+        cfg.min_probability_score,
         len(records),
         out_csv,
     )
@@ -976,6 +1038,8 @@ if __name__ == "__main__":
     by_cat: dict[str, int] = {}
     for p in prospects:
         by_cat[p.category] = by_cat.get(p.category, 0) + 1
-    print(f"\nVerified California Prospects Total: {len(prospects)} -> {DEFAULT_CSV_PATH}")
+    print(f"\nQualified Tier-1 California Prospects (Score >= 75/100): {len(prospects)} -> {DEFAULT_CSV_PATH}")
     for cat, cnt in by_cat.items():
         print(f"  - {cat}: {cnt}")
+    if prospects:
+        print(f"  - Score Range: {prospects[0].probability_score}/100 (highest) down to {prospects[-1].probability_score}/100 (lowest)")

@@ -586,13 +586,19 @@ def generate_submission_packet(
     matches = match_single_profile(synthetic_profile, grants, config=intake_cfg, top_k_override=3)
 
     if not matches:
-        # Broad conservation fallback if client entered terse custom keywords
+        # Broad conservation fallback if walk-in client entered terse custom keywords or <75 parcel
         broad_profile = synthetic_profile.model_copy(
             update={
                 "features": f"{synthetic_profile.features} conservation soil health wildlife habitat climate adaptation"
             }
         )
-        matches = match_single_profile(broad_profile, grants, config=intake_cfg, top_k_override=3)
+        matches = match_single_profile(
+            broad_profile,
+            grants,
+            config=intake_cfg,
+            top_k_override=3,
+            enforce_min_score=False,
+        )
 
     packet_md = compose_submission_packet_markdown(saved_intake, matches, cfg)
     out_file = Path(output_path)

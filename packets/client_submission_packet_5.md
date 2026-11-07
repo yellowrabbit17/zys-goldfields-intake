@@ -2,7 +2,7 @@
 
 - **Dossier Reference:** `ZYS-ELD-08914002`
 - **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Packet Generated:** `2026-11-07 01:34 UTC`
+- **Packet Generated:** `2026-11-07 02:13 UTC`
 - **Workflow Mode:** 100% Zero-Call Digital Intake & Asynchronous Agency Handoff
 
 ---
@@ -18,16 +18,16 @@
 | **Administering Agency** | California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments |
 | **Published Funding Pool** | 75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects) |
 | **Target Solicitation Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
-| **Filing Pathway** | Direct Private Landowner / Rancher Application |
+| **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
 | **Engineered Grant Request** | **\$63,330** (out of \$71,800 total project budget) |
-| **Advisory Fee Authorization** | `[x]` **Agreed to 7% Contingent No-Win / No-Fee Terms** (`2026-11-07T01:34:24Z`) — \$4,433 due *only* upon grant award (\$0 upfront) |
+| **Advisory Fee Authorization** | `[x]` **Agreed to 7% Contingent No-Win / No-Fee Terms** (`2026-11-07T02:13:15Z`) — \$4,433 due *only* upon grant award (\$0 upfront) |
 | **Official Solicitation Link** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 #### Secondary Pre-Screened Stackable / Backup Grants
 | Rank | Grant Program | Agency | Available Funding | Deadline |
 | :---: | :--- | :--- | :--- | :--- |
-| #2 | Climate Adaptation and Resiliency Program | California Wildlife Conservation Board (WCB) — California Climate Investments | Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects) | Rolling (Open Solicitation - applications accepted continuously) |
-| #3 | Landscape Scale Restoration Grant Program for Non-Federal Lands (USDA-FS-2026-LSR) | Forest Service (Federal) | \$100,000 - \$600,000 per award; \$11,340,000 total program funding | 2027-01-26 |
+| #2 | DARRP Restoration Implementation Grants (2026) (NOAA-NMFS-HCPO-2026-33781) | DOC NOAA - ERA Production (Federal) | \$2,500,000 - \$100,000,000 per award | 2026-11-18 |
+| #3 | F24AS00298 Cooperative Agriculture | Fish and Wildlife Service (Federal) | Varies by cooperative agreement / project scope (see NOFO) | 2029-03-07 |
 
 ---
 
@@ -37,10 +37,8 @@
 **Applicant Elena & Marcus Vance** requests **\$63,330** in conservation funding under the **California Forest Improvement Program** (California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments) to implement multi-benefit ecological restoration and working-lands stewardship across **45 contiguous acres** in **El Dorado County, CA** (**APN `089-140-027-000`**).
 
 **Eligibility Verification:**
-- Strong ecological alignment across forest & oak woodland, soil health & climate resilience.
-- Dedicated California state conservation funding applicable to El Dorado County.
-- Parcel size (45 acres) satisfies statutory 20-5,000 acre requirement.
-- Private landowners/individuals are directly eligible applicants.
+- **Grant Win Probability (97/100 — Acreage 30/30 | Entity 24/25 | Eco/Geo 25/25 | Co-Match 18/20):** Scores 97/100 because its 45-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, private nonindustrial forestland/ranch owner qualifies directly with El Dorado RCD/RPF support, El Dorado County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$61,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match.
+- **Application Pathway:** Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application.
 
 ### A.2 Baseline Land Condition & Resource Problem Statement
 Field-reported baseline assessment submitted digitally by the landowner for APN `089-140-027-000` (45 acres, El Dorado County) documents the following urgent resource concerns:
@@ -95,7 +93,7 @@ On behalf of Elena & Marcus Vance (copied), owner of a 45-acre parcel in El Dora
   Program:  California Forest Improvement Program
   Agency:   California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments
   Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)
-  Pathway:  Direct Private Landowner / Rancher Application
+  Pathway:  Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application
 
 We respectfully request that El Dorado County & Georgetown Divide Resource Conservation Districts (in coordination with the USDA NRCS Placerville Service Center) assign a staff Conservation Planner / Registered Professional Forester (in coordination with CAL FIRE Amador-El Dorado Unit (AEU) Forestry Assistance Specialist) to:
   1. Generate the final GIS parcel boundary & treatment-unit map for APN 089-140-027-000;
@@ -123,7 +121,7 @@ Dossier Ref: ZYS-ELD-08914002
 - **CLIENT / LANDOWNER:** **Elena & Marcus Vance** (`vance.family@sierraridgeoak.com`)  
 - **PARCEL IDENTIFICATION:** **APN `089-140-027-000`** · **45 Acres** · **El Dorado County, CA**  
 - **TARGET SOLICITATION:** **California Forest Improvement Program** (*Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)*)  
-- **DATE:** `2026-11-07 01:34 UTC`  
+- **DATE:** `2026-11-07 02:13 UTC`  
 
 #### 1. Purpose of Handoff
 This Memorandum transmits a pre-qualified, landowner-authorized conservation project package prepared by **ZYS GoldFields PRO LLC** for **Elena & Marcus Vance** (`APN 089-140-027-000`, 45 acres in El Dorado County). All intake screening, statutory acreage/geographic eligibility checks, narrative drafting, and preliminary cost-share engineering (**\$63,330** grant request / **\$71,800** total project cost) have been completed digitally.
@@ -133,12 +131,12 @@ To complete agency submission prior to **2027-01-02 (Quarterly cycle: Jan 2, Apr
 
 1. **GIS Parcel & Soil Unit Verification:** Plot APN `089-140-027-000` (45 acres) in Web Soil Survey / CalMapper and attach standard conservation practice map polygons matching Section A.3.
 2. **Practice Standard / Forester Certification:** Verify practice unit rates in Section A.5 against current El Dorado County RCD / NRCS / CAL FIRE payment schedules.
-3. **Co-Sponsor / Partner Endorsement:** Where **California Forest Improvement Program** utilizes `Direct Private Landowner / Rancher Application`, attach standard RCD co-sponsor resolution or technical partner letter and upload/transmit final package to `California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments`.
+3. **Co-Sponsor / Partner Endorsement:** Where **California Forest Improvement Program** utilizes `Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application`, attach standard RCD co-sponsor resolution or technical partner letter and upload/transmit final package to `California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments`.
 
 #### 3. Digital Landowner Authorization & Advisory Terms Attestation
 - **Authorized Landowner:** `Elena & Marcus Vance` (`vance.family@sierraridgeoak.com`)
 - **Parcel Attestation:** Landowner attests ownership/management authority over APN `089-140-027-000` (45 acres, El Dorado County, CA).
-- **Advisory Fee Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-07T01:34:24Z`), with **\$0** upfront fees and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
+- **Advisory Fee Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-07T02:13:15Z`), with **\$0** upfront fees and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
 
 ---
 Prepared & Certified by:  

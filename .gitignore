@@ -3,8 +3,13 @@ __pycache__/
 *.py[cod]
 .cache/
 .gemini
+.local/
+.gitconfig
 bin/
 .bash_history
 .bash_logout
 .bashrc
 .profile
+.lesshst
+.python_history
+.wget-hsts

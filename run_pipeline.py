@@ -66,7 +66,12 @@ def verify_intake_portal_and_packager() -> None:
         prospects_resp = requests.get(f"{base_url}/api/prospects", timeout=5)
         assert prospects_resp.status_code == 200
         prospects_json = prospects_resp.json()
-        assert prospects_json["count"] >= 50, f"Expected >= 50 prospects in /api/prospects, got {prospects_json['count']}"
+        assert 25 <= prospects_json["count"] < 70, (
+            f"Expected strict filtering to retain Tier-1 subset (<70, >=25), got {prospects_json['count']}"
+        )
+        api_scores = [p["probability_score"] for p in prospects_json["prospects"]]
+        assert all(s >= 75 for s in api_scores), f"Found sub-75 prospect in /api/prospects: {min(api_scores)}"
+        assert api_scores == sorted(api_scores, reverse=True), "/api/prospects is not ranked highest-to-lowest"
 
         # 2. Verify unchecked 7% terms checkbox is rejected with HTTP 400
         bad_payload = {
@@ -108,6 +113,7 @@ def verify_intake_portal_and_packager() -> None:
         body = ok_resp.json()
         assert body["status"] == "ok"
         assert "California Forest Improvement Program" in body["matched_grant_title"]
+        assert int(body["probability_score"].split("/")[0]) >= 75
         intake_id = body["intake_id"]
 
         # 4. Verify GET /api/packet/latest, GET /api/packet/<id>, and GET /api/intakes
@@ -137,6 +143,7 @@ def verify_outputs(
     """Run automated integrity assertions across SQLite, config.json, pitches, prospects CSV, and packet."""
     assert config_path.exists(), f"Missing config.json: {config_path}"
     cfg = load_matcher_config(config_path)
+    assert cfg.min_probability_score == 75, f"Expected min_probability_score=75, got {cfg.min_probability_score}"
 
     assert db_path.exists(), f"Missing SQLite database: {db_path}"
     assert pitches_path.exists(), f"Missing outreach pitches file: {pitches_path}"
@@ -158,11 +165,13 @@ def verify_outputs(
         profile_count = conn.execute("SELECT COUNT(*) FROM landowner_profiles").fetchone()[0]
         intake_count = conn.execute("SELECT COUNT(*) FROM client_intakes").fetchone()[0]
         prospect_db_count = conn.execute("SELECT COUNT(*) FROM california_prospects").fetchone()[0]
+        min_db_prob = conn.execute("SELECT MIN(probability_score) FROM california_prospects").fetchone()[0]
 
         assert grant_count >= 10, f"Expected >= 10 active grants in grants.db, found {grant_count}"
         assert profile_count == 3, f"Expected 3 seeded landowner profiles, found {profile_count}"
         assert intake_count >= 1, f"Expected >= 1 persisted client intake, found {intake_count}"
-        assert prospect_db_count >= 50, f"Expected >= 50 verified California prospects in DB, found {prospect_db_count}"
+        assert 25 <= prospect_db_count < 70, f"Expected Tier-1 filtered prospect count in [25, 69], found {prospect_db_count}"
+        assert min_db_prob >= 75, f"Expected all DB prospects >= 75/100, found min={min_db_prob}"
 
     with prospects_csv_path.open("r", encoding="utf-8", newline="") as fh:
         csv_rows = list(csv.DictReader(fh))
@@ -170,17 +179,27 @@ def verify_outputs(
     categories_seen = {r["category"] for r in csv_rows}
     for required_cat in ("Wildlife Sanctuary", "Conservation Ranch", "Land Trust"):
         assert required_cat in categories_seen, f"Missing prospect category {required_cat} in CSV"
+
     ca_county_set = set(CA_COUNTIES)
+    csv_scores: list[int] = []
     for row in csv_rows:
         assert "@" in row["contact_email"] and "." in row["contact_email"].split("@")[-1], f"Invalid email in {row}"
         assert row["county"] in ca_county_set, f"Non-California county {row['county']} in {row}"
         assert row["state"] == "CA"
         assert row["personalized_intake_url"].startswith("https://")
+        sc = int(row["probability_score"])
+        assert sc >= 75, f"Candidate {row['organization_name']} has score {sc} < 75!"
+        assert len(row["score_rationale"]) > 25, f"Missing 1-sentence score_rationale on {row['organization_name']}"
+        csv_scores.append(sc)
+
+    assert csv_scores == sorted(csv_scores, reverse=True), "california_prospects.csv is not ranked highest-to-lowest!"
 
     md_text = pitches_path.read_text(encoding="utf-8")
     assert NO_CALL_NEXT_STEP in md_text, "Missing zero-call digital intake CTA in outreach_pitches.md"
     assert cfg.firm_name in md_text, "Missing ZYS GoldFields PRO LLC signature in outreach_pitches.md"
     assert cfg.firm_subtitle in md_text, "Missing Conservation & Agricultural Grant Advisory subtitle"
+    assert "Grant Win Probability Score" in md_text, "Missing Probability Score label in outreach_pitches.md"
+    assert "1-Sentence Score Rationale" in md_text, "Missing 1-Sentence Score Rationale in outreach_pitches.md"
     assert "walk-through call" not in md_text.lower(), "Legacy phone call CTA still present!"
     assert "Northern California Conservation Grant Advisory Desk" not in md_text, "Legacy desk signature present!"
     assert "Automated Conservation Grant & Subsidy Hunter" not in md_text, "Legacy subtitle present!"
@@ -194,26 +213,33 @@ def verify_outputs(
     assert "USDA NRCS Placerville Service Center" in packet_md
     assert "ZYS GoldFields PRO LLC" in packet_md
 
-    print("\n=== Full Pipeline & Public Prospect Upgrade Verification Passed ===")
+    print("\n=== Grant Probability Engine (>=75 Tier-1) & Pipeline Verification Passed ===")
     print(f"  Config File:         {config_path} ({json.dumps(cfg.model_dump())})")
     print(
         f"  SQLite DB:           {db_path} "
-        f"({grant_count} grants, {profile_count} profiles, {prospect_db_count} CA prospects, {intake_count} client intakes)"
+        f"({grant_count} grants, {profile_count} profiles, {prospect_db_count} Tier-1 CA prospects, {intake_count} client intakes)"
     )
-    print(f"  CA Prospects CSV:    {prospects_csv_path} ({len(csv_rows)} verified orgs across {sorted(categories_seen)})")
-    print(f"  Outreach Briefs:     {pitches_path} ({len(md_text):,} bytes — zero-call CTA & ZYS GoldFields PRO LLC signed)")
+    print(
+        f"  Tier-1 CA CSV:       {prospects_csv_path} "
+        f"({len(csv_rows)} Tier-1 orgs, ranked {csv_scores[0]}/100 down to {csv_scores[-1]}/100)"
+    )
+    print(f"  Outreach Briefs:     {pitches_path} ({len(md_text):,} bytes — Tier-1 >=75 only, ranked highest-to-lowest)")
     print(f"  Submission Packet:   {packet_path} ({len(packet_md):,} bytes — Elena & Marcus Vance ready-to-file dossier)")
 
 
 def main() -> None:
     ingest_all_grants()
     run_seed()
-    run_matcher()
     build_california_prospects_dataset()
-    # Reset client_intakes before running clean verification intake submission
+    run_matcher()
+    # Reset client_intakes and remove stale packet archives before clean verification intake submission
     with sqlite3.connect(str(DEFAULT_DB_PATH)) as conn:
         conn.execute("DELETE FROM client_intakes")
         conn.commit()
+    packets_dir = DEFAULT_DB_PATH.parent / "packets"
+    if packets_dir.exists():
+        for old_pkt in packets_dir.glob("client_submission_packet_*.md"):
+            old_pkt.unlink()
     verify_intake_portal_and_packager()
     verify_outputs()
 
