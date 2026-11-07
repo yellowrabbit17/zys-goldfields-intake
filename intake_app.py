@@ -1,13 +1,26 @@
-"""Zero-Call Digital Client Intake Portal (intake_app.py).
+"""Zero-Call Digital Client Intake & California E-Signature Portal (intake_app.py).
 
 Serves a single-page web intake portal for ZYS GoldFields PRO LLC (Conservation & Agricultural
-Grant Advisory) and automatically generates client_submission_packet.md via admin_packager.py
-upon submission.
+Grant Advisory) incorporating:
+- Scrollable "Conservation Advisory & Origination Agreement" governed by the California Uniform
+  Electronic Transactions Act (UETA) and federal ESIGN Act, with explicit 2 CFR § 200.459
+  federal/state grant compliance protection, 5-business-day payment trigger, 1.5% monthly late fee,
+  and Sacramento County, California venue / prevailing-party attorney fee provisions.
+- Frictionless 1-click E-Signature block (Full Legal Name, Title, and "I agree to the ZYS GoldFields
+  PRO LLC Advisory Agreement.") capturing UTC Timestamp, Client IP Address, User-Agent browser
+  string, and SHA-256 hash of the signed contract text in grants.db.
+- Two-stage "Sign-to-Unlock" Final Filing Gate via admin_packager.py:
+  * Stage A (Client Preview Summary): Shows matched grant, engineered budget total, and probability
+    score while masking the RCD Co-Sponsor Memorandum, grant solicitation ID, and copy-paste
+    narrative until agreement_signed == True in grants.db.
+  * Stage B (Unlocked RCD & Agency Filing Dossier): Unlocks client_submission_packet.md (with
+    appended Notice of Authorized Advisory Representation) and generates signed_advisory_agreement.md.
 """
 
 from __future__ import annotations
 
 import argparse
+import html
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
@@ -23,11 +36,26 @@ from pydantic import ValidationError
 
 from admin_packager import (
     DEFAULT_PACKET_PATH,
+    DEFAULT_PREVIEW_PATH,
     build_budget_engineering_table,
     generate_submission_packet,
     resolve_local_agency_contacts,
 )
-from db import DEFAULT_DB_PATH, fetch_all_grants, fetch_all_intakes, fetch_all_prospects, init_db
+from db import (
+    DEFAULT_DB_PATH,
+    fetch_all_esignature_audits,
+    fetch_all_grants,
+    fetch_all_intakes,
+    fetch_all_prospects,
+    fetch_client_intake_by_id,
+    init_db,
+)
+from legal_agreement import (
+    AGREEMENT_VERSION,
+    DEFAULT_SIGNED_AGREEMENT_PATH,
+    compute_contract_sha256,
+    render_canonical_contract_text,
+)
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
 from models import ClientIntake
 
@@ -67,19 +95,36 @@ def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
 
 
 def render_portal_html() -> str:
-    """Render the single-page HTML/CSS/JS Zero-Call Digital Client Intake Portal."""
+    """Render the single-page HTML/CSS/JS Zero-Call Digital Client Intake & California E-Signature Portal."""
     cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
     fee_str = cfg.fee_label()
     public_mode_js = "true" if os.environ.get("PUBLIC_MODE", "0") == "1" else "false"
     county_options_html = "".join(f'<option value="{c}"></option>' for c in ALL_CA_COUNTIES)
+
+    sample_contract_preview = render_canonical_contract_text(
+        firm_name=cfg.firm_name,
+        firm_subtitle=cfg.firm_subtitle,
+        fee_percent=cfg.success_fee_percent,
+        client_name="[Landowner / Entity Name Entered Above]",
+        client_email="[Client Email Entered Above]",
+        county="[California County Entered Above]",
+        state="CA",
+        apn="[Parcel APN Entered Above]",
+        acreage=45.0,
+        matched_grant_title="[Matched Conservation / Agricultural Grant Program]",
+        engineered_grant_request=30375,
+        contingent_fee_dollars=2126,
+    )
+    sample_contract_escaped = html.escape(sample_contract_preview)
+    template_sha256 = compute_contract_sha256(sample_contract_preview)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{cfg.firm_name} — Digital Property Grant Intake</title>
-  <meta name="description" content="2-minute zero-call digital property intake portal for {cfg.firm_name} ({cfg.firm_subtitle}). Submit parcel details asynchronously for conservation grant filing under {fee_str} no-win/no-fee terms." />
+  <title>{cfg.firm_name} — Digital Property Grant Intake &amp; California UETA E-Signature Portal</title>
+  <meta name="description" content="2-minute zero-call digital property intake and California UETA / federal ESIGN e-signature portal for {cfg.firm_name} ({cfg.firm_subtitle})." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -98,6 +143,8 @@ def render_portal_html() -> str:
       --border-focus: hsl(154, 42%, 28%);
       --danger-bg: hsl(4, 68%, 96%);
       --danger-ink: hsl(4, 62%, 34%);
+      --warning-bg: hsl(38, 86%, 94%);
+      --warning-ink: hsl(32, 78%, 26%);
       --success-bg: hsl(146, 36%, 94%);
       --success-ink: hsl(152, 48%, 20%);
       --shadow-sheet: 0 1px 2px hsla(154, 30%, 12%, 0.04), 0 12px 32px -8px hsla(154, 28%, 12%, 0.08);
@@ -121,15 +168,15 @@ def render_portal_html() -> str:
     }}
 
     .page-shell {{
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
-      padding: 40px 20px 72px;
+      padding: 36px 20px 72px;
     }}
 
     header.masthead {{
       border-bottom: 1px solid var(--border-stone);
-      padding-bottom: 24px;
-      margin-bottom: 32px;
+      padding-bottom: 22px;
+      margin-bottom: 28px;
     }}
 
     .firm-lockup {{
@@ -138,19 +185,19 @@ def render_portal_html() -> str:
       align-items: baseline;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }}
 
     .firm-name {{
       font-family: 'Newsreader', Georgia, serif;
       font-weight: 600;
-      font-size: 1.15rem;
+      font-size: 1.18rem;
       letter-spacing: 0.02em;
       color: var(--ink-primary);
     }}
 
     .firm-practice {{
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -160,28 +207,28 @@ def render_portal_html() -> str:
     h1 {{
       font-family: 'Newsreader', Georgia, serif;
       font-weight: 500;
-      font-size: clamp(1.85rem, 3.6vw, 2.45rem);
+      font-size: clamp(1.8rem, 3.5vw, 2.35rem);
       line-height: 1.18;
       letter-spacing: -0.015em;
-      margin: 0 0 12px;
+      margin: 0 0 10px;
       color: var(--ink-primary);
     }}
 
     .lead-copy {{
       margin: 0;
       color: var(--ink-secondary);
-      max-width: 66ch;
-      font-size: 0.98rem;
+      max-width: 68ch;
+      font-size: 0.96rem;
     }}
 
     .assurance-strip {{
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
-      margin-top: 18px;
-      padding-top: 16px;
+      gap: 18px;
+      margin-top: 16px;
+      padding-top: 14px;
       border-top: 1px solid var(--border-stone);
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: var(--ink-secondary);
     }}
 
@@ -195,7 +242,7 @@ def render_portal_html() -> str:
       border: 1px solid var(--border-stone);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-sheet);
-      padding: clamp(22px, 4vw, 38px);
+      padding: clamp(22px, 4vw, 36px);
     }}
 
     .sheet-toolbar {{
@@ -204,7 +251,7 @@ def render_portal_html() -> str:
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       padding-bottom: 14px;
       border-bottom: 1px solid var(--border-stone);
     }}
@@ -222,8 +269,8 @@ def render_portal_html() -> str:
       color: var(--ink-secondary);
       font-family: inherit;
       font-size: 0.8rem;
-      font-weight: 500;
-      padding: 6px 12px;
+      font-weight: 600;
+      padding: 7px 12px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
@@ -238,7 +285,7 @@ def render_portal_html() -> str:
     .form-grid {{
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 18px 20px;
+      gap: 16px 18px;
     }}
 
     .field-full {{
@@ -254,11 +301,11 @@ def render_portal_html() -> str:
     .field-group {{
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }}
 
     label {{
-      font-size: 0.84rem;
+      font-size: 0.83rem;
       font-weight: 600;
       color: var(--ink-primary);
     }}
@@ -266,7 +313,7 @@ def render_portal_html() -> str:
     .label-hint {{
       font-weight: 400;
       color: var(--ink-muted);
-      font-size: 0.78rem;
+      font-size: 0.77rem;
       margin-left: 4px;
     }}
 
@@ -281,18 +328,18 @@ def render_portal_html() -> str:
       background-color: #fff;
       color: var(--ink-primary);
       font-family: inherit;
-      font-size: 0.93rem;
+      font-size: 0.92rem;
       line-height: 1.45;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }}
 
     input.mono-input {{
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.88rem;
+      font-size: 0.87rem;
     }}
 
     textarea {{
-      min-height: 92px;
+      min-height: 86px;
       resize: vertical;
     }}
 
@@ -303,12 +350,95 @@ def render_portal_html() -> str:
       box-shadow: 0 0 0 3px hsla(154, 42%, 28%, 0.12);
     }}
 
-    .terms-box {{
-      margin-top: 22px;
-      padding: 16px 18px;
+    .agreement-section {{
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border-stone);
+    }}
+
+    .agreement-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }}
+
+    .agreement-header h3 {{
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+    }}
+
+    .agreement-badge {{
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.73rem;
+      color: var(--accent-pine);
+      background: var(--success-bg);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }}
+
+    .compliance-highlights {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }}
+
+    .compliance-pill {{
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      line-height: 1.45;
+    }}
+
+    .compliance-pill strong {{
+      display: block;
+      color: var(--ink-primary);
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }}
+
+    .scrollable-contract {{
+      background: #fff;
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: var(--ink-primary);
+      margin-bottom: 16px;
+    }}
+
+    .esign-box {{
+      padding: 18px;
       background-color: var(--surface-subtle);
       border: 1px solid var(--border-stone);
       border-radius: var(--radius-sm);
+    }}
+
+    .esign-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }}
+
+    @media (max-width: 640px) {{
+      .esign-grid {{
+        grid-template-columns: 1fr;
+      }}
     }}
 
     .checkbox-row {{
@@ -316,6 +446,7 @@ def render_portal_html() -> str:
       align-items: flex-start;
       gap: 12px;
       cursor: pointer;
+      padding-top: 6px;
     }}
 
     .checkbox-row input[type="checkbox"] {{
@@ -328,9 +459,9 @@ def render_portal_html() -> str:
     }}
 
     .terms-text {{
-      font-size: 0.86rem;
+      font-size: 0.85rem;
       color: var(--ink-secondary);
-      line-height: 1.55;
+      line-height: 1.52;
     }}
 
     .terms-text strong {{
@@ -338,21 +469,27 @@ def render_portal_html() -> str:
     }}
 
     .submit-row {{
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1.45fr;
       gap: 12px;
+    }}
+
+    @media (max-width: 680px) {{
+      .submit-row {{
+        grid-template-columns: 1fr;
+      }}
     }}
 
     .btn-primary {{
       width: 100%;
-      padding: 13px 20px;
+      padding: 13px 18px;
       background-color: var(--accent-pine);
       color: #fff;
       border: none;
       border-radius: var(--radius-sm);
       font-family: inherit;
-      font-size: 0.96rem;
+      font-size: 0.92rem;
       font-weight: 600;
       letter-spacing: 0.01em;
       cursor: pointer;
@@ -363,11 +500,27 @@ def render_portal_html() -> str:
       background-color: var(--accent-pine-hover);
     }}
 
-    .btn-primary:active {{
-      transform: translateY(1px);
+    .btn-secondary {{
+      width: 100%;
+      padding: 13px 16px;
+      background-color: #fff;
+      color: var(--ink-primary);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }}
 
-    .btn-primary:disabled {{
+    .btn-secondary:hover {{
+      background-color: var(--surface-subtle);
+      border-color: var(--ink-muted);
+    }}
+
+    .btn-primary:disabled,
+    .btn-secondary:disabled {{
       opacity: 0.65;
       cursor: wait;
     }}
@@ -376,7 +529,7 @@ def render_portal_html() -> str:
       display: none;
       padding: 12px 15px;
       border-radius: var(--radius-sm);
-      font-size: 0.88rem;
+      font-size: 0.87rem;
       margin-top: 16px;
     }}
 
@@ -389,7 +542,7 @@ def render_portal_html() -> str:
 
     .confirmation-panel {{
       display: none;
-      margin-top: 30px;
+      margin-top: 28px;
       background: var(--surface-sheet);
       border: 1px solid var(--border-stone);
       border-radius: var(--radius-md);
@@ -408,20 +561,26 @@ def render_portal_html() -> str:
       border-radius: var(--radius-sm);
       font-size: 0.88rem;
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
+    }}
+
+    .status-header.locked {{
+      background: var(--warning-bg);
+      color: var(--warning-ink);
+      border: 1px solid hsla(32, 78%, 26%, 0.25);
     }}
 
     .summary-dl {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
       gap: 14px;
-      margin: 0 0 22px;
-      padding-bottom: 20px;
+      margin: 0 0 18px;
+      padding-bottom: 18px;
       border-bottom: 1px solid var(--border-stone);
     }}
 
     .summary-item dt {{
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--ink-muted);
@@ -431,12 +590,31 @@ def render_portal_html() -> str:
     .summary-item dd {{
       margin: 0;
       font-weight: 600;
-      font-size: 0.94rem;
+      font-size: 0.91rem;
       color: var(--ink-primary);
+      word-break: break-word;
     }}
 
     .summary-item dd.mono {{
       font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+    }}
+
+    .audit-strip {{
+      display: none;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      color: var(--ink-secondary);
+      line-height: 1.55;
+    }}
+
+    .audit-strip.visible {{
+      display: block;
     }}
 
     .packet-actions {{
@@ -451,10 +629,14 @@ def render_portal_html() -> str:
       text-decoration: none;
       background: var(--accent-pine);
       color: #fff;
-      padding: 9px 16px;
+      padding: 9px 15px;
       border-radius: var(--radius-sm);
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       font-weight: 600;
+    }}
+
+    .btn-download.secondary {{
+      background: hsl(38, 64%, 32%);
     }}
 
     .packet-preview {{
@@ -462,19 +644,19 @@ def render_portal_html() -> str:
       border: 1px solid var(--border-stone);
       border-radius: var(--radius-sm);
       padding: 16px;
-      max-height: 420px;
+      max-height: 440px;
       overflow-y: auto;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.79rem;
+      font-size: 0.78rem;
       line-height: 1.55;
       white-space: pre-wrap;
       color: var(--ink-primary);
     }}
 
     footer.site-footer {{
-      margin-top: 36px;
+      margin-top: 34px;
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.79rem;
       color: var(--ink-muted);
     }}
   </style>
@@ -486,29 +668,29 @@ def render_portal_html() -> str:
         <span class="firm-name">{cfg.firm_name}</span>
         <span class="firm-practice">{cfg.firm_subtitle}</span>
       </div>
-      <h1>Digital Property Grant Intake</h1>
+      <h1>Digital Property Grant Intake &amp; E-Signature</h1>
       <p class="lead-copy">
-        Complete this 2-minute property intake to generate your matched conservation grant narrative,
-        engineered line-item budget, and County Resource Conservation District (RCD) filing handoff—100%
-        online with zero phone calls or meetings required.
+        Complete this 2-minute property intake to preview your matched conservation grant &amp; engineered
+        budget, and e-sign the California UETA / ESIGN Advisory Agreement to unlock your complete County
+        Resource Conservation District (RCD) filing dossier—100% online with zero phone calls.
       </p>
       <div class="assurance-strip">
         <span><strong>$0 Upfront Cost</strong> · Strictly No-Win, No-Fee</span>
-        <span><strong>{fee_str} Contingent Success Fee</strong> · Payable Only Upon Award</span>
-        <span><strong>Asynchronous RCD / NRCS Handoff</strong> · No Phone Calls</span>
+        <span><strong>2 CFR § 200.459 Compliant</strong> · {fee_str} Fee Paid Only From Separate General Funds Upon Award</span>
+        <span><strong>California UETA &amp; ESIGN Audit Trail</strong> · SHA-256 Contract Hash</span>
       </div>
     </header>
 
     <main>
       <section class="sheet" aria-labelledby="form-heading">
         <div class="sheet-toolbar">
-          <h2 id="form-heading">Parcel &amp; Conservation Scope</h2>
+          <h2 id="form-heading">1. Parcel &amp; Conservation Scope</h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <a id="btn-repo-zip" href="/api/repo-archive.zip" download="zys-goldfields-intake.zip" class="btn-ghost" style="text-decoration:none;">
               Download GitHub Repo (.zip)
             </a>
             <button type="button" id="btn-prefill-vance" class="btn-ghost">
-              Load Sample Parcel (Vance — El Dorado 45 ac)
+              Load Sample Parcel &amp; Signer (Elena &amp; Marcus Vance — El Dorado 45 ac)
             </button>
           </div>
         </div>
@@ -521,7 +703,7 @@ def render_portal_html() -> str:
             </div>
 
             <div class="field-group">
-              <label for="input-email">Email Address <span class="label-hint">(for digital packet delivery)</span></label>
+              <label for="input-email">Email Address <span class="label-hint">(for dossier &amp; signed receipt)</span></label>
               <input type="email" id="input-email" name="email" required placeholder="name@domain.com" />
             </div>
 
@@ -554,25 +736,63 @@ def render_portal_html() -> str:
             </div>
           </div>
 
-          <div class="terms-box">
-            <label class="checkbox-row" for="checkbox-terms">
-              <input type="checkbox" id="checkbox-terms" name="agreed_to_terms" value="true" required />
-              <span class="terms-text">
-                <strong>I agree to the {cfg.firm_name} {fee_str} No-Win / No-Fee Advisory Terms:</strong>
-                I authorize {cfg.firm_name} ({cfg.firm_subtitle}) to prepare my conservation grant submission
-                packet and coordinate technical handoff with my County Resource Conservation District (RCD)
-                and local USDA NRCS Service Center. I owe <strong>$0 upfront</strong> and <strong>$0 if no grant
-                is awarded</strong>; a contingent <strong>{fee_str} success fee</strong> applies solely upon
-                official grant award execution.
-              </span>
-            </label>
+          <div class="agreement-section">
+            <div class="agreement-header">
+              <h3>2. Conservation Advisory &amp; Origination Agreement</h3>
+              <span class="agreement-badge">{AGREEMENT_VERSION} · Cal. Civ. Code § 1633.1 / 15 U.S.C. § 7001</span>
+            </div>
+
+            <div class="compliance-highlights">
+              <div class="compliance-pill">
+                <strong>2 CFR § 200.459 Grant Compliance</strong>
+                {fee_str} Success Fee is paid strictly from Client's separate general/operating funds—never deducted from restricted grant funds.
+              </div>
+              <div class="compliance-pill">
+                <strong>Payment Trigger &amp; 5-Day Settlement</strong>
+                Invoiced upon official Agency Award Notice (or RCD Grant Agreement), payable within 5 business days of initial tranche disbursement.
+              </div>
+              <div class="compliance-pill">
+                <strong>Remedies &amp; Sacramento Venue</strong>
+                1.5% monthly late fee after 5 business days; exclusive venue in Sacramento County, CA with prevailing-party attorney fees (Cal. Civ. Code § 1717).
+              </div>
+            </div>
+
+            <div id="scrollable-agreement-box" class="scrollable-contract" tabindex="0" aria-label="Conservation Advisory and Origination Agreement">{sample_contract_escaped}</div>
+
+            <div class="esign-box">
+              <div class="esign-grid">
+                <div class="field-group">
+                  <label for="input-signer-name">Full Legal Name of Signer <span class="label-hint">(Required to Unlock Dossier)</span></label>
+                  <input type="text" id="input-signer-name" name="signer_full_name" placeholder="e.g., Elena Vance" />
+                </div>
+                <div class="field-group">
+                  <label for="input-signer-title">Title / Legal Capacity <span class="label-hint">(e.g., Managing Co-Owner, Executive Director)</span></label>
+                  <input type="text" id="input-signer-title" name="signer_title" placeholder="e.g., Managing Co-Owner &amp; Steward" />
+                </div>
+              </div>
+
+              <label class="checkbox-row" for="checkbox-terms">
+                <input type="checkbox" id="checkbox-terms" name="agreed_to_terms" value="true" required />
+                <span class="terms-text">
+                  <strong>I agree to the ZYS GoldFields PRO LLC Advisory Agreement.</strong>
+                  By typing my Full Legal Name and Title above and checking this box, I execute a legally binding
+                  electronic signature under the California Uniform Electronic Transactions Act (UETA) and federal
+                  ESIGN Act, agreeing to the <strong>{fee_str} Contingent Success Fee</strong> paid strictly from
+                  separate general/operating funds (<strong>2 CFR § 200.459 compliant</strong>) within <strong>5 business
+                  days</strong> of initial grant tranche disbursement.
+                </span>
+              </label>
+            </div>
           </div>
 
           <div id="form-error" class="alert-banner" role="alert"></div>
 
           <div class="submit-row">
+            <button type="button" id="btn-preview-only" class="btn-secondary">
+              Stage A: Preview Match &amp; Budget Summary (Locked)
+            </button>
             <button type="submit" id="btn-submit-intake" class="btn-primary">
-              Submit Digital Intake &amp; Generate Filing Packet
+              Stage B: E-Sign &amp; Unlock Full RCD Filing Dossier
             </button>
           </div>
         </form>
@@ -580,21 +800,29 @@ def render_portal_html() -> str:
 
       <section id="confirmation-panel" class="confirmation-panel" aria-live="polite">
         <div id="status-banner" class="status-header">
-          Submission Packet Generated &amp; Ready for County RCD / NRCS Dispatch
+          UNLOCKED — E-Signature Verified &amp; Complete RCD Filing Dossier Ready
         </div>
 
         <dl class="summary-dl">
           <div class="summary-item">
+            <dt>Filing Gate Status</dt>
+            <dd id="res-gate-status" class="mono">—</dd>
+          </div>
+          <div class="summary-item">
             <dt>Primary Matched Grant</dt>
             <dd id="res-grant">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Solicitation ID</dt>
+            <dd id="res-grant-id" class="mono">—</dd>
           </div>
           <div class="summary-item">
             <dt>Engineered Grant Request</dt>
             <dd id="res-request" class="mono">—</dd>
           </div>
           <div class="summary-item">
-            <dt>Application Deadline</dt>
-            <dd id="res-deadline">—</dd>
+            <dt>Win Probability Score</dt>
+            <dd id="res-score" class="mono">—</dd>
           </div>
           <div class="summary-item">
             <dt>Assigned Local Handoff Target</dt>
@@ -602,12 +830,17 @@ def render_portal_html() -> str:
           </div>
         </dl>
 
+        <div id="audit-strip" class="audit-strip"></div>
+
         <div class="packet-actions">
           <a href="/api/packet/latest" id="btn-download-packet" class="btn-download" download="client_submission_packet.md">
             Download client_submission_packet.md
           </a>
+          <a href="/api/agreement/latest" id="btn-download-agreement" class="btn-download secondary" download="signed_advisory_agreement.md">
+            Download signed_advisory_agreement.md
+          </a>
           <button type="button" id="btn-copy-packet" class="btn-ghost">
-            Copy Complete Packet Markdown
+            Copy Dossier Markdown
           </button>
         </div>
 
@@ -616,7 +849,7 @@ def render_portal_html() -> str:
     </main>
 
     <footer class="site-footer">
-      &copy; {cfg.firm_name} &middot; {cfg.firm_subtitle} &middot; 100% Digital Asynchronous Landowner Onboarding
+      &copy; {cfg.firm_name} &middot; {cfg.firm_subtitle} &middot; California UETA &amp; ESIGN Compliant ({template_sha256[:16]}…)
     </footer>
   </div>
 
@@ -625,13 +858,17 @@ def render_portal_html() -> str:
     const form = document.getElementById('intake-form');
     const errorEl = document.getElementById('form-error');
     const submitBtn = document.getElementById('btn-submit-intake');
+    const previewOnlyBtn = document.getElementById('btn-preview-only');
     const confirmPanel = document.getElementById('confirmation-panel');
+    const statusBanner = document.getElementById('status-banner');
+    const auditStrip = document.getElementById('audit-strip');
     const previewEl = document.getElementById('packet-preview');
     const prefillBtn = document.getElementById('btn-prefill-vance');
     const repoZipBtn = document.getElementById('btn-repo-zip');
     const copyBtn = document.getElementById('btn-copy-packet');
+    const dlPacketBtn = document.getElementById('btn-download-packet');
+    const dlAgreementBtn = document.getElementById('btn-download-agreement');
 
-    // Auto-populate fields when a prospect clicks their personalized ?name=...&email=...&county=...&acres=... link
     const urlParams = new URLSearchParams(window.location.search);
     if (PUBLIC_MODE) {{
       if (repoZipBtn) repoZipBtn.style.display = 'none';
@@ -640,7 +877,9 @@ def render_portal_html() -> str:
       prefillBtn.style.display = 'none';
     }}
     if (urlParams.get('name') || urlParams.get('org')) {{
-      document.getElementById('input-name').value = urlParams.get('name') || urlParams.get('org');
+      const nm = urlParams.get('name') || urlParams.get('org');
+      document.getElementById('input-name').value = nm;
+      document.getElementById('input-signer-name').value = nm;
     }}
     if (urlParams.get('email')) {{
       document.getElementById('input-email').value = urlParams.get('email');
@@ -668,6 +907,8 @@ def render_portal_html() -> str:
         '45-acre degraded blue oak, black oak, and ponderosa pine woodland in El Dorado County experiencing post-drought canopy mortality, invasive brush fuel accumulation, and seasonal gully soil erosion.';
       document.getElementById('input-goals').value =
         'Complete a Registered Professional Forester (RPF) Forest Management Plan, mechanical understory fuels thinning, native oak and pine reforestation, gully erosion stabilization, and wildlife habitat restoration.';
+      document.getElementById('input-signer-name').value = 'Elena Vance';
+      document.getElementById('input-signer-title').value = 'Managing Co-Owner & Steward, Sierra Ridge Oak Woodland';
       document.getElementById('checkbox-terms').checked = true;
       errorEl.className = 'alert-banner';
       errorEl.textContent = '';
@@ -681,8 +922,7 @@ def render_portal_html() -> str:
       setTimeout(() => {{ copyBtn.textContent = orig; }}, 1800);
     }});
 
-    form.addEventListener('submit', async (ev) => {{
-      ev.preventDefault();
+    async function submitIntakeRequest(previewOnly) {{
       errorEl.className = 'alert-banner';
       errorEl.textContent = '';
 
@@ -695,11 +935,14 @@ def render_portal_html() -> str:
         acreage: parseFloat(document.getElementById('input-acreage').value || '0'),
         land_condition: document.getElementById('input-condition').value.trim(),
         project_goals: document.getElementById('input-goals').value.trim(),
-        agreed_to_terms: document.getElementById('checkbox-terms').checked
+        signer_full_name: document.getElementById('input-signer-name').value.trim(),
+        signer_title: document.getElementById('input-signer-title').value.trim(),
+        agreed_to_terms: previewOnly ? false : document.getElementById('checkbox-terms').checked,
+        preview_only: previewOnly
       }};
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Matching Active Grants & Engineering Packet...';
+      previewOnlyBtn.disabled = true;
 
       try {{
         const resp = await fetch('/api/intake', {{
@@ -709,14 +952,41 @@ def render_portal_html() -> str:
         }});
         const data = await resp.json();
         if (!resp.ok) {{
-          throw new Error(data.error || 'Please check all required parcel fields and terms agreement.');
+          throw new Error(data.error || 'Please check all required parcel fields and e-signature boxes.');
         }}
 
         document.getElementById('res-grant').textContent = data.matched_grant_title;
+        document.getElementById('res-grant-id').textContent = data.matched_grant_id;
         document.getElementById('res-request').textContent = data.engineered_grant_request;
-        document.getElementById('res-deadline').textContent = data.deadline;
+        document.getElementById('res-score').textContent = data.probability_score;
         document.getElementById('res-rcd').textContent = data.rcd_target;
         previewEl.textContent = data.packet_markdown;
+
+        if (data.agreement_signed) {{
+          statusBanner.className = 'status-header';
+          statusBanner.textContent =
+            'STAGE B UNLOCKED — E-Signature Verified & Complete RCD Filing Dossier Ready for Dispatch';
+          document.getElementById('res-gate-status').textContent = 'UNLOCKED (Stage B)';
+          auditStrip.className = 'audit-strip visible';
+          auditStrip.textContent =
+            `UETA/ESIGN Audit Trail | Signer: ${{data.signer_full_name}} (${{data.signer_title}}) | ` +
+            `UTC: ${{data.signature_timestamp_utc}} | IP: ${{data.signer_ip_address}} | ` +
+            `SHA-256: ${{data.contract_sha256_hash}}`;
+          dlPacketBtn.href = data.packet_download_url || '/api/packet/latest';
+          dlPacketBtn.textContent = 'Download Unlocked client_submission_packet.md';
+          dlAgreementBtn.style.display = 'inline-block';
+          dlAgreementBtn.href = data.signed_agreement_download_url || '/api/agreement/latest';
+        }} else {{
+          statusBanner.className = 'status-header locked';
+          statusBanner.textContent =
+            'STAGE A PREVIEW (LOCKED) — E-Sign Agreement Above to Unlock Solicitation ID, Narrative & RCD Memo';
+          document.getElementById('res-gate-status').textContent = 'LOCKED PREVIEW (Stage A)';
+          auditStrip.className = 'audit-strip';
+          auditStrip.textContent = '';
+          dlPacketBtn.href = data.packet_download_url || '/api/packet/latest';
+          dlPacketBtn.textContent = 'Download Stage A Preview Summary (.md)';
+          dlAgreementBtn.style.display = 'none';
+        }}
 
         confirmPanel.classList.add('visible');
         confirmPanel.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
@@ -725,8 +995,14 @@ def render_portal_html() -> str:
         errorEl.className = 'alert-banner error';
       }} finally {{
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Digital Intake & Generate Filing Packet';
+        previewOnlyBtn.disabled = false;
       }}
+    }}
+
+    previewOnlyBtn.addEventListener('click', () => submitIntakeRequest(true));
+    form.addEventListener('submit', (ev) => {{
+      ev.preventDefault();
+      submitIntakeRequest(false);
     }});
   </script>
 </body>
@@ -734,10 +1010,34 @@ def render_portal_html() -> str:
 """
 
 
-def _process_intake_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
-    """Validate intake payload, run admin_packager, and return structured response JSON."""
+def _process_intake_payload(
+    raw_data: dict[str, Any],
+    *,
+    client_ip: str = "127.0.0.1",
+    user_agent: str = "ZYS-GoldFields-Intake-Portal/1.0",
+) -> dict[str, Any]:
+    """Validate intake payload, enforce the Sign-to-Unlock filing gate, and return structured JSON."""
+    preview_only = bool(raw_data.get("preview_only", False)) or str(raw_data.get("stage", "")).lower() == "preview"
+    agreed_to_terms = bool(raw_data.get("agreed_to_terms", False))
+
+    if not preview_only and not agreed_to_terms:
+        raise ValueError(
+            "You must check 'I agree to the ZYS GoldFields PRO LLC Advisory Agreement' "
+            "or select Stage A Preview."
+        )
+
+    name_val = str(raw_data.get("name", "")).strip()
+    signer_full_name = str(raw_data.get("signer_full_name") or "").strip()
+    signer_title = str(raw_data.get("signer_title") or "").strip()
+
+    if not preview_only:
+        if not signer_full_name:
+            signer_full_name = name_val
+        if not signer_title:
+            signer_title = "Property Owner & Authorized Representative"
+
     intake = ClientIntake(
-        name=str(raw_data.get("name", "")),
+        name=name_val,
         email=str(raw_data.get("email", "")),
         county=str(raw_data.get("county", "")),
         state=str(raw_data.get("state") or "CA"),
@@ -745,15 +1045,22 @@ def _process_intake_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
         acreage=float(raw_data.get("acreage") or 0),
         land_condition=str(raw_data.get("land_condition", "")),
         project_goals=str(raw_data.get("project_goals", "")),
-        agreed_to_terms=bool(raw_data.get("agreed_to_terms")),
+        agreed_to_terms=agreed_to_terms and not preview_only,
+        agreement_signed=agreed_to_terms and not preview_only,
+        signer_full_name=signer_full_name,
+        signer_title=signer_title,
+        signer_ip_address=client_ip,
+        signer_user_agent=user_agent,
     )
 
     cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    target_output = DEFAULT_PREVIEW_PATH if preview_only else DEFAULT_PACKET_PATH
     saved, matches, packet_path = generate_submission_packet(
         intake=intake,
         db_path=DEFAULT_DB_PATH,
         config_path=DEFAULT_CONFIG_PATH,
-        output_path=DEFAULT_PACKET_PATH,
+        output_path=target_output,
+        signed_agreement_output_path=DEFAULT_SIGNED_AGREEMENT_PATH,
         persist_intake=True,
     )
     primary = matches[0]
@@ -762,13 +1069,40 @@ def _process_intake_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
     )
     contacts = resolve_local_agency_contacts(saved.county, saved.state)
     packet_md = packet_path.read_text(encoding="utf-8")
-    if saved.id is not None:
-        PACKETS_ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-        archived_file = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{saved.id}.md"
-        archived_file.write_text(packet_md, encoding="utf-8")
+
+    if not saved.agreement_signed:
+        return {
+            "status": "ok",
+            "stage": "preview_locked",
+            "agreement_signed": False,
+            "intake_id": saved.id,
+            "client_name": saved.name,
+            "apn": saved.apn,
+            "county": saved.county,
+            "matched_grant_id": "[LOCKED — E-SIGNATURE REQUIRED]",
+            "matched_grant_title": primary.grant.title,
+            "probability_score": f"{primary.score}/100",
+            "score_rationale": primary.score_rationale,
+            "agency": primary.grant.agency,
+            "deadline": primary.grant.deadline,
+            "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
+            "contingent_fee_upon_award": f"${fee_dollars:,}",
+            "rcd_target": "[LOCKED — E-Sign Advisory Agreement to Unlock County RCD Co-Sponsor Memo]",
+            "packet_path": str(packet_path),
+            "packet_download_url": f"/api/preview/{saved.id}" if saved.id else "/api/preview/latest",
+            "packet_markdown": packet_md,
+        }
+
+    signed_agreement_md = (
+        DEFAULT_SIGNED_AGREEMENT_PATH.read_text(encoding="utf-8")
+        if DEFAULT_SIGNED_AGREEMENT_PATH.exists()
+        else ""
+    )
 
     return {
         "status": "ok",
+        "stage": "unlocked_filing_dossier",
+        "agreement_signed": True,
         "intake_id": saved.id,
         "client_name": saved.name,
         "apn": saved.apn,
@@ -782,17 +1116,124 @@ def _process_intake_payload(raw_data: dict[str, Any]) -> dict[str, Any]:
         "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
         "contingent_fee_upon_award": f"${fee_dollars:,}",
         "rcd_target": f"{contacts['rcd_name']} / {contacts['nrcs_office']}",
+        "signer_full_name": saved.signer_full_name,
+        "signer_title": saved.signer_title,
+        "agreement_version": AGREEMENT_VERSION,
+        "signature_timestamp_utc": saved.signature_timestamp_utc,
+        "signer_ip_address": saved.signer_ip_address,
+        "signer_user_agent": saved.signer_user_agent,
+        "contract_sha256_hash": saved.contract_sha256_hash,
         "packet_path": str(packet_path),
         "packet_download_url": f"/api/packet/{saved.id}" if saved.id else "/api/packet/latest",
+        "signed_agreement_path": saved.signed_agreement_path,
+        "signed_agreement_download_url": (
+            f"/api/agreement/{saved.id}" if saved.id else "/api/agreement/latest"
+        ),
+        "signed_agreement_markdown": signed_agreement_md,
+        "packet_markdown": packet_md,
+    }
+
+
+def _unlock_existing_intake(
+    raw_data: dict[str, Any],
+    *,
+    client_ip: str = "127.0.0.1",
+    user_agent: str = "ZYS-GoldFields-Intake-Portal/1.0",
+) -> dict[str, Any]:
+    """Unlock an existing Stage-A intake record once the client completes the e-signature block."""
+    intake_id = int(raw_data.get("intake_id") or 0)
+    if intake_id <= 0:
+        raise ValueError("A valid intake_id is required to sign and unlock.")
+    agreed = bool(raw_data.get("agreed_to_terms", False))
+    if not agreed:
+        raise ValueError("You must check 'I agree to the ZYS GoldFields PRO LLC Advisory Agreement' to unlock.")
+
+    existing = fetch_client_intake_by_id(intake_id, DEFAULT_DB_PATH)
+    if existing is None:
+        raise ValueError(f"Intake #{intake_id} not found in grants.db.")
+
+    signer_full_name = str(raw_data.get("signer_full_name") or existing.name).strip()
+    signer_title = str(raw_data.get("signer_title") or "Property Owner & Authorized Representative").strip()
+
+    signed_intake = existing.model_copy(
+        update={
+            "agreed_to_terms": True,
+            "agreement_signed": True,
+            "signer_full_name": signer_full_name,
+            "signer_title": signer_title,
+            "signer_ip_address": client_ip,
+            "signer_user_agent": user_agent,
+        }
+    )
+
+    cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    saved, matches, packet_path = generate_submission_packet(
+        intake=signed_intake,
+        db_path=DEFAULT_DB_PATH,
+        config_path=DEFAULT_CONFIG_PATH,
+        output_path=DEFAULT_PACKET_PATH,
+        signed_agreement_output_path=DEFAULT_SIGNED_AGREEMENT_PATH,
+        persist_intake=True,
+    )
+    primary = matches[0]
+    _, total_cost, grant_req, _, fee_dollars = build_budget_engineering_table(
+        saved, primary.grant, fee_percent=cfg.success_fee_percent
+    )
+    contacts = resolve_local_agency_contacts(saved.county, saved.state)
+    packet_md = packet_path.read_text(encoding="utf-8")
+    signed_agreement_md = (
+        DEFAULT_SIGNED_AGREEMENT_PATH.read_text(encoding="utf-8")
+        if DEFAULT_SIGNED_AGREEMENT_PATH.exists()
+        else ""
+    )
+
+    return {
+        "status": "ok",
+        "stage": "unlocked_filing_dossier",
+        "agreement_signed": True,
+        "intake_id": saved.id,
+        "client_name": saved.name,
+        "apn": saved.apn,
+        "county": saved.county,
+        "matched_grant_id": primary.grant.id,
+        "matched_grant_title": primary.grant.title,
+        "probability_score": f"{primary.score}/100",
+        "score_rationale": primary.score_rationale,
+        "agency": primary.grant.agency,
+        "deadline": primary.grant.deadline,
+        "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
+        "contingent_fee_upon_award": f"${fee_dollars:,}",
+        "rcd_target": f"{contacts['rcd_name']} / {contacts['nrcs_office']}",
+        "signer_full_name": saved.signer_full_name,
+        "signer_title": saved.signer_title,
+        "agreement_version": AGREEMENT_VERSION,
+        "signature_timestamp_utc": saved.signature_timestamp_utc,
+        "signer_ip_address": saved.signer_ip_address,
+        "signer_user_agent": saved.signer_user_agent,
+        "contract_sha256_hash": saved.contract_sha256_hash,
+        "packet_path": str(packet_path),
+        "packet_download_url": f"/api/packet/{saved.id}",
+        "signed_agreement_path": saved.signed_agreement_path,
+        "signed_agreement_download_url": f"/api/agreement/{saved.id}",
+        "signed_agreement_markdown": signed_agreement_md,
         "packet_markdown": packet_md,
     }
 
 
 class IntakePortalHandler(BaseHTTPRequestHandler):
-    """Lightweight HTTP request handler for the Zero-Call Digital Client Intake Portal."""
+    """Lightweight HTTP request handler for the Zero-Call Digital Client Intake & E-Signature Portal."""
 
     def log_message(self, fmt: str, *args: Any) -> None:
         logger.info("%s - %s", self.address_string(), fmt % args)
+
+    def _extract_client_ip(self) -> str:
+        forwarded = self.headers.get("X-Forwarded-For", "").strip()
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return self.client_address[0] if self.client_address else "127.0.0.1"
+
+    def _extract_user_agent(self) -> str:
+        return self.headers.get("User-Agent", "ZYS-GoldFields-Client-Browser/1.0").strip()
 
     def _send_json(self, status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload).encode("utf-8")
@@ -810,6 +1251,15 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_markdown_file(self, file_path: Path, download_name: str) -> None:
+        data = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/markdown; charset=utf-8")
+        self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path in ("/", "/index.html"):
@@ -821,7 +1271,8 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 HTTPStatus.OK,
                 {
                     "status": "healthy",
-                    "service": "ZYS GoldFields PRO Intake Portal",
+                    "service": "ZYS GoldFields PRO Intake & E-Signature Portal",
+                    "agreement_version": AGREEMENT_VERSION,
                     "public_mode": os.environ.get("PUBLIC_MODE", "0") == "1",
                 },
             )
@@ -830,6 +1281,11 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/prospects":
             prospects = [p.model_dump() for p in fetch_all_prospects(DEFAULT_DB_PATH)]
             self._send_json(HTTPStatus.OK, {"count": len(prospects), "prospects": prospects})
+            return
+
+        if parsed.path == "/api/audits":
+            audits = [a.model_dump() for a in fetch_all_esignature_audits(DEFAULT_DB_PATH)]
+            self._send_json(HTTPStatus.OK, {"count": len(audits), "audits": audits})
             return
 
         if parsed.path == "/api/repo-archive.zip":
@@ -843,11 +1299,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "README.md",
                 "admin_packager.py",
                 "california_prospects.csv",
+                "client_preview_summary.md",
                 "client_submission_packet.md",
                 "config.json",
                 "db.py",
                 "grants.db",
                 "intake_app.py",
+                "legal_agreement.py",
                 "matcher.py",
                 "models.py",
                 "outreach_pitches.md",
@@ -858,6 +1316,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "runtime.txt",
                 "scraper.py",
                 "seed_profiles.py",
+                "signed_advisory_agreement.md",
                 "start_public_tunnel.sh",
             )
             buf = io.BytesIO()
@@ -881,7 +1340,8 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             intakes = [
                 {
                     **item.model_dump(),
-                    "packet_url": f"/api/packet/{item.id}",
+                    "packet_url": f"/api/packet/{item.id}" if item.agreement_signed else f"/api/preview/{item.id}",
+                    "signed_agreement_url": f"/api/agreement/{item.id}" if item.agreement_signed else None,
                 }
                 for item in fetch_all_intakes(DEFAULT_DB_PATH)
             ]
@@ -890,32 +1350,60 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
         if parsed.path == "/api/packet/latest":
             if not DEFAULT_PACKET_PATH.exists():
-                self._send_json(HTTPStatus.NOT_FOUND, {"error": "No submission packet generated yet."})
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "No unlocked submission packet generated yet."})
                 return
-            data = DEFAULT_PACKET_PATH.read_bytes()
-            self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", "text/markdown; charset=utf-8")
-            self.send_header("Content-Disposition", 'attachment; filename="client_submission_packet.md"')
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
+            self._send_markdown_file(DEFAULT_PACKET_PATH, "client_submission_packet.md")
             return
 
         if parsed.path.startswith("/api/packet/"):
             tail = parsed.path.removeprefix("/api/packet/").strip("/")
             if tail.isdigit():
-                target = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{int(tail)}.md"
-                if target.exists():
-                    data = target.read_bytes()
-                    self.send_response(HTTPStatus.OK)
-                    self.send_header("Content-Type", "text/markdown; charset=utf-8")
-                    self.send_header(
-                        "Content-Disposition",
-                        f'attachment; filename="client_submission_packet_{int(tail)}.md"',
+                intake_id = int(tail)
+                intake_rec = fetch_client_intake_by_id(intake_id, DEFAULT_DB_PATH)
+                if intake_rec is not None and not intake_rec.agreement_signed:
+                    self._send_json(
+                        HTTPStatus.FORBIDDEN,
+                        {
+                            "error": (
+                                f"Sign-to-Unlock Gate Active: Intake #{intake_id} has not executed the "
+                                "ZYS GoldFields PRO LLC Advisory Agreement (agreement_signed == False)."
+                            )
+                        },
                     )
-                    self.send_header("Content-Length", str(len(data)))
-                    self.end_headers()
-                    self.wfile.write(data)
+                    return
+                target = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{intake_id}.md"
+                if target.exists():
+                    self._send_markdown_file(target, f"client_submission_packet_{intake_id}.md")
+                    return
+
+        if parsed.path == "/api/preview/latest":
+            if not DEFAULT_PREVIEW_PATH.exists():
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "No preview summary generated yet."})
+                return
+            self._send_markdown_file(DEFAULT_PREVIEW_PATH, "client_preview_summary.md")
+            return
+
+        if parsed.path.startswith("/api/preview/"):
+            tail = parsed.path.removeprefix("/api/preview/").strip("/")
+            if tail.isdigit():
+                target = PACKETS_ARCHIVE_DIR / f"client_preview_summary_{int(tail)}.md"
+                if target.exists():
+                    self._send_markdown_file(target, f"client_preview_summary_{int(tail)}.md")
+                    return
+
+        if parsed.path == "/api/agreement/latest":
+            if not DEFAULT_SIGNED_AGREEMENT_PATH.exists():
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "No signed advisory agreement generated yet."})
+                return
+            self._send_markdown_file(DEFAULT_SIGNED_AGREEMENT_PATH, "signed_advisory_agreement.md")
+            return
+
+        if parsed.path.startswith("/api/agreement/"):
+            tail = parsed.path.removeprefix("/api/agreement/").strip("/")
+            if tail.isdigit():
+                target = PACKETS_ARCHIVE_DIR / f"signed_advisory_agreement_{int(tail)}.md"
+                if target.exists():
+                    self._send_markdown_file(target, f"signed_advisory_agreement_{int(tail)}.md")
                     return
 
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
@@ -924,11 +1412,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         length = int(self.headers.get("Content-Length", "0") or "0")
         raw_bytes = self.rfile.read(length) if length > 0 else b""
+        client_ip = self._extract_client_ip()
+        user_agent = self._extract_user_agent()
 
         if parsed.path == "/api/intake":
             try:
                 body = json.loads(raw_bytes.decode("utf-8") or "{}")
-                result = _process_intake_payload(body)
+                result = _process_intake_payload(body, client_ip=client_ip, user_agent=user_agent)
                 self._send_json(HTTPStatus.OK, result)
             except ValidationError as verr:
                 first_msg = verr.errors()[0].get("msg", "Invalid intake input.")
@@ -940,22 +1430,34 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
             return
 
+        if parsed.path == "/api/sign":
+            try:
+                body = json.loads(raw_bytes.decode("utf-8") or "{}")
+                result = _unlock_existing_intake(body, client_ip=client_ip, user_agent=user_agent)
+                self._send_json(HTTPStatus.OK, result)
+            except ValueError as val_err:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(val_err)})
+            except Exception as exc:
+                logger.exception("Error processing /api/sign")
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+            return
+
         if parsed.path == "/submit":
             try:
                 form = parse_qs(raw_bytes.decode("utf-8"), keep_blank_values=True)
-                flat = {
-                    k: (v[0] if v else "")
-                    for k, v in form.items()
-                }
+                flat = {k: (v[0] if v else "") for k, v in form.items()}
                 flat["agreed_to_terms"] = flat.get("agreed_to_terms", "").lower() in ("true", "on", "1", "yes")
-                result = _process_intake_payload(flat)
+                result = _process_intake_payload(flat, client_ip=client_ip, user_agent=user_agent)
                 confirmation_html = (
                     f"<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Submission Confirmed</title></head>"
                     f"<body style='font-family:sans-serif;max-width:760px;margin:40px auto;padding:0 20px;'>"
-                    f"<h1>Submission Packet Generated</h1>"
+                    f"<h1>Submission Dossier Unlocked</h1>"
                     f"<p><strong>Matched Grant:</strong> {result['matched_grant_title']}</p>"
                     f"<p><strong>Engineered Request:</strong> {result['engineered_grant_request']}</p>"
-                    f"<p><a href='{result['packet_download_url']}'>Download client_submission_packet.md</a> | <a href='/'>Back to Portal</a></p>"
+                    f"<p><strong>SHA-256 Contract Hash:</strong> <code>{result.get('contract_sha256_hash', '')}</code></p>"
+                    f"<p><a href='{result['packet_download_url']}'>Download client_submission_packet.md</a> | "
+                    f"<a href='{result.get('signed_agreement_download_url', '/api/agreement/latest')}'>Download signed_advisory_agreement.md</a> | "
+                    f"<a href='/'>Back to Portal</a></p>"
                     f"<pre style='background:#f6f5f0;padding:16px;overflow:auto;'>{result['packet_markdown']}</pre>"
                     f"</body></html>"
                 )
@@ -968,10 +1470,10 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
-    """Start the ThreadingHTTPServer for the digital intake portal."""
+    """Start the ThreadingHTTPServer for the digital intake & e-signature portal."""
     ensure_database_ready(DEFAULT_DB_PATH)
     server = ThreadingHTTPServer((host, port), IntakePortalHandler)
-    logger.info("ZYS GoldFields PRO Intake Portal listening on http://%s:%d", host, port)
+    logger.info("ZYS GoldFields PRO Intake & E-Signature Portal listening on http://%s:%d", host, port)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

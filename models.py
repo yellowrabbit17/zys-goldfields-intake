@@ -141,6 +141,35 @@ class GrantMatch(BaseModel):
     personalized_intake_url: str = Field(default="")
 
 
+class ESignatureAuditRecord(BaseModel):
+    """Cryptographic legal audit trail record for California UETA / Federal ESIGN Act execution."""
+
+    id: Optional[int] = Field(default=None)
+    intake_id: Optional[int] = Field(default=None)
+    client_name: str = Field(..., min_length=2)
+    client_email: str = Field(..., min_length=5)
+    county: str = Field(..., min_length=2)
+    apn: str = Field(..., min_length=3)
+    signer_full_name: str = Field(..., min_length=2, description="Full Legal Name typed in digital signature block")
+    signer_title: str = Field(..., min_length=2, description="Signer Title or capacity")
+    agreement_version: str = Field(default="CA-UETA-ESIGN-2026.1")
+    agreement_signed: bool = Field(default=True)
+    signature_timestamp_utc: str = Field(..., min_length=10, description="UTC ISO-8601 execution timestamp")
+    signer_ip_address: str = Field(..., min_length=3, description="Client IP address captured at signature")
+    signer_user_agent: str = Field(..., min_length=2, description="Browser User-Agent string captured at signature")
+    contract_sha256_hash: str = Field(
+        ...,
+        min_length=64,
+        max_length=64,
+        description="64-char hex SHA-256 hash of the signed contract text",
+    )
+    matched_grant_id: str = Field(default="")
+    matched_grant_title: str = Field(default="")
+    engineered_grant_request: int = Field(default=0, ge=0)
+    contingent_fee_dollars: int = Field(default=0, ge=0)
+    signed_agreement_path: str = Field(default="")
+
+
 class ClientIntake(BaseModel):
     """Validated digital client onboarding submission from intake_app.py."""
 
@@ -153,7 +182,24 @@ class ClientIntake(BaseModel):
     acreage: float = Field(..., gt=0, description="Total parcel acreage")
     land_condition: str = Field(..., min_length=5, description="Current land & resource condition")
     project_goals: str = Field(..., min_length=5, description="Desired conservation / agricultural upgrades")
-    agreed_to_terms: bool = Field(..., description="Agreement to 7% no-win/no-fee advisory terms")
+    agreed_to_terms: bool = Field(default=False, description="Agreement to 7% ZYS GoldFields PRO LLC Advisory Agreement")
+    agreement_signed: bool = Field(
+        default=False,
+        description="True when California UETA / ESIGN e-signature block is executed to unlock final filing dossier",
+    )
+    signer_full_name: str = Field(default="", description="Full Legal Name typed by landowner in signature block")
+    signer_title: str = Field(
+        default="Owner / Authorized Representative",
+        description="Title / capacity typed by landowner in signature block",
+    )
+    signature_timestamp_utc: str = Field(default="", description="UTC ISO-8601 timestamp of electronic signature")
+    signer_ip_address: str = Field(default="127.0.0.1", description="Client IP address at time of signature")
+    signer_user_agent: str = Field(
+        default="Mozilla/5.0 (ZYS-GoldFields-Intake-Portal)",
+        description="Client browser User-Agent string at time of signature",
+    )
+    contract_sha256_hash: str = Field(default="", description="SHA-256 hash of the signed contract text")
+    signed_agreement_path: str = Field(default="", description="Path to generated signed_advisory_agreement.md")
     submitted_at: Optional[str] = Field(default=None, description="ISO UTC submission timestamp")
 
     @field_validator("name", "email", "county", "state", "apn", "land_condition", "project_goals")
@@ -171,12 +217,15 @@ class ClientIntake(BaseModel):
             raise ValueError("Please enter a valid email address.")
         return v
 
-    @field_validator("agreed_to_terms")
-    @classmethod
-    def must_agree_to_terms(cls, v: bool) -> bool:
-        if v is not True:
-            raise ValueError("You must agree to the contingent no-win/no-fee advisory terms to proceed.")
-        return v
+    def model_post_init(self, __context: object) -> None:
+        if self.agreed_to_terms and not self.agreement_signed:
+            object.__setattr__(self, "agreement_signed", True)
+        if self.agreement_signed and not self.agreed_to_terms:
+            object.__setattr__(self, "agreed_to_terms", True)
+        if self.agreement_signed and not self.signer_full_name.strip():
+            object.__setattr__(self, "signer_full_name", self.name)
+        if not self.signer_title.strip():
+            object.__setattr__(self, "signer_title", "Owner / Authorized Representative")
 
 
 class ProspectRecord(BaseModel):

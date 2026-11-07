@@ -1,8 +1,8 @@
-# ZYS GoldFields PRO LLC — Conservation Grant Hunter & Zero-Call Intake Portal
+# ZYS GoldFields PRO LLC — Conservation Grant Hunter, E-Signature & Zero-Call Intake Portal
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yellowrabbit17/zys-goldfields-intake)
 
-End-to-end automated California conservation grant underwriting, Tier-1 prospect qualification, 1-page cold-outreach pitch generation, zero-call digital property intake, and County Resource Conservation District (RCD) / USDA NRCS submission packaging.
+End-to-end automated California conservation grant underwriting, Tier-1 prospect qualification, 1-page cold-outreach pitch generation, California UETA / ESIGN e-signature execution (`2 CFR § 200.459` compliant), and "Sign-to-Unlock" County Resource Conservation District (RCD) / USDA NRCS submission packaging.
 
 ## Key Capabilities
 
@@ -15,9 +15,14 @@ End-to-end automated California conservation grant underwriting, Tier-1 prospect
      - **Ecological & Geographic Priority Fit (25 pts)**: County fire-severity zones, coastal sea-level-rise watersheds, Pacific Flyway wetland corridors, and prime farmland conversion-risk zones.
      - **Funding-to-Scale Ratio & Co-Match Feasibility (20 pts)**: Cost-share / bargain-sale / in-kind match feasibility relative to parcel acreage and organizational scale.
 3. **Tier-1 Ranked California Prospects & Outreach Briefs (`prospect_hunter.py`)**:
-   - `california_prospects.csv` & `outreach_pitches.md`: **55 qualified Tier-1 California wildlife sanctuaries, conservation ranches, and land trusts** (`score >= 75/100`, ranked `98/100` down to `76/100`), with `15` weak or statutorily non-compliant leads automatically excluded.
-4. **Zero-Call Digital Client Intake Portal & Auto-Admin RCD Packager (`intake_app.py`, `admin_packager.py`)**:
-   - Single-page digital property intake form supporting `?name=...&email=...&county=...&acres=...` URL prefill, contingent **7% no-win/no-fee** authorization, and instant generation of a ready-to-file `client_submission_packet.md` (Project Narrative + Budget Engineering + County RCD / USDA NRCS Co-Sponsor Memorandum).
+   - `california_prospects.csv` & `outreach_pitches.md`: **57 qualified Tier-1 California wildlife sanctuaries, conservation ranches, and land trusts** (`score >= 75/100`, ranked `98/100` down to `76/100`), with weak or statutorily non-compliant leads automatically excluded.
+4. **California UETA / ESIGN Contingency Agreement & `2 CFR § 200.459` Protection (`legal_agreement.py`, `intake_app.py`)**:
+   - Embeds a scrollable **"Conservation Advisory & Origination Agreement"** governed by the **California Uniform Electronic Transactions Act (UETA)** (`Cal. Civ. Code § 1633.1 et seq.`) and federal **ESIGN Act** (`15 U.S.C. § 7001 et seq.`).
+   - **Federal & State Grant Compliance (`2 CFR § 200.459`)**: Explicitly stipulates that the **7% Advisory Success Fee** is paid strictly from the Client's separate general/operating funds upon official Agency Award Notice (payable within **5 business days** of initial tranche disbursement, with a **1.5% monthly late fee** and **Sacramento County, California** venue / prevailing-party attorney fees under `Cal. Civ. Code § 1717`), and is never billed to or deducted from restricted grant funds.
+   - **Cryptographic Audit Trail (`grants.db` & `signed_advisory_agreement.md`)**: Captures the signer's Full Legal Name, Title, UTC Timestamp, Client IP Address, User-Agent browser string, and `SHA-256` hash of the signed contract text.
+5. **"Sign-to-Unlock" Final Filing Gate (`admin_packager.py`)**:
+   - **Stage A — Client Preview Summary (`client_preview_summary.md`)**: Displays the matched grant title, engineered budget total, and probability score while masking the grant solicitation ID, copy-paste narrative, and County RCD Co-Sponsor Memorandum until `agreement_signed == True` in `grants.db`.
+   - **Stage B — Unlocked RCD & Agency Filing Dossier (`client_submission_packet.md`)**: Unlocks immediately upon e-signature completion and appends **Part C: Notice of Authorized Advisory Representation & E-Signature Certificate**.
 
 ## 1-Click Render Free Deployment (`render.yaml`)
 

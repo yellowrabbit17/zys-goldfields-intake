@@ -15,7 +15,20 @@ from pathlib import Path
 import re
 from typing import Any
 
-from db import DEFAULT_DB_PATH, fetch_all_grants, insert_client_intake
+from db import (
+    DEFAULT_DB_PATH,
+    fetch_all_grants,
+    insert_client_intake,
+    insert_esignature_audit_record,
+    is_intake_agreement_signed,
+    update_client_intake_signature,
+)
+from legal_agreement import (
+    DEFAULT_SIGNED_AGREEMENT_PATH,
+    build_esignature_audit_record,
+    render_notice_of_authorized_representation,
+    render_signed_agreement_markdown,
+)
 from matcher import (
     DEFAULT_CONFIG_PATH,
     _escape_md_dollars,
@@ -23,7 +36,14 @@ from matcher import (
     load_matcher_config,
     match_single_profile,
 )
-from models import ClientIntake, GrantMatch, GrantRecord, LandownerProfile, MatcherConfig
+from models import (
+    ClientIntake,
+    ESignatureAuditRecord,
+    GrantMatch,
+    GrantRecord,
+    LandownerProfile,
+    MatcherConfig,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -33,6 +53,8 @@ logging.basicConfig(
 logger = logging.getLogger("admin_packager")
 
 DEFAULT_PACKET_PATH = Path(__file__).resolve().parent / "client_submission_packet.md"
+DEFAULT_PREVIEW_PATH = Path(__file__).resolve().parent / "client_preview_summary.md"
+PACKETS_DIR = Path(__file__).resolve().parent / "packets"
 
 COUNTY_RCD_DIRECTORY: dict[str, dict[str, str]] = {
     "el dorado": {
@@ -366,12 +388,73 @@ def build_budget_engineering_table(
     return "\n".join(table_lines), total_cost, grant_total, owner_total, advisory_fee
 
 
-def compose_submission_packet_markdown(
+def compose_client_preview_markdown(
     intake: ClientIntake,
     matches: list[GrantMatch],
     config: MatcherConfig,
 ) -> str:
-    """Render the complete client_submission_packet.md with Narrative, Budget, and RCD Handoff."""
+    """Render Stage A: Client Preview Summary (masks RCD Co-Sponsor Memo, solicitation ID, and copy-paste narrative until agreement_signed == True)."""
+    if not matches:
+        raise RuntimeError(f"No eligible conservation grants matched parcel in {intake.county} County.")
+
+    primary = matches[0]
+    grant = primary.grant
+    fee_str = config.fee_label()
+    _, total_cost, grant_req, owner_match, fee_dollars = build_budget_engineering_table(
+        intake=intake,
+        grant=grant,
+        fee_percent=config.success_fee_percent,
+    )
+    generated_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    county_code = re.sub(r"[^A-Za-z]", "", intake.county)[:3].upper() or "CAL"
+    apn_code = re.sub(r"[^0-9A-Za-z]", "", intake.apn)[:8] or "APN"
+    ref_code = f"ZYS-{county_code}-{apn_code}"
+
+    raw_preview = f"""# Stage A: Client Grant Eligibility & Budget Preview Summary (LOCKED DOSSIER)
+
+- **Dossier Reference:** `{ref_code}`
+- **Prepared By:** **{config.firm_name}** — *{config.firm_subtitle}*
+- **Preview Generated:** `{generated_ts}`
+- **Filing Gate Status:** **`LOCKED — AWAITING CALIFORNIA UETA / ESIGN ELECTRONIC SIGNATURE (agreement_signed = False)`**
+
+---
+
+## 1. Unlocked Eligibility, Grant Match & Budget Summary
+
+| Underwriting Parameter | Verified Parcel & Grant Match Summary |
+| :--- | :--- |
+| **Landowner / Applicant** | **{_table_safe(intake.name)}** (`{intake.email}`) |
+| **Jurisdiction & Parcel APN** | **{intake.county} County, {intake.state}** — Assessor's Parcel Number (`APN`): **`{intake.apn}`** ({intake.acreage:g} Acres) |
+| **Primary Matched Grant** | **{_table_safe(grant.title)}** |
+| **Administering Agency** | {_table_safe(grant.agency)} |
+| **Grant Win Probability Score** | **{primary.score}/100** ({_table_safe(primary.probability_breakdown.summary_tag() if primary.probability_breakdown else '4-Pillar Tier-1 Verified')}) |
+| **Win Probability Rationale** | {_table_safe(primary.score_rationale)} |
+| **Total Engineered Project Budget** | **${total_cost:,}** (${grant_req:,} Grant Request + ${owner_match:,} Landowner Cost-Share / In-Kind) |
+| **Contingent {fee_str} Origination Fee** | **${fee_dollars:,}** (*$0 upfront; payable strictly from separate Client operating funds under `2 CFR § 200.459` within 5 business days of initial tranche disbursement*) |
+| **Grant Solicitation ID** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK SOLICITATION ID]` |
+| **Official Agency Portal URL** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK AGENCY PORTAL LINK]` |
+
+---
+
+## 2. Masked Filing Sections (Sign-to-Unlock Gate Active)
+
+> **SIGN-TO-UNLOCK FINAL FILING GATE (`agreement_signed == False` in `grants.db`):**
+> To protect **{config.firm_name}** proprietary underwriting and origination work product, the following ready-to-file sections are masked until the landowner completes the 1-click **Conservation Advisory & Origination Agreement** electronic signature block:
+>
+> - **Part A (Copy-Paste Project Narrative & Line-Item Practice Table):** `[MASKED — COMPLETE E-SIGNATURE TO UNLOCK FULL MULTI-PHASE NARRATIVE & PRACTICE CODES]`
+> - **Part B (County RCD & USDA NRCS Co-Sponsor Memorandum & Dispatch Email):** `[MASKED — COMPLETE E-SIGNATURE TO UNLOCK COUNTY RCD CO-SPONSOR MEMORANDUM & PLANNER HANDOFF]`
+> - **Part C (Notice of Authorized Advisory Representation & SHA-256 Certificate):** `[MASKED — COMPLETE E-SIGNATURE TO UNLOCK AUTHORIZED REPRESENTATION CERTIFICATE]`
+"""
+    return _escape_md_dollars(raw_preview)
+
+
+def compose_submission_packet_markdown(
+    intake: ClientIntake,
+    matches: list[GrantMatch],
+    config: MatcherConfig,
+    audit_record: ESignatureAuditRecord | None = None,
+) -> str:
+    """Render Stage B: Unlocked RCD & Agency Filing Dossier (client_submission_packet.md) with Notice of Authorized Advisory Representation."""
     if not matches:
         raise RuntimeError(f"No eligible conservation grants matched parcel in {intake.county} County.")
 
@@ -388,10 +471,19 @@ def compose_submission_packet_markdown(
     )
     net_benefit = grant_req - fee_dollars
     generated_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    consent_ts = intake.submitted_at or generated_ts
+    consent_ts = intake.signature_timestamp_utc or intake.submitted_at or generated_ts
     county_code = re.sub(r"[^A-Za-z]", "", intake.county)[:3].upper() or "CAL"
     apn_code = re.sub(r"[^0-9A-Za-z]", "", intake.apn)[:8] or "APN"
     ref_code = f"ZYS-{county_code}-{apn_code}"
+
+    if audit_record is None:
+        audit_record, _ = build_esignature_audit_record(
+            intake=intake,
+            grant=grant,
+            engineered_grant_request=grant_req,
+            contingent_fee_dollars=fee_dollars,
+            config=config,
+        )
 
     is_forestry = "forest" in grant.title.lower()
     specialist_role = (
@@ -415,11 +507,21 @@ def compose_submission_packet_markdown(
             )
         backup_rows = "\n".join(b_lines) + "\n"
 
+    notice_page_md = render_notice_of_authorized_representation(
+        audit=audit_record,
+        config=config,
+        rcd_name=contacts["rcd_name"],
+        nrcs_office=contacts["nrcs_office"],
+        acreage=intake.acreage,
+        state=intake.state,
+    )
+
     raw_doc = f"""# Ready-to-File Conservation Grant Submission & RCD Handoff Packet
 
 - **Dossier Reference:** `{ref_code}`
 - **Prepared By:** **{config.firm_name}** — *{config.firm_subtitle}*
 - **Packet Generated:** `{generated_ts}`
+- **Filing Gate Status:** **`UNLOCKED — E-SIGNATURE VERIFIED (agreement_signed = True | SHA-256: {audit_record.contract_sha256_hash[:16]}...)`**
 - **Workflow Mode:** 100% Zero-Call Digital Intake & Asynchronous Agency Handoff
 
 ---
@@ -429,15 +531,18 @@ def compose_submission_packet_markdown(
 | Filing Parameter | Verified Client & Solicitation Record |
 | :--- | :--- |
 | **Landowner / Applicant** | **{_table_safe(intake.name)}** (`{intake.email}`) |
+| **Authorized Signatory** | **`/s/ {_table_safe(audit_record.signer_full_name)}`** (*{_table_safe(audit_record.signer_title)}*) |
 | **Jurisdiction & Parcel APN** | **{intake.county} County, {intake.state}** — Assessor's Parcel Number (`APN`): **`{intake.apn}`** |
 | **Verified Parcel Acreage** | **{intake.acreage:g} Acres** ({_table_safe(primary.profile.land_type)}) |
 | **Primary Matched Grant** | **{_table_safe(grant.title)}** |
+| **Grant Solicitation ID** | **`{grant.id}`** |
 | **Administering Agency** | {_table_safe(grant.agency)} |
 | **Published Funding Pool** | {_table_safe(grant.funding_amount)} |
 | **Target Solicitation Deadline** | **{_table_safe(grant.deadline)}** |
 | **Filing Pathway** | {_table_safe(primary.application_pathway)} |
 | **Engineered Grant Request** | **${grant_req:,}** (out of ${total_cost:,} total project budget) |
-| **Advisory Fee Authorization** | `[x]` **Agreed to {fee_str} Contingent No-Win / No-Fee Terms** (`{consent_ts}`) — ${fee_dollars:,} due *only* upon grant award ($0 upfront) |
+| **Advisory Fee Authorization** | `[x]` **Executed {fee_str} Contingent Origination Agreement** (`{consent_ts}`) — ${fee_dollars:,} payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement ($0 upfront) |
+| **Cryptographic Contract Hash** | `{audit_record.contract_sha256_hash}` |
 | **Official Solicitation Link** | [{grant.url}]({grant.url}) |
 {backup_rows}
 ---
@@ -445,7 +550,7 @@ def compose_submission_packet_markdown(
 ## Part A: Pre-Filled Project Narrative & Budget Engineering
 
 ### A.1 Project Abstract & Statutory Eligibility Statement
-**Applicant {intake.name}** requests **${grant_req:,}** in conservation funding under the **{grant.title}** ({grant.agency}) to implement multi-benefit ecological restoration and working-lands stewardship across **{intake.acreage:g} contiguous acres** in **{intake.county} County, {intake.state}** (**APN `{intake.apn}`**).
+**Applicant {intake.name}** requests **${grant_req:,}** in conservation funding under the **{grant.title}** (`{grant.id}`, {grant.agency}) to implement multi-benefit ecological restoration and working-lands stewardship across **{intake.acreage:g} contiguous acres** in **{intake.county} County, {intake.state}** (**APN `{intake.apn}`**).
 
 **Eligibility Verification:**
 {chr(10).join(f"- {r}" for r in primary.rationale)}
@@ -476,7 +581,7 @@ The project executes the landowner's stated conservation objectives:
 
 {budget_table_md}
 
-> **Grant Accounting & {fee_str} Contingent Fee Compliance Note:** In strict compliance with federal `2 CFR Part 200` and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (${grant_req:,} grant request; ${owner_match:,} landowner cost-share/in-kind). **{config.firm_name}** charges **$0 upfront** and invoices its separate **{fee_str} contingent advisory fee (${fee_dollars:,})** privately upon executed grant award, leaving an estimated **${net_benefit:,} net grant benefit** for the property.
+> **Grant Accounting & {fee_str} Contingent Fee Compliance Note (`2 CFR § 200.459` Protection):** In strict compliance with federal `2 CFR § 200.459` (`2 CFR Part 200`) and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (${grant_req:,} grant request; ${owner_match:,} landowner cost-share/in-kind). **{config.firm_name}** charges **$0 upfront** and invoices its separate **{fee_str} contingent origination and administrative consulting fee (${fee_dollars:,})** strictly to the Client's separate general/operating funds upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, never billed to or deducted from restricted federal or state grant funds), leaving an estimated **${net_benefit:,} net grant benefit** for the property.
 
 ---
 
@@ -486,24 +591,25 @@ The project executes the landowner's stated conservation objectives:
 
 - **To:** `{contacts["rcd_email"]}` ({contacts["rcd_name"]})
 - **CC:** `{intake.email}` ({intake.name} — Landowner); {contacts["nrcs_office"]}
-- **Subject:** `Technical Planner Assignment & Grant Filing Handoff — APN {intake.apn} ({intake.acreage:g} Acres, {intake.county} County) — {grant.title}`
+- **Subject:** `Technical Planner Assignment & Grant Filing Handoff — APN {intake.apn} ({intake.acreage:g} Acres, {intake.county} County) — {grant.title} ({grant.id})`
 
 ```text
 Dear Conservation Planning Team at {contacts["rcd_name"]},
 
-On behalf of {intake.name} (copied), owner of a {intake.acreage:g}-acre parcel in {intake.county} County, {intake.state} (Assessor's Parcel Number: {intake.apn}), {config.firm_name} is submitting the attached pre-screened Conservation Grant Application Narrative and Engineered Budget (${grant_req:,} target grant request) for the active solicitation:
+On behalf of {intake.name} (copied, represented by authorized signatory {audit_record.signer_full_name}, {audit_record.signer_title}), owner of a {intake.acreage:g}-acre parcel in {intake.county} County, {intake.state} (Assessor's Parcel Number: {intake.apn}), {config.firm_name} is submitting the attached pre-screened Conservation Grant Application Narrative and Engineered Budget (${grant_req:,} target grant request) for the active solicitation:
 
-  Program:  {grant.title}
-  Agency:   {grant.agency}
-  Deadline: {grant.deadline}
-  Pathway:  {primary.application_pathway}
+  Program:         {grant.title}
+  Solicitation ID: {grant.id}
+  Agency:          {grant.agency}
+  Deadline:        {grant.deadline}
+  Pathway:         {primary.application_pathway}
 
 We respectfully request that {contacts["rcd_name"]} (in coordination with the {contacts["nrcs_office"]}) assign a {specialist_role} to:
   1. Generate the final GIS parcel boundary & treatment-unit map for APN {intake.apn};
   2. Confirm agency practice codes / RPF or NRCS technical sign-off against our pre-engineered ${total_cost:,} scope; and
   3. Execute the Co-Sponsor / Technical Assistance endorsement for portal submission ahead of the {grant.deadline} deadline.
 
-All landowner authorizations, baseline condition statements, and budget tables are complete in the attached Co-Sponsor Memorandum so your planner can proceed asynchronously via email without scheduling introductory phone calls. Please reply-all with the assigned planner's email and any standard landowner signature forms required by your district.
+All landowner authorizations, baseline condition statements, budget tables, and the executed Notice of Authorized Advisory Representation (SHA-256: {audit_record.contract_sha256_hash}) are complete in the attached Co-Sponsor Memorandum so your planner can proceed asynchronously via email without scheduling introductory phone calls. Please reply-all with the assigned planner's email and any standard landowner signature forms required by your district.
 
 Sincerely,
 
@@ -521,9 +627,9 @@ Dossier Ref: {ref_code}
 - **TO:** District Manager & Lead Conservation Planner, **{contacts["rcd_name"]}** ({contacts["rcd_address"]})  
 - **CONCURRENT COPY:** District Conservationist, **{contacts["nrcs_office"]}** ({contacts["nrcs_address"]})  
 - **FROM:** **{config.firm_name}** — *{config.firm_subtitle}*  
-- **CLIENT / LANDOWNER:** **{intake.name}** (`{intake.email}`)  
+- **CLIENT / LANDOWNER:** **{intake.name}** (`{intake.email}`) — Signed by **`/s/ {audit_record.signer_full_name}`** (*{audit_record.signer_title}*)  
 - **PARCEL IDENTIFICATION:** **APN `{intake.apn}`** · **{intake.acreage:g} Acres** · **{intake.county} County, {intake.state}**  
-- **TARGET SOLICITATION:** **{grant.title}** (*Deadline: {grant.deadline}*)  
+- **TARGET SOLICITATION:** **{grant.title}** (`{grant.id}` · *Deadline: {grant.deadline}*)  
 - **DATE:** `{generated_ts}`  
 
 #### 1. Purpose of Handoff
@@ -537,10 +643,11 @@ To complete agency submission prior to **{grant.deadline}**, we request assignme
 3. **Co-Sponsor / Partner Endorsement:** Where **{grant.title}** utilizes `{primary.application_pathway}`, attach standard RCD co-sponsor resolution or technical partner letter and upload/transmit final package to `{grant.agency}`.
 
 #### 3. Digital Landowner Authorization & Advisory Terms Attestation
-- **Authorized Landowner:** `{intake.name}` (`{intake.email}`)
+- **Authorized Landowner & Signatory:** `{intake.name}` — `/s/ {audit_record.signer_full_name}` ({audit_record.signer_title}, `{intake.email}`)
 - **Parcel Attestation:** Landowner attests ownership/management authority over APN `{intake.apn}` ({intake.acreage:g} acres, {intake.county} County, {intake.state}).
-- **Advisory Fee Disclosure:** Landowner has digitally executed the **{config.firm_name}** contingent **{fee_str} no-win/no-fee** agreement (`{consent_ts}`), with **$0** upfront fees and zero administrative cost to {contacts["rcd_name"]} or USDA NRCS.
+- **Advisory Fee & `2 CFR § 200.459` Disclosure:** Landowner has digitally executed the **{config.firm_name}** contingent **{fee_str} no-win/no-fee** agreement (`{consent_ts}`, SHA-256 `{audit_record.contract_sha256_hash}`), with **$0** upfront fees, separate Client operating-funds payment (`2 CFR § 200.459`), and zero administrative cost to {contacts["rcd_name"]} or USDA NRCS.
 
+{notice_page_md}
 ---
 Prepared & Certified by:  
 **{config.firm_name}**  
@@ -549,44 +656,37 @@ Prepared & Certified by:
     return _escape_md_dollars(raw_doc)
 
 
-def generate_submission_packet(
+def _match_parcel_to_grants(
     intake: ClientIntake,
+    cfg: MatcherConfig,
     db_path: Path | str = DEFAULT_DB_PATH,
-    config_path: Path | str = DEFAULT_CONFIG_PATH,
-    output_path: Path | str = DEFAULT_PACKET_PATH,
-    persist_intake: bool = True,
-) -> tuple[ClientIntake, list[GrantMatch], Path]:
-    """Persist a ClientIntake (optional), match grants, and write client_submission_packet.md."""
-    cfg = load_matcher_config(config_path)
-    saved_intake = insert_client_intake(intake, db_path=db_path) if persist_intake else intake
-
+) -> list[GrantMatch]:
+    """Match a ClientIntake parcel against active grants in grants.db."""
     grants = fetch_all_grants(db_path=db_path)
     if not grants:
         raise RuntimeError("No active grants found in grants.db. Run scraper.py first.")
 
     synthetic_profile = LandownerProfile(
-        id=saved_intake.id,
-        name=saved_intake.name,
-        state=saved_intake.state,
-        county=saved_intake.county,
-        acreage=saved_intake.acreage,
-        land_type=infer_land_classification(saved_intake.land_condition, saved_intake.project_goals),
-        features=f"APN {saved_intake.apn}. Condition: {saved_intake.land_condition}. Goals: {saved_intake.project_goals}",
+        id=intake.id,
+        name=intake.name,
+        state=intake.state,
+        county=intake.county,
+        acreage=intake.acreage,
+        land_type=infer_land_classification(intake.land_condition, intake.project_goals),
+        features=f"APN {intake.apn}. Condition: {intake.land_condition}. Goals: {intake.project_goals}",
     )
 
-    # Match parcel against active grants (bypass county filter override if client is in another CA county)
     intake_cfg = cfg.model_copy(
         update={
-            "state": saved_intake.state,
+            "state": intake.state,
             "county": [],
-            "min_acreage": min(cfg.min_acreage, saved_intake.acreage),
-            "max_acreage": max(cfg.max_acreage, saved_intake.acreage),
+            "min_acreage": min(cfg.min_acreage, intake.acreage),
+            "max_acreage": max(cfg.max_acreage, intake.acreage),
         }
     )
     matches = match_single_profile(synthetic_profile, grants, config=intake_cfg, top_k_override=3)
 
     if not matches:
-        # Broad conservation fallback if walk-in client entered terse custom keywords or <75 parcel
         broad_profile = synthetic_profile.model_copy(
             update={
                 "features": f"{synthetic_profile.features} conservation soil health wildlife habitat climate adaptation"
@@ -599,15 +699,115 @@ def generate_submission_packet(
             top_k_override=3,
             enforce_min_score=False,
         )
+    return matches
 
-    packet_md = compose_submission_packet_markdown(saved_intake, matches, cfg)
+
+def generate_submission_packet(
+    intake: ClientIntake,
+    db_path: Path | str = DEFAULT_DB_PATH,
+    config_path: Path | str = DEFAULT_CONFIG_PATH,
+    output_path: Path | str = DEFAULT_PACKET_PATH,
+    signed_agreement_output_path: Path | str = DEFAULT_SIGNED_AGREEMENT_PATH,
+    persist_intake: bool = True,
+) -> tuple[ClientIntake, list[GrantMatch], Path]:
+    """Persist a ClientIntake, enforce the Sign-to-Unlock gate against grants.db, and generate the appropriate packet.
+
+    - Stage A (agreement_signed == False in grants.db): Generates the masked Client Preview Summary.
+    - Stage B (agreement_signed == True in grants.db): Records the cryptographic SHA-256 e-signature audit trail
+      in grants.db, generates signed_advisory_agreement.md, and unlocks client_submission_packet.md with the
+      appended Notice of Authorized Advisory Representation.
+    """
+    cfg = load_matcher_config(config_path)
+    if persist_intake and intake.id is None:
+        saved_intake = insert_client_intake(intake, db_path=db_path)
+    else:
+        saved_intake = intake
+    matches = _match_parcel_to_grants(saved_intake, cfg, db_path=db_path)
+    primary = matches[0]
+
+    # Verify agreement_signed gate in grants.db
+    db_signed = bool(saved_intake.agreement_signed) or (
+        is_intake_agreement_signed(saved_intake.id, db_path=db_path)
+        if (persist_intake and saved_intake.id is not None)
+        else False
+    )
+
+    if not db_signed:
+        preview_md = compose_client_preview_markdown(saved_intake, matches, cfg)
+        preview_file = Path(output_path) if output_path != DEFAULT_PACKET_PATH else DEFAULT_PREVIEW_PATH
+        preview_file.write_text(preview_md, encoding="utf-8")
+        if saved_intake.id is not None:
+            PACKETS_DIR.mkdir(parents=True, exist_ok=True)
+            (PACKETS_DIR / f"client_preview_summary_{saved_intake.id}.md").write_text(preview_md, encoding="utf-8")
+        logger.info(
+            "Generated LOCKED Stage-A Client Preview Summary for %s (APN %s, agreement_signed=False) -> %s",
+            saved_intake.name,
+            saved_intake.apn,
+            preview_file,
+        )
+        return saved_intake, matches, preview_file
+
+    # Stage B: agreement_signed == True -> Build cryptographic audit record & signed_advisory_agreement.md
+    _, _, grant_req, _, fee_dollars = build_budget_engineering_table(
+        intake=saved_intake,
+        grant=primary.grant,
+        fee_percent=cfg.success_fee_percent,
+    )
+    agreement_file = Path(signed_agreement_output_path)
+    audit_record, contract_text = build_esignature_audit_record(
+        intake=saved_intake,
+        grant=primary.grant,
+        engineered_grant_request=grant_req,
+        contingent_fee_dollars=fee_dollars,
+        config=cfg,
+        signer_ip_address=saved_intake.signer_ip_address,
+        signer_user_agent=saved_intake.signer_user_agent,
+        signature_timestamp_utc=saved_intake.signature_timestamp_utc or saved_intake.submitted_at,
+        signed_agreement_path=agreement_file,
+    )
+
+    signed_agreement_md = render_signed_agreement_markdown(
+        audit=audit_record,
+        contract_text=contract_text,
+        config=cfg,
+        acreage=saved_intake.acreage,
+        state=saved_intake.state,
+    )
+    agreement_file.write_text(signed_agreement_md, encoding="utf-8")
+
+    if persist_intake and saved_intake.id is not None:
+        PACKETS_DIR.mkdir(parents=True, exist_ok=True)
+        archived_agreement = PACKETS_DIR / f"signed_advisory_agreement_{saved_intake.id}.md"
+        archived_agreement.write_text(signed_agreement_md, encoding="utf-8")
+        saved_intake = update_client_intake_signature(
+            intake_id=saved_intake.id,
+            signer_full_name=audit_record.signer_full_name,
+            signer_title=audit_record.signer_title,
+            signature_timestamp_utc=audit_record.signature_timestamp_utc,
+            signer_ip_address=audit_record.signer_ip_address,
+            signer_user_agent=audit_record.signer_user_agent,
+            contract_sha256_hash=audit_record.contract_sha256_hash,
+            signed_agreement_path=str(agreement_file),
+            db_path=db_path,
+        )
+        insert_esignature_audit_record(audit_record, db_path=db_path)
+
+    packet_md = compose_submission_packet_markdown(
+        intake=saved_intake,
+        matches=matches,
+        config=cfg,
+        audit_record=audit_record,
+    )
     out_file = Path(output_path)
     out_file.write_text(packet_md, encoding="utf-8")
+    if saved_intake.id is not None:
+        PACKETS_DIR.mkdir(parents=True, exist_ok=True)
+        (PACKETS_DIR / f"client_submission_packet_{saved_intake.id}.md").write_text(packet_md, encoding="utf-8")
+
     logger.info(
-        "Generated ready-to-file packet for %s (APN %s, %s County) -> %s (%d bytes)",
+        "Generated UNLOCKED Stage-B filing dossier & signed agreement (SHA-256 %s...) for %s -> %s (%d bytes)",
+        audit_record.contract_sha256_hash[:12],
         saved_intake.name,
-        saved_intake.apn,
-        saved_intake.county,
         out_file,
         len(packet_md),
     )
@@ -631,9 +831,17 @@ if __name__ == "__main__":
             "thinning, native oak and pine reforestation, gully erosion stabilization, and wildlife habitat restoration."
         ),
         agreed_to_terms=True,
+        agreement_signed=True,
+        signer_full_name="Elena Vance",
+        signer_title="Managing Co-Owner & Steward, Sierra Ridge Oak Woodland",
+        signer_ip_address="198.51.100.42",
+        signer_user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
     )
     stored, matched, packet_file = generate_submission_packet(sample_vance_intake)
-    print(f"=== Generated Sample Submission Packet: {packet_file} ===")
-    print(f"  Client:        {stored.name} (Intake ID #{stored.id}, APN {stored.apn})")
-    print(f"  Primary Grant: {matched[0].grant.title} ({matched[0].grant.agency})")
-    print(f"  Deadline:      {matched[0].grant.deadline}")
+    print(f"=== Generated Unlocked Submission Packet: {packet_file} ===")
+    print(f"  Client:          {stored.name} (Intake ID #{stored.id}, APN {stored.apn})")
+    print(f"  Signatory:       /s/ {stored.signer_full_name} ({stored.signer_title})")
+    print(f"  SHA-256 Hash:    {stored.contract_sha256_hash}")
+    print(f"  Signed Receipt:  {stored.signed_agreement_path}")
+    print(f"  Primary Grant:   {matched[0].grant.title} ({matched[0].grant.agency})")
+    print(f"  Deadline:        {matched[0].grant.deadline}")

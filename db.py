@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from models import ClientIntake, GrantRecord, LandownerProfile, ProspectRecord
+from models import ClientIntake, ESignatureAuditRecord, GrantRecord, LandownerProfile, ProspectRecord
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "grants.db"
 
@@ -20,7 +20,7 @@ def get_connection(db_path: Path | str = DEFAULT_DB_PATH) -> sqlite3.Connection:
 
 
 def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
-    """Create the grants, landowner_profiles, and client_intakes tables if they do not exist."""
+    """Create the grants, landowner_profiles, client_intakes, california_prospects, and esignature_audit_log tables."""
     with get_connection(db_path) as conn:
         conn.execute(
             """
@@ -61,7 +61,57 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
                 land_condition TEXT NOT NULL,
                 project_goals TEXT NOT NULL,
                 agreed_to_terms INTEGER NOT NULL,
+                agreement_signed INTEGER NOT NULL DEFAULT 0,
+                signer_full_name TEXT NOT NULL DEFAULT '',
+                signer_title TEXT NOT NULL DEFAULT '',
+                signature_timestamp_utc TEXT NOT NULL DEFAULT '',
+                signer_ip_address TEXT NOT NULL DEFAULT '',
+                signer_user_agent TEXT NOT NULL DEFAULT '',
+                contract_sha256_hash TEXT NOT NULL DEFAULT '',
+                signed_agreement_path TEXT NOT NULL DEFAULT '',
                 submitted_at TEXT NOT NULL
+            )
+            """
+        )
+        intake_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(client_intakes)").fetchall()
+        }
+        new_intake_cols = [
+            ("agreement_signed", "INTEGER NOT NULL DEFAULT 0"),
+            ("signer_full_name", "TEXT NOT NULL DEFAULT ''"),
+            ("signer_title", "TEXT NOT NULL DEFAULT ''"),
+            ("signature_timestamp_utc", "TEXT NOT NULL DEFAULT ''"),
+            ("signer_ip_address", "TEXT NOT NULL DEFAULT ''"),
+            ("signer_user_agent", "TEXT NOT NULL DEFAULT ''"),
+            ("contract_sha256_hash", "TEXT NOT NULL DEFAULT ''"),
+            ("signed_agreement_path", "TEXT NOT NULL DEFAULT ''"),
+        ]
+        for col_name, col_ddl in new_intake_cols:
+            if col_name not in intake_cols:
+                conn.execute(f"ALTER TABLE client_intakes ADD COLUMN {col_name} {col_ddl}")
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS esignature_audit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                intake_id INTEGER NOT NULL,
+                client_name TEXT NOT NULL,
+                client_email TEXT NOT NULL,
+                county TEXT NOT NULL,
+                apn TEXT NOT NULL,
+                signer_full_name TEXT NOT NULL,
+                signer_title TEXT NOT NULL,
+                agreement_version TEXT NOT NULL,
+                agreement_signed INTEGER NOT NULL DEFAULT 1,
+                signature_timestamp_utc TEXT NOT NULL,
+                signer_ip_address TEXT NOT NULL,
+                signer_user_agent TEXT NOT NULL,
+                contract_sha256_hash TEXT NOT NULL,
+                matched_grant_id TEXT NOT NULL DEFAULT '',
+                matched_grant_title TEXT NOT NULL DEFAULT '',
+                engineered_grant_request INTEGER NOT NULL DEFAULT 0,
+                contingent_fee_dollars INTEGER NOT NULL DEFAULT 0,
+                signed_agreement_path TEXT NOT NULL DEFAULT ''
             )
             """
         )
@@ -188,14 +238,18 @@ def insert_client_intake(
     """Store a validated ClientIntake submission into grants.db and return it with its ID."""
     init_db(db_path)
     ts = intake.submitted_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    sig_ts = intake.signature_timestamp_utc or (ts if intake.agreement_signed else "")
     with get_connection(db_path) as conn:
         cur = conn.execute(
             """
             INSERT INTO client_intakes (
                 name, email, county, state, apn, acreage,
-                land_condition, project_goals, agreed_to_terms, submitted_at
+                land_condition, project_goals, agreed_to_terms,
+                agreement_signed, signer_full_name, signer_title,
+                signature_timestamp_utc, signer_ip_address, signer_user_agent,
+                contract_sha256_hash, signed_agreement_path, submitted_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 intake.name,
@@ -207,12 +261,180 @@ def insert_client_intake(
                 intake.land_condition,
                 intake.project_goals,
                 1 if intake.agreed_to_terms else 0,
+                1 if intake.agreement_signed else 0,
+                intake.signer_full_name,
+                intake.signer_title,
+                sig_ts,
+                intake.signer_ip_address,
+                intake.signer_user_agent,
+                intake.contract_sha256_hash,
+                intake.signed_agreement_path,
                 ts,
             ),
         )
         conn.commit()
         new_id = cur.lastrowid
-    return intake.model_copy(update={"id": new_id, "submitted_at": ts})
+    return intake.model_copy(
+        update={
+            "id": new_id,
+            "submitted_at": ts,
+            "signature_timestamp_utc": sig_ts,
+        }
+    )
+
+
+def update_client_intake_signature(
+    intake_id: int,
+    signer_full_name: str,
+    signer_title: str,
+    signature_timestamp_utc: str,
+    signer_ip_address: str,
+    signer_user_agent: str,
+    contract_sha256_hash: str,
+    signed_agreement_path: str,
+    db_path: Path | str = DEFAULT_DB_PATH,
+) -> ClientIntake:
+    """Record a completed e-signature on an existing client_intakes row and return the updated model."""
+    init_db(db_path)
+    with get_connection(db_path) as conn:
+        conn.execute(
+            """
+            UPDATE client_intakes
+            SET agreed_to_terms = 1,
+                agreement_signed = 1,
+                signer_full_name = ?,
+                signer_title = ?,
+                signature_timestamp_utc = ?,
+                signer_ip_address = ?,
+                signer_user_agent = ?,
+                contract_sha256_hash = ?,
+                signed_agreement_path = ?
+            WHERE id = ?
+            """,
+            (
+                signer_full_name,
+                signer_title,
+                signature_timestamp_utc,
+                signer_ip_address,
+                signer_user_agent,
+                contract_sha256_hash,
+                signed_agreement_path,
+                intake_id,
+            ),
+        )
+        conn.commit()
+    updated = fetch_client_intake_by_id(intake_id, db_path=db_path)
+    if updated is None:
+        raise ValueError(f"ClientIntake #{intake_id} not found in grants.db")
+    return updated
+
+
+def fetch_client_intake_by_id(
+    intake_id: int,
+    db_path: Path | str = DEFAULT_DB_PATH,
+) -> ClientIntake | None:
+    """Fetch a single ClientIntake record by ID from grants.db."""
+    init_db(db_path)
+    with get_connection(db_path) as conn:
+        cur = conn.execute(
+            """
+            SELECT id, name, email, county, state, apn, acreage,
+                   land_condition, project_goals, agreed_to_terms,
+                   agreement_signed, signer_full_name, signer_title,
+                   signature_timestamp_utc, signer_ip_address, signer_user_agent,
+                   contract_sha256_hash, signed_agreement_path, submitted_at
+            FROM client_intakes
+            WHERE id = ?
+            """,
+            (intake_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["agreed_to_terms"] = bool(d["agreed_to_terms"])
+        d["agreement_signed"] = bool(d["agreement_signed"])
+        return ClientIntake(**d)
+
+
+def is_intake_agreement_signed(
+    intake_id: int | None,
+    db_path: Path | str = DEFAULT_DB_PATH,
+) -> bool:
+    """Check directly in grants.db whether agreement_signed == True for the given intake_id."""
+    if intake_id is None:
+        return False
+    record = fetch_client_intake_by_id(intake_id, db_path=db_path)
+    return bool(record and record.agreement_signed)
+
+
+def insert_esignature_audit_record(
+    record: ESignatureAuditRecord,
+    db_path: Path | str = DEFAULT_DB_PATH,
+) -> ESignatureAuditRecord:
+    """Insert a cryptographic legal audit record into esignature_audit_log in grants.db."""
+    init_db(db_path)
+    with get_connection(db_path) as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO esignature_audit_log (
+                intake_id, client_name, client_email, county, apn,
+                signer_full_name, signer_title, agreement_version, agreement_signed,
+                signature_timestamp_utc, signer_ip_address, signer_user_agent,
+                contract_sha256_hash, matched_grant_id, matched_grant_title,
+                engineered_grant_request, contingent_fee_dollars, signed_agreement_path
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record.intake_id or 0,
+                record.client_name,
+                record.client_email,
+                record.county,
+                record.apn,
+                record.signer_full_name,
+                record.signer_title,
+                record.agreement_version,
+                1 if record.agreement_signed else 0,
+                record.signature_timestamp_utc,
+                record.signer_ip_address,
+                record.signer_user_agent,
+                record.contract_sha256_hash,
+                record.matched_grant_id,
+                record.matched_grant_title,
+                record.engineered_grant_request,
+                record.contingent_fee_dollars,
+                record.signed_agreement_path,
+            ),
+        )
+        conn.commit()
+        audit_id = cur.lastrowid
+    return record.model_copy(update={"id": audit_id})
+
+
+def fetch_all_esignature_audits(
+    db_path: Path | str = DEFAULT_DB_PATH,
+) -> list[ESignatureAuditRecord]:
+    """Load all cryptographic e-signature audit records from grants.db."""
+    init_db(db_path)
+    with get_connection(db_path) as conn:
+        cur = conn.execute(
+            """
+            SELECT id, intake_id, client_name, client_email, county, apn,
+                   signer_full_name, signer_title, agreement_version, agreement_signed,
+                   signature_timestamp_utc, signer_ip_address, signer_user_agent,
+                   contract_sha256_hash, matched_grant_id, matched_grant_title,
+                   engineered_grant_request, contingent_fee_dollars, signed_agreement_path
+            FROM esignature_audit_log
+            ORDER BY id DESC
+            """
+        )
+        rows: list[ESignatureAuditRecord] = []
+        for row in cur.fetchall():
+            d = dict(row)
+            d["agreement_signed"] = bool(d["agreement_signed"])
+            rows.append(ESignatureAuditRecord(**d))
+        return rows
 
 
 def fetch_all_grants(db_path: Path | str = DEFAULT_DB_PATH) -> list[GrantRecord]:
@@ -242,7 +464,10 @@ def fetch_all_intakes(db_path: Path | str = DEFAULT_DB_PATH) -> list[ClientIntak
         cur = conn.execute(
             """
             SELECT id, name, email, county, state, apn, acreage,
-                   land_condition, project_goals, agreed_to_terms, submitted_at
+                   land_condition, project_goals, agreed_to_terms,
+                   agreement_signed, signer_full_name, signer_title,
+                   signature_timestamp_utc, signer_ip_address, signer_user_agent,
+                   contract_sha256_hash, signed_agreement_path, submitted_at
             FROM client_intakes
             ORDER BY id DESC
             """
@@ -251,6 +476,7 @@ def fetch_all_intakes(db_path: Path | str = DEFAULT_DB_PATH) -> list[ClientIntak
         for row in cur.fetchall():
             d = dict(row)
             d["agreed_to_terms"] = bool(d["agreed_to_terms"])
+            d["agreement_signed"] = bool(d["agreement_signed"])
             rows.append(ClientIntake(**d))
         return rows
 

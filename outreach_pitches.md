@@ -1,10 +1,10 @@
 # ZYS GoldFields PRO LLC — Tier-1 Conservation Grant Outreach Briefs (Score >= 75/100)
 
 - **Advisory Practice:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Generated:** `2026-11-07 02:18`
+- **Generated:** `2026-11-07 05:36`
 - **Active Filter & Cutoff Config (`config.json`):** State=`CA`, Counties=`All Eligible California Counties`, Acreage=`5–5000 ac`, Min Grant=`$25,000`, **Min Win Probability=`75/100`**
 - **Active Grants Indexed in `grants.db`:** `48` live federal & California Climate Investments opportunities
-- **Tier-1 Qualification Funnel:** `55` qualified Tier-1 candidates retained (`score >= 75/100`) out of `70` evaluated leads (all `< 75/100` and statutory non-compliant leads excluded)
+- **Tier-1 Qualification Funnel:** `57` qualified Tier-1 candidates retained (`score >= 75/100`) out of `70` evaluated leads (all `< 75/100` and statutory non-compliant leads excluded)
 - **Underwriting & Pitch Engine:** 4-Pillar Grant Award Probability Scoring Engine (`min_probability_score >= 75/100`)
 - **Commercial Terms & Onboarding:** Contingent **7% success fee** (\$0 upfront) · 100% digital intake (zero phone calls)
 
@@ -22,51 +22,53 @@
 | 8 | **Richards Regenerative Ranch** | Yuba | 4,200 | **96/100** | Scores 96/100 because its 4,200-acre working agricultural scale strongly fits SALC conservation easement underwriting, commercial agricultural producer eligible via Yuba County RCD / agricultural land trust easement co-sponsorship, Yuba County is a high-priority agricultural conversion-risk zone (ranch, rangeland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
 | 9 | **Stemple Creek Ranch** | Marin | 1,000 | **96/100** | Scores 96/100 because its 1,000-acre working agricultural scale strongly fits SALC conservation easement underwriting, commercial agricultural producer eligible via Marin County RCD / agricultural land trust easement co-sponsorship, Marin County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
 | 10 | **California Farmland Trust** | Sacramento | 850 | **96/100** | Scores 96/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0566494) is a directly eligible SALC easement grantee, Sacramento County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 11 | **Tejon Ranch Conservancy** | Kern | 1,200 | **95/100** | Scores 95/100 because its 1,200-acre working agricultural scale strongly fits SALC conservation easement underwriting, agricultural producer with verified 501(c)(3) standing (EIN 26-2839563) and local RCD/land trust co-application readiness, Kern County is a high-priority agricultural conversion-risk zone (ranch, rangeland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 12 | **Freestone Ranch** | Sonoma | 1,200 | **95/100** | Scores 95/100 because its 1,200-acre landscape holding matches California Climate Adaptation flagship scale, private agricultural/conservation landowner is directly eligible with Sonoma RCD coordination, Sonoma County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 13 | **Markegard Family Grass-Fed Ranch** | San Mateo | 1,000 | **95/100** | Scores 95/100 because its 1,000-acre landscape holding matches California Climate Adaptation flagship scale, private agricultural/conservation landowner is directly eligible with San Mateo RCD coordination, San Mateo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 14 | **Marin Agricultural Land Trust** | Marin | 850 | **95/100** | Scores 95/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-2689383) is a directly eligible SALC easement grantee, Marin County is a high-priority agricultural conversion-risk zone (ranch, agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 15 | **Redwood Coast Land Conservancy** | Mendocino | 650 | **95/100** | Scores 95/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 68-0287719) is directly eligible as lead grantee, Mendocino County coastal watershed/shoreline habitat (coastal, coast) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
-| 16 | **Sanctuary Forest** | Humboldt | 420 | **95/100** | Scores 95/100 because its 420-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, verified 501(c)(3) forestland steward (EIN 94-2676195) qualifies directly under CAL FIRE CFIP, Humboldt County is a priority CAL FIRE fire-severity & forest watershed zone (forest), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
-| 17 | **Tablas Creek Vineyard & Regenerative Ranch** | San Luis Obispo | 270 | **95/100** | Scores 95/100 because its 270-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, private nonindustrial forestland/ranch owner qualifies directly with San Luis Obispo RCD/RPF support, San Luis Obispo County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
-| 18 | **Burroughs Family Farms** | Merced | 1,100 | **94/100** | Scores 94/100 because its 1,100-acre working agricultural scale strongly fits SALC conservation easement underwriting, commercial agricultural producer eligible via Merced County RCD / agricultural land trust easement co-sponsorship, Merced County is a high-priority agricultural conversion-risk zone (ranch, rangeland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 19 | **San Benito Agricultural Land Trust** | San Benito | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0338085) is a directly eligible SALC easement grantee, San Benito County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 20 | **Agri-Culture** | Santa Cruz | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0212413) is a directly eligible SALC easement grantee, Santa Cruz County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 21 | **Ag Land Trust** | Monterey | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0077084) is a directly eligible SALC easement grantee, Monterey County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 22 | **The Land Conservancy of San Luis Obispo County** | San Luis Obispo | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0039294) is a directly eligible SALC easement grantee, San Luis Obispo County is a high-priority agricultural conversion-risk zone (ranch, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 23 | **Sutter Buttes Regional Land Trust** | Sutter | 650 | **94/100** | Scores 94/100 because its 650-acre wetland/easement footprint matches USDA-NRCS ACEP landscape stewardship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservation holder (EIN 68-0204641) meets USDA-NRCS ACEP entity rules, Sutter County lies within a priority Pacific Flyway / Central Valley easement corridor, and organizational stewardship capacity supports USDA ACEP's \$580,000 restoration scale and partner cost-share. | Easement Restoration and Stewardship (USDA-NHQ-ACEP-26-NOFO0001456) |
-| 24 | **Sonoma Land Trust** | Sonoma | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 51-0197006) is a directly eligible SALC easement grantee, Sonoma County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 25 | **Northern California Regional Land Trust** | Butte | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0216430) is a directly eligible SALC easement grantee, Butte County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 26 | **San Diego Habitat Conservancy** | San Diego | 420 | **94/100** | Scores 94/100 because its 420-acre landscape holding matches California Climate Adaptation flagship scale, IRS Form 990-verified 501(c)(3) entity (EIN 33-0906648) has direct statutory applicant standing, San Diego County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 27 | **Quail Ridge Wilderness Conservancy** | Yolo | 420 | **94/100** | Scores 94/100 because its 420-acre landscape holding matches California Climate Adaptation flagship scale, IRS Form 990-verified 501(c)(3) entity (EIN 68-0184037) has direct statutory applicant standing, Yolo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 28 | **Solano Land Trust** | Solano | 650 | **93/100** | Scores 93/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-3015363) is a directly eligible SALC easement grantee, Solano County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 29 | **Sierra Foothill Conservancy** | Fresno | 650 | **93/100** | Scores 93/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 93-6301478) is a directly eligible SALC easement grantee, Fresno County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 30 | **Northcoast Regional Land Trust** | Humboldt | 650 | **93/100** | Scores 93/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 68-0456290) is directly eligible as lead grantee, Humboldt County coastal watershed/shoreline habitat (coast) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
-| 31 | **Big Sur Land Trust** | Monterey | 650 | **93/100** | Scores 93/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 94-2473415) is directly eligible as lead grantee, Monterey County coastal watershed/shoreline habitat (big sur) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
-| 32 | **Yolo Land Trust** | Yolo | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0160105) is a directly eligible SALC easement grantee, Yolo County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 33 | **Tuolumne County Land Trust** | Tuolumne | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-6099191) is a directly eligible SALC easement grantee, Tuolumne County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 34 | **Sequoia Riverlands Trust** | Tulare | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0347417) is a directly eligible SALC easement grantee, Tulare County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 35 | **Sacramento Valley Conservancy** | Sacramento | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0256214) is a directly eligible SALC easement grantee, Sacramento County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 36 | **Placer Land Trust** | Placer | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0223143) is a directly eligible SALC easement grantee, Placer County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 37 | **Mother Lode Land Trust** | Amador | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-3137444) is a directly eligible SALC easement grantee, Amador County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 38 | **Land Trust for Santa Barbara County** | Santa Barbara | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 95-3797404) is a directly eligible SALC easement grantee, Santa Barbara County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 39 | **Eastern Sierra Land Trust** | Inyo | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0566099) is a directly eligible SALC easement grantee, Inyo County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 40 | **Tara Firma Farms** | Sonoma | 238 | **92/100** | Scores 92/100 because its 238-acre agricultural parcel meets SALC viable easement scale, agricultural producer with verified 501(c)(3) standing (EIN 27-3354459) and local RCD/land trust co-application readiness, Sonoma County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,070,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 41 | **Ventura Land Trust** | Ventura | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 01-0769456) has direct statutory applicant standing, Ventura County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 42 | **Ojai Valley Land Conservancy** | Ventura | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 77-0169682) has direct statutory applicant standing, Ventura County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 43 | **Mendocino Land Trust** | Mendocino | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 94-2362450) has direct statutory applicant standing, Mendocino County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 44 | **Lassen Land and Trails Trust** | Lassen | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0153733) has direct statutory applicant standing, Lassen County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 45 | **Lake County Land Trust** | Lake | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0332712) has direct statutory applicant standing, Lake County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 46 | **Siskiyou Land Trust** | Siskiyou | 650 | **90/100** | Scores 90/100 because its 650-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window (portfolio estimate pending parcel APN selection), verified 501(c)(3) forestland steward (EIN 68-0235003) qualifies directly under CAL FIRE CFIP, Siskiyou County is a priority CAL FIRE fire-severity & forest watershed zone (forest), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
-| 47 | **Bear Yuba Land Trust** | Nevada | 650 | **90/100** | Scores 90/100 because its 650-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window (portfolio estimate pending parcel APN selection), verified 501(c)(3) forestland steward (EIN 68-0256981) qualifies directly under CAL FIRE CFIP, Nevada County is a priority CAL FIRE fire-severity & forest watershed zone (forests), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
-| 48 | **Feather River Land Trust** | Plumas | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0449687) has direct statutory applicant standing, Plumas County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
-| 49 | **Anderson Valley Land Trust** | Mendocino | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 94-3142400) has direct statutory applicant standing, Mendocino County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
-| 50 | **American River Conservancy** | El Dorado | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0195752) has direct statutory applicant standing, El Dorado County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
-| 51 | **Blackberry Creek Farm Animal Sanctuary** | Placer | 32 | **89/100** | Scores 89/100 because its 32-acre parcel complies with CAL FIRE's 20–5,000 ac statutory threshold, verified 501(c)(3) forestland steward (EIN 47-2296714) qualifies directly under CAL FIRE CFIP, Placer County is a priority CAL FIRE fire-severity & forest watershed zone (conifer, forest), and ~\$43,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
-| 52 | **Frog Hollow Farm** | Contra Costa | 280 | **87/100** | Scores 87/100 because its 280-acre agricultural parcel meets SALC viable easement scale, commercial agricultural producer eligible via Contra Costa County RCD / agricultural land trust easement co-sponsorship, Contra Costa County is a high-priority agricultural conversion-risk zone (farm, orchard), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
-| 53 | **Herd & Flock Animal Sanctuary** | Solano | 60 | **81/100** | Scores 81/100 because its 60-acre property complies with program parcel thresholds, IRS Form 990-verified 501(c)(3) entity (EIN 84-3648087) has direct statutory applicant standing, Solano County natural and working lands scope aligns with California climate resilience priorities, and ~\$55,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F24AS00298 Cooperative Agriculture |
-| 54 | **Pacific Forest Trust** | San Francisco | 650 | **79/100** | Scores 79/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0292509) has direct statutory applicant standing, urban San Francisco County address has low natural/working lands priority, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
-| 55 | **Pie Ranch** | San Mateo | 27 | **76/100** | Scores 76/100 because its 27-acre working/natural land parcel fits regional Climate Adaptation scope, IRS Form 990-verified 501(c)(3) entity (EIN 26-1631976) has direct statutory applicant standing, San Mateo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$109,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 11 | **Agricultural-Natural Resources Trust** | Contra Costa | 850 | **96/100** | Scores 96/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0429007) is a directly eligible SALC easement grantee, Contra Costa County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 12 | **Tejon Ranch Conservancy** | Kern | 1,200 | **95/100** | Scores 95/100 because its 1,200-acre working agricultural scale strongly fits SALC conservation easement underwriting, agricultural producer with verified 501(c)(3) standing (EIN 26-2839563) and local RCD/land trust co-application readiness, Kern County is a high-priority agricultural conversion-risk zone (ranch, rangeland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 13 | **Freestone Ranch** | Sonoma | 1,200 | **95/100** | Scores 95/100 because its 1,200-acre landscape holding matches California Climate Adaptation flagship scale, private agricultural/conservation landowner is directly eligible with Sonoma RCD coordination, Sonoma County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 14 | **Markegard Family Grass-Fed Ranch** | San Mateo | 1,000 | **95/100** | Scores 95/100 because its 1,000-acre landscape holding matches California Climate Adaptation flagship scale, private agricultural/conservation landowner is directly eligible with San Mateo RCD coordination, San Mateo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 15 | **Marin Agricultural Land Trust** | Marin | 850 | **95/100** | Scores 95/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-2689383) is a directly eligible SALC easement grantee, Marin County is a high-priority agricultural conversion-risk zone (ranch, agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 16 | **Redwood Coast Land Conservancy** | Mendocino | 650 | **95/100** | Scores 95/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 68-0287719) is directly eligible as lead grantee, Mendocino County coastal watershed/shoreline habitat (coastal, coast) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
+| 17 | **Sanctuary Forest** | Humboldt | 420 | **95/100** | Scores 95/100 because its 420-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, verified 501(c)(3) forestland steward (EIN 94-2676195) qualifies directly under CAL FIRE CFIP, Humboldt County is a priority CAL FIRE fire-severity & forest watershed zone (forest), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 18 | **Tablas Creek Vineyard & Regenerative Ranch** | San Luis Obispo | 270 | **95/100** | Scores 95/100 because its 270-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, private nonindustrial forestland/ranch owner qualifies directly with San Luis Obispo RCD/RPF support, San Luis Obispo County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 19 | **Burroughs Family Farms** | Merced | 1,100 | **94/100** | Scores 94/100 because its 1,100-acre working agricultural scale strongly fits SALC conservation easement underwriting, commercial agricultural producer eligible via Merced County RCD / agricultural land trust easement co-sponsorship, Merced County is a high-priority agricultural conversion-risk zone (ranch, rangeland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 20 | **San Benito Agricultural Land Trust** | San Benito | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0338085) is a directly eligible SALC easement grantee, San Benito County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 21 | **Agri-Culture** | Santa Cruz | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0212413) is a directly eligible SALC easement grantee, Santa Cruz County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 22 | **Ag Land Trust** | Monterey | 850 | **94/100** | Scores 94/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0077084) is a directly eligible SALC easement grantee, Monterey County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 23 | **The Land Conservancy of San Luis Obispo County** | San Luis Obispo | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0039294) is a directly eligible SALC easement grantee, San Luis Obispo County is a high-priority agricultural conversion-risk zone (ranch, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 24 | **Sutter Buttes Regional Land Trust** | Sutter | 650 | **94/100** | Scores 94/100 because its 650-acre wetland/easement footprint matches USDA-NRCS ACEP landscape stewardship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservation holder (EIN 68-0204641) meets USDA-NRCS ACEP entity rules, Sutter County lies within a priority Pacific Flyway / Central Valley easement corridor, and organizational stewardship capacity supports USDA ACEP's \$580,000 restoration scale and partner cost-share. | Easement Restoration and Stewardship (USDA-NHQ-ACEP-26-NOFO0001456) |
+| 25 | **Sonoma Land Trust** | Sonoma | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 51-0197006) is a directly eligible SALC easement grantee, Sonoma County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 26 | **Northern California Regional Land Trust** | Butte | 650 | **94/100** | Scores 94/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0216430) is a directly eligible SALC easement grantee, Butte County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 27 | **San Diego Habitat Conservancy** | San Diego | 420 | **94/100** | Scores 94/100 because its 420-acre landscape holding matches California Climate Adaptation flagship scale, IRS Form 990-verified 501(c)(3) entity (EIN 33-0906648) has direct statutory applicant standing, San Diego County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 28 | **Quail Ridge Wilderness Conservancy** | Yolo | 420 | **94/100** | Scores 94/100 because its 420-acre landscape holding matches California Climate Adaptation flagship scale, IRS Form 990-verified 501(c)(3) entity (EIN 68-0184037) has direct statutory applicant standing, Yolo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 29 | **Solano Land Trust** | Solano | 650 | **93/100** | Scores 93/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-3015363) is a directly eligible SALC easement grantee, Solano County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 30 | **Sierra Foothill Conservancy** | Fresno | 650 | **93/100** | Scores 93/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 93-6301478) is a directly eligible SALC easement grantee, Fresno County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 31 | **Northcoast Regional Land Trust** | Humboldt | 650 | **93/100** | Scores 93/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 68-0456290) is directly eligible as lead grantee, Humboldt County coastal watershed/shoreline habitat (coast) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
+| 32 | **Big Sur Land Trust** | Monterey | 650 | **93/100** | Scores 93/100 because its 650-acre coastal conservation holding matches flagship State Coastal Conservancy scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) conservancy (EIN 94-2473415) is directly eligible as lead grantee, Monterey County coastal watershed/shoreline habitat (big sur) directly targets State Coastal Conservancy priorities, and 0% mandatory state cash match and ~\$500,000 project sizing fit organizational stewardship capacity. | Climate Ready Program: Nature Based Sea Level Rise Adaptation Projects |
+| 33 | **Yolo Land Trust** | Yolo | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0160105) is a directly eligible SALC easement grantee, Yolo County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 34 | **Tuolumne County Land Trust** | Tuolumne | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-6099191) is a directly eligible SALC easement grantee, Tuolumne County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 35 | **Sequoia Riverlands Trust** | Tulare | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0347417) is a directly eligible SALC easement grantee, Tulare County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 36 | **Sacramento Valley Conservancy** | Sacramento | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0256214) is a directly eligible SALC easement grantee, Sacramento County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 37 | **Placer Land Trust** | Placer | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0223143) is a directly eligible SALC easement grantee, Placer County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 38 | **Mother Lode Land Trust** | Amador | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 94-3137444) is a directly eligible SALC easement grantee, Amador County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 39 | **Land Trust for Santa Barbara County** | Santa Barbara | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 95-3797404) is a directly eligible SALC easement grantee, Santa Barbara County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 40 | **Eastern Sierra Land Trust** | Inyo | 650 | **92/100** | Scores 92/100 because its 650-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 77-0566099) is a directly eligible SALC easement grantee, Inyo County is a high-priority agricultural conversion-risk zone (agricultural), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 41 | **Tara Firma Farms** | Sonoma | 238 | **92/100** | Scores 92/100 because its 238-acre agricultural parcel meets SALC viable easement scale, agricultural producer with verified 501(c)(3) standing (EIN 27-3354459) and local RCD/land trust co-application readiness, Sonoma County is a high-priority agricultural conversion-risk zone (ranch, farm), and ~\$1,070,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 42 | **Ventura Land Trust** | Ventura | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 01-0769456) has direct statutory applicant standing, Ventura County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 43 | **Ojai Valley Land Conservancy** | Ventura | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 77-0169682) has direct statutory applicant standing, Ventura County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 44 | **Mendocino Land Trust** | Mendocino | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 94-2362450) has direct statutory applicant standing, Mendocino County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 45 | **Lassen Land and Trails Trust** | Lassen | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0153733) has direct statutory applicant standing, Lassen County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 46 | **Lake County Land Trust** | Lake | 650 | **91/100** | Scores 91/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0332712) has direct statutory applicant standing, Lake County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 47 | **Siskiyou Land Trust** | Siskiyou | 650 | **90/100** | Scores 90/100 because its 650-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window (portfolio estimate pending parcel APN selection), verified 501(c)(3) forestland steward (EIN 68-0235003) qualifies directly under CAL FIRE CFIP, Siskiyou County is a priority CAL FIRE fire-severity & forest watershed zone (forest), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 48 | **Bear Yuba Land Trust** | Nevada | 650 | **90/100** | Scores 90/100 because its 650-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window (portfolio estimate pending parcel APN selection), verified 501(c)(3) forestland steward (EIN 68-0256981) qualifies directly under CAL FIRE CFIP, Nevada County is a priority CAL FIRE fire-severity & forest watershed zone (forests), and ~\$150,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 49 | **Feather River Land Trust** | Plumas | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0449687) has direct statutory applicant standing, Plumas County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
+| 50 | **Anderson Valley Land Trust** | Mendocino | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 94-3142400) has direct statutory applicant standing, Mendocino County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
+| 51 | **American River Conservancy** | El Dorado | 650 | **89/100** | Scores 89/100 because its 650-acre watershed stewardship footprint supports multi-reach habitat restoration (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0195752) has direct statutory applicant standing, El Dorado County riverine watershed (river) aligns with USFWS fish-passage priorities, and ~\$185,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F26AS00105 National Fish Passage Program |
+| 52 | **Blackberry Creek Farm Animal Sanctuary** | Placer | 32 | **89/100** | Scores 89/100 because its 32-acre parcel complies with CAL FIRE's 20–5,000 ac statutory threshold, verified 501(c)(3) forestland steward (EIN 47-2296714) qualifies directly under CAL FIRE CFIP, Placer County is a priority CAL FIRE fire-severity & forest watershed zone (conifer, forest), and ~\$43,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 53 | **Frog Hollow Farm** | Contra Costa | 280 | **87/100** | Scores 87/100 because its 280-acre agricultural parcel meets SALC viable easement scale, commercial agricultural producer eligible via Contra Costa County RCD / agricultural land trust easement co-sponsorship, Contra Costa County is a high-priority agricultural conversion-risk zone (farm, orchard), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. | Sustainable Agricultural Lands Conservation Program |
+| 54 | **Children's Nature Retreat / Alpine Acres Sanctuary** | San Diego | 20 | **83/100** | Scores 83/100 because its 20-acre parcel meets CAL FIRE's 20-acre minimum floor, verified 501(c)(3) forestland steward (EIN 20-4859019) qualifies directly under CAL FIRE CFIP, San Diego County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$35,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. | California Forest Improvement Program |
+| 55 | **Herd & Flock Animal Sanctuary** | Solano | 60 | **81/100** | Scores 81/100 because its 60-acre property complies with program parcel thresholds, IRS Form 990-verified 501(c)(3) entity (EIN 84-3648087) has direct statutory applicant standing, Solano County natural and working lands scope aligns with California climate resilience priorities, and ~\$55,000 award target aligns with parcel scale and in-kind RCD/USFWS co-match feasibility. | F24AS00298 Cooperative Agriculture |
+| 56 | **Pacific Forest Trust** | San Francisco | 650 | **79/100** | Scores 79/100 because its 650-acre landscape holding matches California Climate Adaptation flagship scale (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) entity (EIN 68-0292509) has direct statutory applicant standing, urban San Francisco County address has low natural/working lands priority, and 0% mandatory state cash match and ~\$450,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
+| 57 | **Pie Ranch** | San Mateo | 27 | **76/100** | Scores 76/100 because its 27-acre working/natural land parcel fits regional Climate Adaptation scope, IRS Form 990-verified 501(c)(3) entity (EIN 26-1631976) has direct statutory applicant standing, San Mateo County natural and working lands scope aligns with California climate resilience priorities, and 0% mandatory state cash match and ~\$109,000 project sizing fit organizational stewardship capacity. | Climate Adaptation and Resiliency Program |
 
 ---
 
@@ -550,7 +552,55 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #11: Tejon Ranch Conservancy (95/100)
+## Tier-1 Outreach Brief #11: Agricultural-Natural Resources Trust (96/100)
+
+| Field | Verified Tier-1 Opportunity Details |
+| :--- | :--- |
+| **Candidate & Location** | **Agricultural-Natural Resources Trust** (850 acres — Contra Costa County, CA) |
+| **Category & Land Type** | Land Trust — Agricultural & Working Farmland Conservation Land Trust |
+| **Verified Contact & EIN** | `info@ag-trust.org` · `68-0429007` |
+| **Grant Win Probability Score** | **96/100** (`Acreage 27/30 | Entity 25/25 | Eco/Geo 25/25 | Co-Match 19/20`) |
+| **1-Sentence Score Rationale** | Scores 96/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0429007) is a directly eligible SALC easement grantee, Contra Costa County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match. |
+| **Exact Grant Name** | **Sustainable Agricultural Lands Conservation Program** |
+| **Administering Agency** | California Strategic Growth Council (SGC) — California Climate Investments |
+| **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
+| **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
+| **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
+| **Pre-Filled Digital Intake** | [https://zys-goldfields-intake.onrender.com/?name=Agricultural-Natural+Resources+Trust&email=info%40ag-trust.org&county=Contra+Costa&acres=850](https://zys-goldfields-intake.onrender.com/?name=Agricultural-Natural+Resources+Trust&email=info%40ag-trust.org&county=Contra+Costa&acres=850) |
+| **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
+
+### Cold-Outreach Letter (1-Page Tier-1 Brief)
+
+**Subject:** Tier-1 Grant Eligibility (**96/100 Win Probability**) for *Agricultural-Natural Resources Trust* (Contra Costa County): **Sustainable Agricultural Lands Conservation Program**
+
+Dear Agricultural-Natural Resources Trust Stewardship Team,
+
+Our California conservation grant underwriting engine evaluated **Agricultural-Natural Resources Trust** (850 acres in **Contra Costa County, CA**) and assigned a **Tier-1 Grant Win Probability Score of 96/100** for active public conservation funding under the **Sustainable Agricultural Lands Conservation Program**, administered by **California Strategic Growth Council (SGC) — California Climate Investments**.
+
+#### 1. Grant Funding, Deadline & Win Probability Assessment
+- **Exact Grant Opportunity:** Sustainable Agricultural Lands Conservation Program
+- **Available Funding:** **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)**
+- **Application Deadline:** **Open Solicitation (Check the program website for updated timeline information.)**
+- **Grant Win Probability Score:** **96/100** (`Acreage 27/30 | Entity 25/25 | Eco/Geo 25/25 | Co-Match 19/20`)
+- **Why You Have a High Chance of Winning:** Scores 96/100 because its 850-acre working agricultural scale strongly fits SALC conservation easement underwriting (portfolio estimate pending parcel APN selection), IRS Form 990-verified 501(c)(3) land trust (EIN 68-0429007) is a directly eligible SALC easement grantee, Contra Costa County is a high-priority agricultural conversion-risk zone (agricultural, farmland), and ~\$1,200,000 easement valuation supports SALC funding-to-acreage underwriting and bargain-sale co-match.
+- **Recommended Project Scope:** Permanent Agricultural Conservation Easement and climate-smart agricultural stewardship plan across 850 acres in Contra Costa County (Target Request: ~\$1,200,000)
+
+#### 2. Turnkey Application Paperwork Offer — Contingent 7% Success Fee (\$0 Upfront)
+Public conservation grants leave millions of dollars unclaimed each cycle because agency portals, GIS parcel mapping, technical scoring rubrics, and cost-share engineering require 35–60 hours of specialized preparation. **We handle 100% of the application paperwork from start to finish for a strictly contingent 7% success fee:**
+- **\$0 Upfront / No-Win, No-Fee:** You pay **\$0** for eligibility verification, project narrative drafting, budget engineering, and agency submission packaging.
+- **Zero-Call Digital Workflow & RCD Coordination:** Because your organization/parcel qualifies for **501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application**, our automated advisory desk prepares your complete project narrative, budget engineering table, and technical handoff packet for your local Contra Costa County Resource Conservation District (RCD) or agency planner—entirely asynchronously.
+- **Transparent 7% Fee Structure:** Our **7% success fee** is earned *only* if and when grant funds are officially awarded to your project (On an estimated \$1,200,000 project award, our 7% success fee is \$84,000 (netting \$1,116,000 directly to your conservation project; \$0 owed if not awarded)).
+
+**Next Step:** Reply 'READY' to receive our 2-minute digital property intake link—no phone calls or meetings required.
+
+Sincerely,  
+**ZYS GoldFields PRO LLC**  
+*Conservation & Agricultural Grant Advisory*
+
+
+---
+
+## Tier-1 Outreach Brief #12: Tejon Ranch Conservancy (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -598,7 +648,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #12: Freestone Ranch (95/100)
+## Tier-1 Outreach Brief #13: Freestone Ranch (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -646,7 +696,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #13: Markegard Family Grass-Fed Ranch (95/100)
+## Tier-1 Outreach Brief #14: Markegard Family Grass-Fed Ranch (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -694,7 +744,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #14: Marin Agricultural Land Trust (95/100)
+## Tier-1 Outreach Brief #15: Marin Agricultural Land Trust (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -742,7 +792,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #15: Redwood Coast Land Conservancy (95/100)
+## Tier-1 Outreach Brief #16: Redwood Coast Land Conservancy (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -790,7 +840,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #16: Sanctuary Forest (95/100)
+## Tier-1 Outreach Brief #17: Sanctuary Forest (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -838,7 +888,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #17: Tablas Creek Vineyard & Regenerative Ranch (95/100)
+## Tier-1 Outreach Brief #18: Tablas Creek Vineyard & Regenerative Ranch (95/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -886,7 +936,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #18: Burroughs Family Farms (94/100)
+## Tier-1 Outreach Brief #19: Burroughs Family Farms (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -934,7 +984,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #19: San Benito Agricultural Land Trust (94/100)
+## Tier-1 Outreach Brief #20: San Benito Agricultural Land Trust (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -982,7 +1032,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #20: Agri-Culture (94/100)
+## Tier-1 Outreach Brief #21: Agri-Culture (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1030,7 +1080,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #21: Ag Land Trust (94/100)
+## Tier-1 Outreach Brief #22: Ag Land Trust (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1078,7 +1128,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #22: The Land Conservancy of San Luis Obispo County (94/100)
+## Tier-1 Outreach Brief #23: The Land Conservancy of San Luis Obispo County (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1126,7 +1176,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #23: Sutter Buttes Regional Land Trust (94/100)
+## Tier-1 Outreach Brief #24: Sutter Buttes Regional Land Trust (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1174,7 +1224,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #24: Sonoma Land Trust (94/100)
+## Tier-1 Outreach Brief #25: Sonoma Land Trust (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1222,7 +1272,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #25: Northern California Regional Land Trust (94/100)
+## Tier-1 Outreach Brief #26: Northern California Regional Land Trust (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1270,7 +1320,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #26: San Diego Habitat Conservancy (94/100)
+## Tier-1 Outreach Brief #27: San Diego Habitat Conservancy (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1318,7 +1368,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #27: Quail Ridge Wilderness Conservancy (94/100)
+## Tier-1 Outreach Brief #28: Quail Ridge Wilderness Conservancy (94/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1366,7 +1416,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #28: Solano Land Trust (93/100)
+## Tier-1 Outreach Brief #29: Solano Land Trust (93/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1414,7 +1464,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #29: Sierra Foothill Conservancy (93/100)
+## Tier-1 Outreach Brief #30: Sierra Foothill Conservancy (93/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1462,7 +1512,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #30: Northcoast Regional Land Trust (93/100)
+## Tier-1 Outreach Brief #31: Northcoast Regional Land Trust (93/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1510,7 +1560,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #31: Big Sur Land Trust (93/100)
+## Tier-1 Outreach Brief #32: Big Sur Land Trust (93/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1558,7 +1608,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #32: Yolo Land Trust (92/100)
+## Tier-1 Outreach Brief #33: Yolo Land Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1606,7 +1656,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #33: Tuolumne County Land Trust (92/100)
+## Tier-1 Outreach Brief #34: Tuolumne County Land Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1654,7 +1704,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #34: Sequoia Riverlands Trust (92/100)
+## Tier-1 Outreach Brief #35: Sequoia Riverlands Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1702,7 +1752,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #35: Sacramento Valley Conservancy (92/100)
+## Tier-1 Outreach Brief #36: Sacramento Valley Conservancy (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1750,7 +1800,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #36: Placer Land Trust (92/100)
+## Tier-1 Outreach Brief #37: Placer Land Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1798,7 +1848,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #37: Mother Lode Land Trust (92/100)
+## Tier-1 Outreach Brief #38: Mother Lode Land Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1846,7 +1896,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #38: Land Trust for Santa Barbara County (92/100)
+## Tier-1 Outreach Brief #39: Land Trust for Santa Barbara County (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1894,7 +1944,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #39: Eastern Sierra Land Trust (92/100)
+## Tier-1 Outreach Brief #40: Eastern Sierra Land Trust (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1942,7 +1992,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #40: Tara Firma Farms (92/100)
+## Tier-1 Outreach Brief #41: Tara Firma Farms (92/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -1990,7 +2040,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #41: Ventura Land Trust (91/100)
+## Tier-1 Outreach Brief #42: Ventura Land Trust (91/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2038,7 +2088,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #42: Ojai Valley Land Conservancy (91/100)
+## Tier-1 Outreach Brief #43: Ojai Valley Land Conservancy (91/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2086,7 +2136,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #43: Mendocino Land Trust (91/100)
+## Tier-1 Outreach Brief #44: Mendocino Land Trust (91/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2134,7 +2184,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #44: Lassen Land and Trails Trust (91/100)
+## Tier-1 Outreach Brief #45: Lassen Land and Trails Trust (91/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2182,7 +2232,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #45: Lake County Land Trust (91/100)
+## Tier-1 Outreach Brief #46: Lake County Land Trust (91/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2230,7 +2280,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #46: Siskiyou Land Trust (90/100)
+## Tier-1 Outreach Brief #47: Siskiyou Land Trust (90/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2278,7 +2328,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #47: Bear Yuba Land Trust (90/100)
+## Tier-1 Outreach Brief #48: Bear Yuba Land Trust (90/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2326,7 +2376,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #48: Feather River Land Trust (89/100)
+## Tier-1 Outreach Brief #49: Feather River Land Trust (89/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2374,7 +2424,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #49: Anderson Valley Land Trust (89/100)
+## Tier-1 Outreach Brief #50: Anderson Valley Land Trust (89/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2422,7 +2472,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #50: American River Conservancy (89/100)
+## Tier-1 Outreach Brief #51: American River Conservancy (89/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2470,7 +2520,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #51: Blackberry Creek Farm Animal Sanctuary (89/100)
+## Tier-1 Outreach Brief #52: Blackberry Creek Farm Animal Sanctuary (89/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2518,7 +2568,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #52: Frog Hollow Farm (87/100)
+## Tier-1 Outreach Brief #53: Frog Hollow Farm (87/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2566,7 +2616,55 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #53: Herd & Flock Animal Sanctuary (81/100)
+## Tier-1 Outreach Brief #54: Children's Nature Retreat / Alpine Acres Sanctuary (83/100)
+
+| Field | Verified Tier-1 Opportunity Details |
+| :--- | :--- |
+| **Candidate & Location** | **Children's Nature Retreat / Alpine Acres Sanctuary** (20 acres — San Diego County, CA) |
+| **Category & Land Type** | Wildlife Sanctuary — Mountain Oak Woodland & Chemical-Free Sanctuary Farm |
+| **Verified Contact & EIN** | `info@childrensnatureretreat.org` · `20-4859019` |
+| **Grant Win Probability Score** | **83/100** (`Acreage 22/30 | Entity 25/25 | Eco/Geo 24/25 | Co-Match 12/20`) |
+| **1-Sentence Score Rationale** | Scores 83/100 because its 20-acre parcel meets CAL FIRE's 20-acre minimum floor, verified 501(c)(3) forestland steward (EIN 20-4859019) qualifies directly under CAL FIRE CFIP, San Diego County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$35,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. |
+| **Exact Grant Name** | **California Forest Improvement Program** |
+| **Administering Agency** | California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments |
+| **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
+| **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
+| **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
+| **Pre-Filled Digital Intake** | [https://zys-goldfields-intake.onrender.com/?name=Children%27s+Nature+Retreat+%2F+Alpine+Acres+Sanctuary&email=info%40childrensnatureretreat.org&county=San+Diego&acres=20](https://zys-goldfields-intake.onrender.com/?name=Children%27s+Nature+Retreat+%2F+Alpine+Acres+Sanctuary&email=info%40childrensnatureretreat.org&county=San+Diego&acres=20) |
+| **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
+
+### Cold-Outreach Letter (1-Page Tier-1 Brief)
+
+**Subject:** Tier-1 Grant Eligibility (**83/100 Win Probability**) for *Children's Nature Retreat / Alpine Acres Sanctuary* (San Diego County): **California Forest Improvement Program**
+
+Dear Children's Nature Retreat / Alpine Acres Sanctuary Stewardship Team,
+
+Our California conservation grant underwriting engine evaluated **Children's Nature Retreat / Alpine Acres Sanctuary** (20 acres in **San Diego County, CA**) and assigned a **Tier-1 Grant Win Probability Score of 83/100** for active public conservation funding under the **California Forest Improvement Program**, administered by **California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments**.
+
+#### 1. Grant Funding, Deadline & Win Probability Assessment
+- **Exact Grant Opportunity:** California Forest Improvement Program
+- **Available Funding:** **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)**
+- **Application Deadline:** **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)**
+- **Grant Win Probability Score:** **83/100** (`Acreage 22/30 | Entity 25/25 | Eco/Geo 24/25 | Co-Match 12/20`)
+- **Why You Have a High Chance of Winning:** Scores 83/100 because its 20-acre parcel meets CAL FIRE's 20-acre minimum floor, verified 501(c)(3) forestland steward (EIN 20-4859019) qualifies directly under CAL FIRE CFIP, San Diego County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$35,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match.
+- **Recommended Project Scope:** Registered Professional Forester (RPF) Forest Management Plan, post-drought oak/conifer reforestation, brush fuels thinning, and erosion stabilization across 20 acres (Target Request: ~\$35,000)
+
+#### 2. Turnkey Application Paperwork Offer — Contingent 7% Success Fee (\$0 Upfront)
+Public conservation grants leave millions of dollars unclaimed each cycle because agency portals, GIS parcel mapping, technical scoring rubrics, and cost-share engineering require 35–60 hours of specialized preparation. **We handle 100% of the application paperwork from start to finish for a strictly contingent 7% success fee:**
+- **\$0 Upfront / No-Win, No-Fee:** You pay **\$0** for eligibility verification, project narrative drafting, budget engineering, and agency submission packaging.
+- **Zero-Call Digital Workflow & RCD Coordination:** Because your organization/parcel qualifies for **Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application**, our automated advisory desk prepares your complete project narrative, budget engineering table, and technical handoff packet for your local San Diego County Resource Conservation District (RCD) or agency planner—entirely asynchronously.
+- **Transparent 7% Fee Structure:** Our **7% success fee** is earned *only* if and when grant funds are officially awarded to your project (On an estimated \$35,000 project award, our 7% success fee is \$2,450 (netting \$32,550 directly to your conservation project; \$0 owed if not awarded)).
+
+**Next Step:** Reply 'READY' to receive our 2-minute digital property intake link—no phone calls or meetings required.
+
+Sincerely,  
+**ZYS GoldFields PRO LLC**  
+*Conservation & Agricultural Grant Advisory*
+
+
+---
+
+## Tier-1 Outreach Brief #55: Herd & Flock Animal Sanctuary (81/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2614,7 +2712,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #54: Pacific Forest Trust (79/100)
+## Tier-1 Outreach Brief #56: Pacific Forest Trust (79/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
@@ -2662,7 +2760,7 @@ Sincerely,
 
 ---
 
-## Tier-1 Outreach Brief #55: Pie Ranch (76/100)
+## Tier-1 Outreach Brief #57: Pie Ranch (76/100)
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
