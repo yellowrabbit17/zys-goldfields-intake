@@ -43,6 +43,7 @@ from models import (
     GrantRecord,
     LandownerProfile,
     MatcherConfig,
+    eligibility_tier_label,
 )
 
 logging.basicConfig(
@@ -427,10 +428,10 @@ def compose_client_preview_markdown(
 | **Jurisdiction & Parcel APN** | **{intake.county} County, {intake.state}** — Assessor's Parcel Number (`APN`): **`{intake.apn}`** ({intake.acreage:g} Acres) |
 | **Primary Matched Grant** | **{_table_safe(grant.title)}** |
 | **Administering Agency** | {_table_safe(grant.agency)} |
-| **Grant Win Probability Score** | **{primary.score}/100** ({_table_safe(primary.probability_breakdown.summary_tag() if primary.probability_breakdown else '4-Pillar Tier-1 Verified')}) |
-| **Win Probability Rationale** | {_table_safe(primary.score_rationale)} |
+| **Statutory Eligibility Assessment** | **{eligibility_tier_label(primary.probability_breakdown, primary.score)}** ({primary.score}/100 internal score) |
+| **Statutory Underwriting Rationale** | {_table_safe(primary.score_rationale)} |
 | **Total Engineered Project Budget** | **${total_cost:,}** (${grant_req:,} Grant Request + ${owner_match:,} Landowner Cost-Share / In-Kind) |
-| **Contingent {fee_str} Origination Fee** | **${fee_dollars:,}** (*$0 upfront; payable strictly from separate Client operating funds under `2 CFR § 200.459` within 5 business days of initial tranche disbursement*) |
+| **{config.fee_name()}** | **${fee_dollars:,}** (*$0 upfront; 100% waived if not awarded; payable strictly from separate Client general/operating funds under `2 CFR § 200.459` within 5 business days of initial tranche disbursement*) |
 | **Grant Solicitation ID** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK SOLICITATION ID]` |
 | **Official Agency Portal URL** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK AGENCY PORTAL LINK]` |
 
@@ -541,7 +542,7 @@ def compose_submission_packet_markdown(
 | **Target Solicitation Deadline** | **{_table_safe(grant.deadline)}** |
 | **Filing Pathway** | {_table_safe(primary.application_pathway)} |
 | **Engineered Grant Request** | **${grant_req:,}** (out of ${total_cost:,} total project budget) |
-| **Advisory Fee Authorization** | `[x]` **Executed {fee_str} Contingent Origination Agreement** (`{consent_ts}`) — ${fee_dollars:,} payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement ($0 upfront) |
+| **Advisory Fee Authorization** | `[x]` **Executed {config.fee_name()}** (`{consent_ts}`) — ${fee_dollars:,} payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement ($0 upfront, 100% waived if not awarded) |
 | **Cryptographic Contract Hash** | `{audit_record.contract_sha256_hash}` |
 | **Official Solicitation Link** | [{grant.url}]({grant.url}) |
 {backup_rows}
@@ -581,7 +582,7 @@ The project executes the landowner's stated conservation objectives:
 
 {budget_table_md}
 
-> **Grant Accounting & {fee_str} Contingent Fee Compliance Note (`2 CFR § 200.459` Protection):** In strict compliance with federal `2 CFR § 200.459` (`2 CFR Part 200`) and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (${grant_req:,} grant request; ${owner_match:,} landowner cost-share/in-kind). **{config.firm_name}** charges **$0 upfront** and invoices its separate **{fee_str} contingent origination and administrative consulting fee (${fee_dollars:,})** strictly to the Client's separate general/operating funds upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, never billed to or deducted from restricted federal or state grant funds), leaving an estimated **${net_benefit:,} net grant benefit** for the property.
+> **Grant Accounting & {fee_str} Fee Compliance Note (`2 CFR § 200.459` Protection):** In strict compliance with federal `2 CFR § 200.459` (`2 CFR Part 200`) and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (${grant_req:,} grant request; ${owner_match:,} landowner cost-share/in-kind). **{config.firm_name}** charges **$0 upfront** and invoices its separate **{config.fee_name()} (${fee_dollars:,})** strictly to the Client's separate general/operating funds upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, never billed to or deducted from restricted federal or state grant funds), leaving an estimated **${net_benefit:,} net grant benefit** for the property.
 
 ---
 

@@ -23,6 +23,7 @@ import argparse
 import html
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import csv
 import io
 import json
 import logging
@@ -57,7 +58,8 @@ from legal_agreement import (
     render_canonical_contract_text,
 )
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
-from models import ClientIntake
+from models import ClientIntake, eligibility_tier_label
+from notifier import dispatch_intake_backup_async, notification_status
 
 logging.basicConfig(
     level=logging.INFO,
@@ -69,6 +71,7 @@ logger = logging.getLogger("intake_app")
 DEFAULT_HOST = os.environ.get("INTAKE_HOST", "0.0.0.0")
 DEFAULT_PORT = int(os.environ.get("PORT", os.environ.get("INTAKE_PORT", "8080")))
 PACKETS_ARCHIVE_DIR = Path(__file__).resolve().parent / "packets"
+DEFAULT_CSV_PATH = Path(__file__).resolve().parent / "california_prospects.csv"
 
 ALL_CA_COUNTIES = (
     "Alameda", "Alpine", "Amador", "Butte", "Calaveras", "Colusa", "Contra Costa",
@@ -83,6 +86,32 @@ ALL_CA_COUNTIES = (
 )
 
 
+def lookup_prospect_by_id(prospect_id: str, csv_path: Path | str = DEFAULT_CSV_PATH) -> dict[str, Any] | None:
+    """Look up a California prospect by ID (e.g. CA-T1-001 or CA-PROS-070) from CSV or SQLite fallback."""
+    pid = str(prospect_id or "").strip()
+    if not pid:
+        return None
+    target_csv = Path(csv_path)
+    if target_csv.exists():
+        try:
+            with target_csv.open("r", encoding="utf-8", newline="") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    r_id = row.get("prospect_id", "").strip()
+                    if r_id.lower() == pid.lower():
+                        return row
+        except Exception as exc:
+            logger.warning("Error reading prospects CSV for prospect_id=%s: %s", pid, exc)
+    try:
+        all_prospects = fetch_all_prospects(DEFAULT_DB_PATH)
+        for p in all_prospects:
+            if p.prospect_id.lower() == pid.lower():
+                return p.model_dump()
+    except Exception as exc:
+        logger.warning("Error searching prospects in DB for prospect_id=%s: %s", pid, exc)
+    return None
+
+
 def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
     """Ensure SQLite tables exist and bootstrap live grants if running on a cold cloud container."""
     init_db(db_path)
@@ -94,24 +123,53 @@ def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
         ingest_all_grants(db_path=db_path)
 
 
-def render_portal_html() -> str:
+def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     """Render the single-page HTML/CSS/JS Zero-Call Digital Client Intake & California E-Signature Portal."""
     cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
     fee_str = cfg.fee_label()
+    fee_name = cfg.fee_name()
     public_mode_js = "true" if os.environ.get("PUBLIC_MODE", "0") == "1" else "false"
     county_options_html = "".join(f'<option value="{c}"></option>' for c in ALL_CA_COUNTIES)
+
+    prefill_name = str((prospect or {}).get("organization_name") or "")
+    prefill_email = str((prospect or {}).get("contact_email") or "")
+    prefill_county = str((prospect or {}).get("county") or "")
+    prefill_acreage = str((prospect or {}).get("estimated_acreage") or "")
+    prefill_ein = str((prospect or {}).get("ein") or "")
+    prefill_prospect_id = str((prospect or {}).get("prospect_id") or "")
+    prefill_matched_grant = str((prospect or {}).get("top_matched_grant") or "")
+    prefill_focus = str((prospect or {}).get("conservation_focus") or "")
+    prefill_json = json.dumps(prospect) if prospect else "null"
+
+    if prospect and prefill_matched_grant:
+        magic_banner = f"""<div class="magic-link-banner" style="background:var(--success-bg); border:1px solid hsla(152, 48%, 20%, 0.25); border-radius:var(--radius-sm); padding:16px 20px; margin-bottom:20px;">
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.07em; font-weight:700; color:var(--success-ink); margin-bottom:4px;">
+            1-Click Pre-Screened Grant Allocation &middot; Tier-1 Statutory Eligibility Match (4/4 Core Criteria Met)
+          </div>
+          <div style="font-size:1.05rem; font-weight:600; color:var(--ink-primary); margin-bottom:4px;">
+            Matched Program: <strong>{html.escape(prefill_matched_grant)}</strong>
+          </div>
+          <div style="font-size:0.83rem; color:var(--ink-secondary);">
+            Candidate ID: <code style="font-family:'JetBrains Mono', monospace; background:var(--surface-subtle); padding:2px 6px; border-radius:3px;">{html.escape(prefill_prospect_id)}</code> &middot; Entity: <strong>{html.escape(prefill_name)}</strong> &middot; County: {html.escape(prefill_county)} &middot; Verified EIN: <code style="font-family:'JetBrains Mono', monospace; background:var(--surface-subtle); padding:2px 6px; border-radius:3px;">{html.escape(prefill_ein)}</code>
+          </div>
+          <div style="font-size:0.82rem; color:var(--accent-pine); margin-top:8px; font-weight:600;">
+            &rarr; Verify your parcel APN below, e-sign the advisory agreement ($0 upfront), and unlock your complete RCD &amp; Agency filing dossier in 1 click.
+          </div>
+        </div>"""
+    else:
+        magic_banner = ""
 
     sample_contract_preview = render_canonical_contract_text(
         firm_name=cfg.firm_name,
         firm_subtitle=cfg.firm_subtitle,
         fee_percent=cfg.success_fee_percent,
-        client_name="[Landowner / Entity Name Entered Above]",
-        client_email="[Client Email Entered Above]",
-        county="[California County Entered Above]",
+        client_name=prefill_name or "[Landowner / Entity Name Entered Above]",
+        client_email=prefill_email or "[Client Email Entered Above]",
+        county=prefill_county or "[California County Entered Above]",
         state="CA",
         apn="[Parcel APN Entered Above]",
-        acreage=45.0,
-        matched_grant_title="[Matched Conservation / Agricultural Grant Program]",
+        acreage=float(prefill_acreage) if (prefill_acreage and prefill_acreage.replace(".", "", 1).isdigit()) else 45.0,
+        matched_grant_title=prefill_matched_grant or "[Matched Conservation / Agricultural Grant Program]",
         engineered_grant_request=30375,
         contingent_fee_dollars=2126,
     )
@@ -675,9 +733,9 @@ def render_portal_html() -> str:
         Resource Conservation District (RCD) filing dossier—100% online with zero phone calls.
       </p>
       <div class="assurance-strip">
-        <span><strong>$0 Upfront Cost</strong> · Strictly No-Win, No-Fee</span>
-        <span><strong>2 CFR § 200.459 Compliant</strong> · {fee_str} Fee Paid Only From Separate General Funds Upon Award</span>
-        <span><strong>California UETA &amp; ESIGN Audit Trail</strong> · SHA-256 Contract Hash</span>
+        <span><strong>$0 Upfront Cost</strong> · Strictly 100% Waived if Not Awarded</span>
+        <span><strong>2 CFR § 200.459 Compliant</strong> · Paid Strictly From Separate General Funds Upon Award</span>
+        <span><strong>California UETA &amp; ESIGN Audit Trail</strong> · Cryptographic SHA-256 Hash</span>
       </div>
     </header>
 
@@ -695,24 +753,31 @@ def render_portal_html() -> str:
           </div>
         </div>
 
+        {magic_banner}
+
         <form id="intake-form" action="/submit" method="post" novalidate>
           <div class="form-grid">
             <div class="field-group">
               <label for="input-name">Landowner / Entity Name</label>
-              <input type="text" id="input-name" name="name" required placeholder="e.g., Elena &amp; Marcus Vance" />
+              <input type="text" id="input-name" name="name" required value="{html.escape(prefill_name)}" placeholder="e.g., Elena &amp; Marcus Vance" />
             </div>
 
             <div class="field-group">
               <label for="input-email">Email Address <span class="label-hint">(for dossier &amp; signed receipt)</span></label>
-              <input type="email" id="input-email" name="email" required placeholder="name@domain.com" />
+              <input type="email" id="input-email" name="email" required value="{html.escape(prefill_email)}" placeholder="name@domain.com" />
             </div>
 
             <div class="field-group">
               <label for="input-county">California County</label>
-              <input type="text" id="input-county" name="county" list="ca-counties" required placeholder="e.g., El Dorado" />
+              <input type="text" id="input-county" name="county" list="ca-counties" required value="{html.escape(prefill_county)}" placeholder="e.g., El Dorado" />
               <datalist id="ca-counties">
                 {county_options_html}
               </datalist>
+            </div>
+
+            <div class="field-group">
+              <label for="input-ein">Employer Identification Number (EIN / Tax ID)</label>
+              <input type="text" id="input-ein" name="ein" class="mono-input" value="{html.escape(prefill_ein)}" placeholder="e.g., 94-1234567" />
             </div>
 
             <div class="field-group">
@@ -720,10 +785,12 @@ def render_portal_html() -> str:
               <input type="text" id="input-apn" name="apn" class="mono-input" required placeholder="e.g., 089-140-027-000" />
             </div>
 
-            <div class="field-group field-full">
+            <div class="field-group">
               <label for="input-acreage">Total Parcel Acreage</label>
-              <input type="number" id="input-acreage" name="acreage" class="mono-input" min="1" max="100000" step="0.1" required placeholder="e.g., 45" />
+              <input type="number" id="input-acreage" name="acreage" class="mono-input" min="1" max="100000" step="0.1" required value="{html.escape(str(prefill_acreage))}" placeholder="e.g., 45" />
             </div>
+
+            <input type="hidden" id="input-prospect-id" name="prospect_id" value="{html.escape(prefill_prospect_id)}" />
 
             <div class="field-group field-full">
               <label for="input-condition">Current Land Condition</label>
@@ -744,12 +811,16 @@ def render_portal_html() -> str:
 
             <div class="compliance-highlights">
               <div class="compliance-pill">
-                <strong>2 CFR § 200.459 Grant Compliance</strong>
-                {fee_str} Success Fee is paid strictly from Client's separate general/operating funds—never deducted from restricted grant funds.
+                <strong>2 CFR § 200.459 Compliance</strong>
+                {fee_name} applies only upon verified award receipt, payable strictly from Client's separate general/operating funds—never deducted from restricted grant funds.
               </div>
               <div class="compliance-pill">
                 <strong>Payment Trigger &amp; 5-Day Settlement</strong>
-                Invoiced upon official Agency Award Notice (or RCD Grant Agreement), payable within 5 business days of initial tranche disbursement.
+                Invoiced upon official Agency Award Notice (or RCD Grant Agreement), payable within 5 business days of initial tranche disbursement ($0 upfront).
+              </div>
+              <div class="compliance-pill">
+                <strong>CAL FIRE RPF &amp; RCD Coordination</strong>
+                Forester and RCD technical coordination conducted under applicable professional standards; awards remain within sole agency discretion.
               </div>
               <div class="compliance-pill">
                 <strong>Remedies &amp; Sacramento Venue</strong>
@@ -777,9 +848,9 @@ def render_portal_html() -> str:
                   <strong>I agree to the ZYS GoldFields PRO LLC Advisory Agreement.</strong>
                   By typing my Full Legal Name and Title above and checking this box, I execute a legally binding
                   electronic signature under the California Uniform Electronic Transactions Act (UETA) and federal
-                  ESIGN Act, agreeing to the <strong>{fee_str} Contingent Success Fee</strong> paid strictly from
-                  separate general/operating funds (<strong>2 CFR § 200.459 compliant</strong>) within <strong>5 business
-                  days</strong> of initial grant tranche disbursement.
+                  ESIGN Act, agreeing to the <strong>{fee_name}</strong> paid strictly from
+                  separate general operating non-grant funds (<strong>2 CFR § 200.459 compliant</strong>) within <strong>5 business
+                  days</strong> of initial grant tranche disbursement ($0 upfront).
                 </span>
               </label>
             </div>
@@ -821,7 +892,7 @@ def render_portal_html() -> str:
             <dd id="res-request" class="mono">—</dd>
           </div>
           <div class="summary-item">
-            <dt>Win Probability Score</dt>
+            <dt>Statutory Eligibility Assessment</dt>
             <dd id="res-score" class="mono">—</dd>
           </div>
           <div class="summary-item">
@@ -855,6 +926,7 @@ def render_portal_html() -> str:
 
   <script>
     const PUBLIC_MODE = {public_mode_js};
+    const PROSPECT_PREFILL = {prefill_json};
     const form = document.getElementById('intake-form');
     const errorEl = document.getElementById('form-error');
     const submitBtn = document.getElementById('btn-submit-intake');
@@ -873,8 +945,30 @@ def render_portal_html() -> str:
     if (PUBLIC_MODE) {{
       if (repoZipBtn) repoZipBtn.style.display = 'none';
     }}
-    if (PUBLIC_MODE || urlParams.has('name') || urlParams.has('org')) {{
+    if (PUBLIC_MODE || urlParams.has('name') || urlParams.has('org') || PROSPECT_PREFILL) {{
       prefillBtn.style.display = 'none';
+    }}
+    if (PROSPECT_PREFILL) {{
+      const p = PROSPECT_PREFILL;
+      if (p.organization_name) {{
+        document.getElementById('input-name').value = p.organization_name;
+        document.getElementById('input-signer-name').value = p.organization_name;
+      }}
+      if (p.contact_email) document.getElementById('input-email').value = p.contact_email;
+      if (p.county) document.getElementById('input-county').value = p.county;
+      if (p.estimated_acreage) document.getElementById('input-acreage').value = p.estimated_acreage;
+      if (p.ein) document.getElementById('input-ein').value = p.ein;
+      if (p.prospect_id) document.getElementById('input-prospect-id').value = p.prospect_id;
+      if (p.conservation_focus) {{
+        if (!document.getElementById('input-condition').value) {{
+          document.getElementById('input-condition').value =
+            `Working conservation parcel in ${{p.county}} County (${{p.estimated_acreage}} acres). Focus: ${{p.conservation_focus}}.`;
+        }}
+        if (!document.getElementById('input-goals').value) {{
+          document.getElementById('input-goals').value =
+            `Implement resource stewardship under ${{p.top_matched_grant || 'active conservation grant programs'}}, focusing on ${{p.conservation_focus}} and local RCD technical coordination.`;
+        }}
+      }}
     }}
     if (urlParams.get('name') || urlParams.get('org')) {{
       const nm = urlParams.get('name') || urlParams.get('org');
@@ -886,6 +980,9 @@ def render_portal_html() -> str:
     }}
     if (urlParams.get('county')) {{
       document.getElementById('input-county').value = urlParams.get('county');
+    }}
+    if (urlParams.get('ein')) {{
+      document.getElementById('input-ein').value = urlParams.get('ein');
     }}
     if (urlParams.get('acres')) {{
       document.getElementById('input-acreage').value = urlParams.get('acres');
@@ -901,6 +998,7 @@ def render_portal_html() -> str:
       document.getElementById('input-name').value = 'Elena & Marcus Vance';
       document.getElementById('input-email').value = 'vance.family@sierraridgeoak.com';
       document.getElementById('input-county').value = 'El Dorado';
+      document.getElementById('input-ein').value = '94-8271039';
       document.getElementById('input-apn').value = '089-140-027-000';
       document.getElementById('input-acreage').value = '45';
       document.getElementById('input-condition').value =
@@ -933,6 +1031,8 @@ def render_portal_html() -> str:
         state: 'CA',
         apn: document.getElementById('input-apn').value.trim(),
         acreage: parseFloat(document.getElementById('input-acreage').value || '0'),
+        ein: document.getElementById('input-ein').value.trim(),
+        prospect_id: document.getElementById('input-prospect-id').value.trim(),
         land_condition: document.getElementById('input-condition').value.trim(),
         project_goals: document.getElementById('input-goals').value.trim(),
         signer_full_name: document.getElementById('input-signer-name').value.trim(),
@@ -958,7 +1058,7 @@ def render_portal_html() -> str:
         document.getElementById('res-grant').textContent = data.matched_grant_title;
         document.getElementById('res-grant-id').textContent = data.matched_grant_id;
         document.getElementById('res-request').textContent = data.engineered_grant_request;
-        document.getElementById('res-score').textContent = data.probability_score;
+        document.getElementById('res-score').textContent = data.eligibility_tier || data.probability_score;
         document.getElementById('res-rcd').textContent = data.rcd_target;
         previewEl.textContent = data.packet_markdown;
 
@@ -1016,7 +1116,7 @@ def _process_intake_payload(
     client_ip: str = "127.0.0.1",
     user_agent: str = "ZYS-GoldFields-Intake-Portal/1.0",
 ) -> dict[str, Any]:
-    """Validate intake payload, enforce the Sign-to-Unlock filing gate, and return structured JSON."""
+    """Validate intake payload, enforce the Sign-to-Unlock filing gate, persist data, and dispatch notifications."""
     preview_only = bool(raw_data.get("preview_only", False)) or str(raw_data.get("stage", "")).lower() == "preview"
     agreed_to_terms = bool(raw_data.get("agreed_to_terms", False))
 
@@ -1029,6 +1129,8 @@ def _process_intake_payload(
     name_val = str(raw_data.get("name", "")).strip()
     signer_full_name = str(raw_data.get("signer_full_name") or "").strip()
     signer_title = str(raw_data.get("signer_title") or "").strip()
+    prospect_id_val = str(raw_data.get("prospect_id") or "").strip()
+    ein_val = str(raw_data.get("ein") or "").strip()
 
     if not preview_only:
         if not signer_full_name:
@@ -1037,6 +1139,8 @@ def _process_intake_payload(
             signer_title = "Property Owner & Authorized Representative"
 
     intake = ClientIntake(
+        prospect_id=prospect_id_val,
+        ein=ein_val,
         name=name_val,
         email=str(raw_data.get("email", "")),
         county=str(raw_data.get("county", "")),
@@ -1064,6 +1168,7 @@ def _process_intake_payload(
         persist_intake=True,
     )
     primary = matches[0]
+    tier_label = eligibility_tier_label(primary.probability_breakdown, primary.score)
     _, total_cost, grant_req, _, fee_dollars = build_budget_engineering_table(
         saved, primary.grant, fee_percent=cfg.success_fee_percent
     )
@@ -1071,17 +1176,44 @@ def _process_intake_payload(
     packet_md = packet_path.read_text(encoding="utf-8")
 
     if not saved.agreement_signed:
+        if cfg.notifications.notify_on_preview:
+            preview_record = {
+                "event": "preview_generated",
+                "intake_id": saved.id,
+                "prospect_id": saved.prospect_id,
+                "ein": saved.ein,
+                "client_name": saved.name,
+                "client_email": saved.email,
+                "county": saved.county,
+                "apn": saved.apn,
+                "acreage": saved.acreage,
+                "matched_grant": primary.grant.title,
+                "matched_grant_id": primary.grant.id,
+                "engineered_grant_request": grant_req,
+                "eligibility_tier": tier_label,
+                "probability_score": primary.score,
+            }
+            dispatch_intake_backup_async(
+                event="preview_generated",
+                record=preview_record,
+                attachments=[("client_preview_summary.md", packet_md.encode("utf-8"), "text/markdown")],
+                cfg=cfg,
+            )
+
         return {
             "status": "ok",
             "stage": "preview_locked",
             "agreement_signed": False,
             "intake_id": saved.id,
+            "prospect_id": saved.prospect_id,
+            "ein": saved.ein,
             "client_name": saved.name,
             "apn": saved.apn,
             "county": saved.county,
             "matched_grant_id": "[LOCKED — E-SIGNATURE REQUIRED]",
             "matched_grant_title": primary.grant.title,
             "probability_score": f"{primary.score}/100",
+            "eligibility_tier": tier_label,
             "score_rationale": primary.score_rationale,
             "agency": primary.grant.agency,
             "deadline": primary.grant.deadline,
@@ -1099,17 +1231,86 @@ def _process_intake_payload(
         else ""
     )
 
+    audit_json = json.dumps(
+        {
+            "intake_id": saved.id,
+            "prospect_id": saved.prospect_id,
+            "ein": saved.ein,
+            "client_name": saved.name,
+            "client_email": saved.email,
+            "county": saved.county,
+            "state": saved.state,
+            "apn": saved.apn,
+            "acreage": saved.acreage,
+            "signer_full_name": saved.signer_full_name,
+            "signer_title": saved.signer_title,
+            "signature_timestamp_utc": saved.signature_timestamp_utc,
+            "signer_ip_address": saved.signer_ip_address,
+            "signer_user_agent": saved.signer_user_agent,
+            "contract_sha256_hash": saved.contract_sha256_hash,
+            "agreement_version": AGREEMENT_VERSION,
+            "eligibility_tier": tier_label,
+            "probability_score": primary.score,
+            "matched_grant_title": primary.grant.title,
+            "matched_grant_id": primary.grant.id,
+            "engineered_grant_request": grant_req,
+            "total_project_budget": total_cost,
+            "contingent_fee_dollars": fee_dollars,
+        },
+        indent=2,
+    )
+
+    signed_record = {
+        "event": "agreement_signed",
+        "intake_id": saved.id,
+        "prospect_id": saved.prospect_id,
+        "ein": saved.ein,
+        "client_name": saved.name,
+        "client_email": saved.email,
+        "county": saved.county,
+        "apn": saved.apn,
+        "acreage": saved.acreage,
+        "matched_grant": primary.grant.title,
+        "matched_grant_id": primary.grant.id,
+        "engineered_grant_request": grant_req,
+        "contingent_fee_dollars": fee_dollars,
+        "contract_sha256_hash": saved.contract_sha256_hash,
+        "signature_timestamp_utc": saved.signature_timestamp_utc,
+        "signer_ip": saved.signer_ip_address,
+        "signer_user_agent": saved.signer_user_agent,
+        "signer_full_name": saved.signer_full_name,
+        "signer_title": saved.signer_title,
+        "eligibility_tier": tier_label,
+        "probability_score": primary.score,
+    }
+
+    attachments = [
+        ("signed_advisory_agreement.md", signed_agreement_md.encode("utf-8"), "text/markdown"),
+        ("client_submission_packet.md", packet_md.encode("utf-8"), "text/markdown"),
+        ("esignature_audit_record.json", audit_json.encode("utf-8"), "application/json"),
+    ]
+
+    dispatch_intake_backup_async(
+        event="agreement_signed",
+        record=signed_record,
+        attachments=attachments,
+        cfg=cfg,
+    )
+
     return {
         "status": "ok",
         "stage": "unlocked_filing_dossier",
         "agreement_signed": True,
         "intake_id": saved.id,
+        "prospect_id": saved.prospect_id,
+        "ein": saved.ein,
         "client_name": saved.name,
         "apn": saved.apn,
         "county": saved.county,
         "matched_grant_id": primary.grant.id,
         "matched_grant_title": primary.grant.title,
         "probability_score": f"{primary.score}/100",
+        "eligibility_tier": tier_label,
         "score_rationale": primary.score_rationale,
         "agency": primary.grant.agency,
         "deadline": primary.grant.deadline,
@@ -1176,6 +1377,7 @@ def _unlock_existing_intake(
         persist_intake=True,
     )
     primary = matches[0]
+    tier_label = eligibility_tier_label(primary.probability_breakdown, primary.score)
     _, total_cost, grant_req, _, fee_dollars = build_budget_engineering_table(
         saved, primary.grant, fee_percent=cfg.success_fee_percent
     )
@@ -1187,17 +1389,86 @@ def _unlock_existing_intake(
         else ""
     )
 
+    audit_json = json.dumps(
+        {
+            "intake_id": saved.id,
+            "prospect_id": saved.prospect_id,
+            "ein": saved.ein,
+            "client_name": saved.name,
+            "client_email": saved.email,
+            "county": saved.county,
+            "state": saved.state,
+            "apn": saved.apn,
+            "acreage": saved.acreage,
+            "signer_full_name": saved.signer_full_name,
+            "signer_title": saved.signer_title,
+            "signature_timestamp_utc": saved.signature_timestamp_utc,
+            "signer_ip_address": saved.signer_ip_address,
+            "signer_user_agent": saved.signer_user_agent,
+            "contract_sha256_hash": saved.contract_sha256_hash,
+            "agreement_version": AGREEMENT_VERSION,
+            "eligibility_tier": tier_label,
+            "probability_score": primary.score,
+            "matched_grant_title": primary.grant.title,
+            "matched_grant_id": primary.grant.id,
+            "engineered_grant_request": grant_req,
+            "total_project_budget": total_cost,
+            "contingent_fee_dollars": fee_dollars,
+        },
+        indent=2,
+    )
+
+    signed_record = {
+        "event": "agreement_signed",
+        "intake_id": saved.id,
+        "prospect_id": saved.prospect_id,
+        "ein": saved.ein,
+        "client_name": saved.name,
+        "client_email": saved.email,
+        "county": saved.county,
+        "apn": saved.apn,
+        "acreage": saved.acreage,
+        "matched_grant": primary.grant.title,
+        "matched_grant_id": primary.grant.id,
+        "engineered_grant_request": grant_req,
+        "contingent_fee_dollars": fee_dollars,
+        "contract_sha256_hash": saved.contract_sha256_hash,
+        "signature_timestamp_utc": saved.signature_timestamp_utc,
+        "signer_ip": saved.signer_ip_address,
+        "signer_user_agent": saved.signer_user_agent,
+        "signer_full_name": saved.signer_full_name,
+        "signer_title": saved.signer_title,
+        "eligibility_tier": tier_label,
+        "probability_score": primary.score,
+    }
+
+    attachments = [
+        ("signed_advisory_agreement.md", signed_agreement_md.encode("utf-8"), "text/markdown"),
+        ("client_submission_packet.md", packet_md.encode("utf-8"), "text/markdown"),
+        ("esignature_audit_record.json", audit_json.encode("utf-8"), "application/json"),
+    ]
+
+    dispatch_intake_backup_async(
+        event="agreement_signed",
+        record=signed_record,
+        attachments=attachments,
+        cfg=cfg,
+    )
+
     return {
         "status": "ok",
         "stage": "unlocked_filing_dossier",
         "agreement_signed": True,
         "intake_id": saved.id,
+        "prospect_id": saved.prospect_id,
+        "ein": saved.ein,
         "client_name": saved.name,
         "apn": saved.apn,
         "county": saved.county,
         "matched_grant_id": primary.grant.id,
         "matched_grant_title": primary.grant.title,
         "probability_score": f"{primary.score}/100",
+        "eligibility_tier": tier_label,
         "score_rationale": primary.score_rationale,
         "agency": primary.grant.agency,
         "deadline": primary.grant.deadline,
@@ -1235,6 +1506,19 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
     def _extract_user_agent(self) -> str:
         return self.headers.get("User-Agent", "ZYS-GoldFields-Client-Browser/1.0").strip()
 
+    def _check_admin_auth(self) -> bool:
+        token = os.environ.get("ADMIN_API_TOKEN", "").strip()
+        is_public = os.environ.get("PUBLIC_MODE", "0") == "1" or bool(os.environ.get("RENDER"))
+        if not is_public and not token:
+            return True
+        auth_header = self.headers.get("Authorization", "").strip()
+        if token and auth_header.startswith("Bearer ") and auth_header[7:].strip() == token:
+            return True
+        qs = parse_qs(urlparse(self.path).query)
+        if token and qs.get("token", [""])[0] == token:
+            return True
+        return False
+
     def _send_json(self, status: int, payload: dict[str, Any]) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
@@ -1260,13 +1544,50 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def do_HEAD(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path in ("/", "/index.html", "/healthz", "/claim"):
+            self.send_response(HTTPStatus.OK)
+            if parsed.path == "/healthz":
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", "3")
+            else:
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            return
+
+        if parsed.path == "/api/health":
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            return
+
+        self.send_response(HTTPStatus.NOT_FOUND)
+        self.end_headers()
+
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path in ("/", "/index.html"):
             self._send_html(HTTPStatus.OK, render_portal_html())
             return
 
+        if parsed.path == "/healthz":
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", "3")
+            self.end_headers()
+            self.wfile.write(b"ok\n")
+            return
+
+        if parsed.path == "/claim":
+            qs = parse_qs(parsed.query)
+            prospect_id = qs.get("prospect_id", [""])[0].strip()
+            prospect = lookup_prospect_by_id(prospect_id) if prospect_id else None
+            self._send_html(HTTPStatus.OK, render_portal_html(prospect=prospect))
+            return
+
         if parsed.path == "/api/health":
+            cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
             self._send_json(
                 HTTPStatus.OK,
                 {
@@ -1274,16 +1595,23 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     "service": "ZYS GoldFields PRO Intake & E-Signature Portal",
                     "agreement_version": AGREEMENT_VERSION,
                     "public_mode": os.environ.get("PUBLIC_MODE", "0") == "1",
+                    "notifications": notification_status(cfg),
                 },
             )
             return
 
         if parsed.path == "/api/prospects":
+            if not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Admin authentication required in public mode."})
+                return
             prospects = [p.model_dump() for p in fetch_all_prospects(DEFAULT_DB_PATH)]
             self._send_json(HTTPStatus.OK, {"count": len(prospects), "prospects": prospects})
             return
 
         if parsed.path == "/api/audits":
+            if not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Admin authentication required in public mode."})
+                return
             audits = [a.model_dump() for a in fetch_all_esignature_audits(DEFAULT_DB_PATH)]
             self._send_json(HTTPStatus.OK, {"count": len(audits), "audits": audits})
             return
@@ -1303,11 +1631,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "client_submission_packet.md",
                 "config.json",
                 "db.py",
+                "followup_templates.md",
                 "grants.db",
                 "intake_app.py",
                 "legal_agreement.py",
                 "matcher.py",
                 "models.py",
+                "notifier.py",
                 "outreach_pitches.md",
                 "prospect_hunter.py",
                 "render.yaml",
@@ -1337,6 +1667,9 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/intakes":
+            if not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Admin authentication required in public mode."})
+                return
             intakes = [
                 {
                     **item.model_dump(),
@@ -1349,6 +1682,9 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/packet/latest":
+            if (os.environ.get("PUBLIC_MODE", "0") == "1" or os.environ.get("RENDER")) and not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Latest packet downloads disabled in public mode."})
+                return
             if not DEFAULT_PACKET_PATH.exists():
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "No unlocked submission packet generated yet."})
                 return
@@ -1377,6 +1713,9 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     return
 
         if parsed.path == "/api/preview/latest":
+            if (os.environ.get("PUBLIC_MODE", "0") == "1" or os.environ.get("RENDER")) and not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Latest preview downloads disabled in public mode."})
+                return
             if not DEFAULT_PREVIEW_PATH.exists():
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "No preview summary generated yet."})
                 return
@@ -1392,6 +1731,9 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     return
 
         if parsed.path == "/api/agreement/latest":
+            if (os.environ.get("PUBLIC_MODE", "0") == "1" or os.environ.get("RENDER")) and not self._check_admin_auth():
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Latest agreement downloads disabled in public mode."})
+                return
             if not DEFAULT_SIGNED_AGREEMENT_PATH.exists():
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "No signed advisory agreement generated yet."})
                 return
@@ -1453,6 +1795,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     f"<body style='font-family:sans-serif;max-width:760px;margin:40px auto;padding:0 20px;'>"
                     f"<h1>Submission Dossier Unlocked</h1>"
                     f"<p><strong>Matched Grant:</strong> {result['matched_grant_title']}</p>"
+                    f"<p><strong>Statutory Eligibility Assessment:</strong> {result.get('eligibility_tier', result['probability_score'])}</p>"
                     f"<p><strong>Engineered Request:</strong> {result['engineered_grant_request']}</p>"
                     f"<p><strong>SHA-256 Contract Hash:</strong> <code>{result.get('contract_sha256_hash', '')}</code></p>"
                     f"<p><a href='{result['packet_download_url']}'>Download client_submission_packet.md</a> | "

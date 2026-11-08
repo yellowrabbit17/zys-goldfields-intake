@@ -2,8 +2,8 @@
 
 - **Dossier Reference:** `ZYS-ELD-08914002`
 - **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Packet Generated:** `2026-11-07 05:41 UTC`
-- **Filing Gate Status:** **`UNLOCKED — E-SIGNATURE VERIFIED (agreement_signed = True | SHA-256: 235390190bff6c3d...)`**
+- **Packet Generated:** `2026-11-08 00:24 UTC`
+- **Filing Gate Status:** **`UNLOCKED — E-SIGNATURE VERIFIED (agreement_signed = True | SHA-256: 3d7539b1bd3fc4f4...)`**
 - **Workflow Mode:** 100% Zero-Call Digital Intake & Asynchronous Agency Handoff
 
 ---
@@ -23,8 +23,8 @@
 | **Target Solicitation Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
 | **Engineered Grant Request** | **\$63,330** (out of \$71,800 total project budget) |
-| **Advisory Fee Authorization** | `[x]` **Executed 7% Contingent Origination Agreement** (`2026-11-07T05:41:01Z`) — \$4,433 payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement (\$0 upfront) |
-| **Cryptographic Contract Hash** | `235390190bff6c3dc20e214d533c7147281f4d46f7b363b0571cffa337faf29d` |
+| **Advisory Fee Authorization** | `[x]` **Executed 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)** (`2026-11-08T00:24:14Z`) — \$4,433 payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement (\$0 upfront, 100% waived if not awarded) |
+| **Cryptographic Contract Hash** | `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b` |
 | **Official Solicitation Link** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 #### Secondary Pre-Screened Stackable / Backup Grants
@@ -77,7 +77,7 @@ The project executes the landowner's stated conservation objectives:
 | 5. Registered Professional Forester (RPF) Layout & Inspection | Technical supervision | 12% of field practices | \$5,900 | **\$5,310** | \$590 |
 | **TOTAL DIRECT PROJECT BUDGET** | **45 Acres (APN `089-140-027-000`)** | **—** | **\$71,800** | **\$63,330** | **\$8,470** |
 
-> **Grant Accounting & 7% Contingent Fee Compliance Note (`2 CFR § 200.459` Protection):** In strict compliance with federal `2 CFR § 200.459` (`2 CFR Part 200`) and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (\$63,330 grant request; \$8,470 landowner cost-share/in-kind). **ZYS GoldFields PRO LLC** charges **\$0 upfront** and invoices its separate **7% contingent origination and administrative consulting fee (\$4,433)** strictly to the Client's separate general/operating funds upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, never billed to or deducted from restricted federal or state grant funds), leaving an estimated **\$58,897 net grant benefit** for the property.
+> **Grant Accounting & 7% Fee Compliance Note (`2 CFR § 200.459` Protection):** In strict compliance with federal `2 CFR § 200.459` (`2 CFR Part 200`) and California state grant guidelines, all line items in the table above represent 100% direct on-the-ground technical, planning, and conservation implementation costs (\$63,330 grant request; \$8,470 landowner cost-share/in-kind). **ZYS GoldFields PRO LLC** charges **\$0 upfront** and invoices its separate **7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded) (\$4,433)** strictly to the Client's separate general/operating funds upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, never billed to or deducted from restricted federal or state grant funds), leaving an estimated **\$58,897 net grant benefit** for the property.
 
 ---
 
@@ -105,7 +105,7 @@ We respectfully request that El Dorado County & Georgetown Divide Resource Conse
   2. Confirm agency practice codes / RPF or NRCS technical sign-off against our pre-engineered $71,800 scope; and
   3. Execute the Co-Sponsor / Technical Assistance endorsement for portal submission ahead of the 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1) deadline.
 
-All landowner authorizations, baseline condition statements, budget tables, and the executed Notice of Authorized Advisory Representation (SHA-256: 235390190bff6c3dc20e214d533c7147281f4d46f7b363b0571cffa337faf29d) are complete in the attached Co-Sponsor Memorandum so your planner can proceed asynchronously via email without scheduling introductory phone calls. Please reply-all with the assigned planner's email and any standard landowner signature forms required by your district.
+All landowner authorizations, baseline condition statements, budget tables, and the executed Notice of Authorized Advisory Representation (SHA-256: 3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b) are complete in the attached Co-Sponsor Memorandum so your planner can proceed asynchronously via email without scheduling introductory phone calls. Please reply-all with the assigned planner's email and any standard landowner signature forms required by your district.
 
 Sincerely,
 
@@ -126,7 +126,7 @@ Dossier Ref: ZYS-ELD-08914002
 - **CLIENT / LANDOWNER:** **Elena & Marcus Vance** (`vance.family@sierraridgeoak.com`) — Signed by **`/s/ Elena Vance`** (*Managing Co-Owner & Steward, Sierra Ridge Oak Woodland*)  
 - **PARCEL IDENTIFICATION:** **APN `089-140-027-000`** · **45 Acres** · **El Dorado County, CA**  
 - **TARGET SOLICITATION:** **California Forest Improvement Program** (`CCI-california-forest-improvement-program` · *Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)*)  
-- **DATE:** `2026-11-07 05:41 UTC`  
+- **DATE:** `2026-11-08 00:24 UTC`  
 
 #### 1. Purpose of Handoff
 This Memorandum transmits a pre-qualified, landowner-authorized conservation project package prepared by **ZYS GoldFields PRO LLC** for **Elena & Marcus Vance** (`APN 089-140-027-000`, 45 acres in El Dorado County). All intake screening, statutory acreage/geographic eligibility checks, narrative drafting, and preliminary cost-share engineering (**\$63,330** grant request / **\$71,800** total project cost) have been completed digitally.
@@ -141,7 +141,7 @@ To complete agency submission prior to **2027-01-02 (Quarterly cycle: Jan 2, Apr
 #### 3. Digital Landowner Authorization & Advisory Terms Attestation
 - **Authorized Landowner & Signatory:** `Elena & Marcus Vance` — `/s/ Elena Vance` (Managing Co-Owner & Steward, Sierra Ridge Oak Woodland, `vance.family@sierraridgeoak.com`)
 - **Parcel Attestation:** Landowner attests ownership/management authority over APN `089-140-027-000` (45 acres, El Dorado County, CA).
-- **Advisory Fee & `2 CFR § 200.459` Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-07T05:41:01Z`, SHA-256 `235390190bff6c3dc20e214d533c7147281f4d46f7b363b0571cffa337faf29d`), with **\$0** upfront fees, separate Client operating-funds payment (`2 CFR § 200.459`), and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
+- **Advisory Fee & `2 CFR § 200.459` Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-08T00:24:14Z`, SHA-256 `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b`), with **\$0** upfront fees, separate Client operating-funds payment (`2 CFR § 200.459`), and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
 
 ---
 
@@ -155,12 +155,13 @@ To complete agency submission prior to **2027-01-02 (Quarterly cycle: Jan 2, Apr
 - **MATCHED SOLICITATION:** **California Forest Improvement Program** (`CCI-california-forest-improvement-program`)
 
 ### 1. Notice of Authorized Grant Advisory & Technical Packaging Representation
-Please take notice that **Elena & Marcus Vance** (by and through its authorized signatory **Elena Vance**, *Managing Co-Owner & Steward, Sierra Ridge Oak Woodland*) has formally executed the **Conservation Advisory & Origination Agreement** (`CA-UETA-ESIGN-2026.1`) appointing **ZYS GoldFields PRO LLC** (*Conservation & Agricultural Grant Advisory*) to prepare, package, and coordinate this conservation grant dossier and County RCD / USDA NRCS technical handoff for **APN `089-140-027-000`**.
+Please take notice that **Elena & Marcus Vance** (by and through its authorized signatory **Elena Vance**, *Managing Co-Owner & Steward, Sierra Ridge Oak Woodland*) has formally executed the **Conservation Advisory & Origination Agreement** (`CA-UETA-ESIGN-2026.2`) appointing **ZYS GoldFields PRO LLC** (*Conservation & Agricultural Grant Advisory*) to prepare, package, and coordinate this conservation grant dossier and County RCD / USDA NRCS technical handoff for **APN `089-140-027-000`**.
 
 ### 2. Federal & State Grant Accounting Compliance Certification (`2 CFR § 200.459`)
 Both Landowner and Advisor certify to **El Dorado County & Georgetown Divide Resource Conservation Districts**, **USDA NRCS**, and the administering state/federal agency that:
-1. **100% Direct Conservation Project Budget:** Every dollar requested in Section A.5 (**\$63,330** grant request) is allocated strictly to eligible on-the-ground conservation practices, Registered Professional Forester (RPF) / NRCS technical planning, and ecological restoration.
-2. **Separate Operating Funds Protection (`2 CFR § 200.459`):** Advisor's contingent **7% Advisory Success Fee** (**\$4,433**) is a private origination and administrative consulting fee paid strictly from the Client's **separate general or operating funds** upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, with a 1.5% monthly late fee and Sacramento County, California venue), and is **never** billed to, reimbursed by, or deducted from restricted federal or state grant funds.
+1. **100% Direct Conservation Project Budget:** Every dollar requested in Section A.5 (**\$63,330** grant request) is allocated strictly to eligible on-the-ground conservation practices, Registered Professional Forester (RPF) / NRCS technical planning, and ecological restoration. Advisor's fee does not appear in the grant budget.
+3. **CAL FIRE RPF / RCD Coordination Disclosure:** **ZYS GoldFields PRO LLC** is an independent packaging consultant, is **not** a Registered Professional Forester (Cal. Pub. Resources Code § 750 et seq.), and is not affiliated with CAL FIRE, **El Dorado County & Georgetown Divide Resource Conservation Districts**, or USDA NRCS. All forestry prescriptions and plans will be prepared and signed by a California-licensed RPF, and all eligibility, co-sponsorship, and award decisions remain at the sole discretion of the RCD and administering agency.
+2. **General Non-Grant Funds Only (`2 CFR § 200.459`):** Advisor's **7% Deferred Administrative Origination & Packaging Fee** (**\$4,433**, 100% waived if the grant is not awarded) is a private fee paid solely from the Client's **general non-grant funds** upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, with a 1.5% monthly late fee and Sacramento County, California venue), and is **never** billed to, reimbursed by, or deducted from restricted federal or state grant funds.
 
 ### 3. Tamper-Evident E-Signature Audit Record (California UETA & Federal ESIGN Act)
 
@@ -168,10 +169,10 @@ Both Landowner and Advisor certify to **El Dorado County & Georgetown Divide Res
 | :--- | :--- |
 | **Electronic Signatory** | **`/s/ Elena Vance`** — *Managing Co-Owner & Steward, Sierra Ridge Oak Woodland* |
 | **Affirmative Agreement Consent** | `[x]` *"I agree to the ZYS GoldFields PRO LLC Advisory Agreement."* (`agreement_signed = True`) |
-| **UTC Execution Timestamp** | `2026-11-07T05:41:01Z` |
+| **UTC Execution Timestamp** | `2026-11-08T00:24:14Z` |
 | **Client IP Address** | `198.51.100.45` |
 | **Browser User-Agent** | `Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 ZYS-Vance-Verification/2.0` |
-| **SHA-256 Signed Contract Hash** | `235390190bff6c3dc20e214d533c7147281f4d46f7b363b0571cffa337faf29d` |
+| **SHA-256 Signed Contract Hash** | `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b` |
 | **Signed Receipt File** | `signed_advisory_agreement.md` |
 
 ---

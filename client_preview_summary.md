@@ -2,7 +2,7 @@
 
 - **Dossier Reference:** `ZYS-ELD-08914002`
 - **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Preview Generated:** `2026-11-07 05:41 UTC`
+- **Preview Generated:** `2026-11-08 00:24 UTC`
 - **Filing Gate Status:** **`LOCKED — AWAITING CALIFORNIA UETA / ESIGN ELECTRONIC SIGNATURE (agreement_signed = False)`**
 
 ---
@@ -15,10 +15,10 @@
 | **Jurisdiction & Parcel APN** | **El Dorado County, CA** — Assessor's Parcel Number (`APN`): **`089-140-027-000`** (45 Acres) |
 | **Primary Matched Grant** | **California Forest Improvement Program** |
 | **Administering Agency** | California Department of Forestry and Fire Protection (CAL FIRE) — California Climate Investments |
-| **Grant Win Probability Score** | **97/100** (Acreage 30/30 \| Entity 24/25 \| Eco/Geo 25/25 \| Co-Match 18/20) |
-| **Win Probability Rationale** | Scores 97/100 because its 45-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, private nonindustrial forestland/ranch owner qualifies directly with El Dorado RCD/RPF support, El Dorado County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$61,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. |
+| **Statutory Eligibility Assessment** | **Tier-1 Statutory Eligibility Match (4/4 Core Criteria Met)** (97/100 internal score) |
+| **Statutory Underwriting Rationale** | Scores 97/100 because its 45-acre footprint sits squarely inside CAL FIRE's 20–5,000 ac statutory forestland window, private nonindustrial forestland/ranch owner qualifies directly with El Dorado RCD/RPF support, El Dorado County is a priority CAL FIRE fire-severity & forest watershed zone (oak, woodland), and ~\$61,000 budget fits CAL FIRE's 75%–90% cost-share schedule with manageable 10%–25% co-match. |
 | **Total Engineered Project Budget** | **\$71,800** (\$63,330 Grant Request + \$8,470 Landowner Cost-Share / In-Kind) |
-| **Contingent 7% Origination Fee** | **\$4,433** (*\$0 upfront; payable strictly from separate Client operating funds under `2 CFR § 200.459` within 5 business days of initial tranche disbursement*) |
+| **7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)** | **\$4,433** (*\$0 upfront; 100% waived if not awarded; payable strictly from separate Client general/operating funds under `2 CFR § 200.459` within 5 business days of initial tranche disbursement*) |
 | **Grant Solicitation ID** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK SOLICITATION ID]` |
 | **Official Agency Portal URL** | `[LOCKED — E-SIGNATURE REQUIRED TO UNLOCK AGENCY PORTAL LINK]` |
 

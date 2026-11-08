@@ -9,5 +9,19 @@
   "success_fee_percent": 7.0,
   "firm_name": "ZYS GoldFields PRO LLC",
   "firm_subtitle": "Conservation & Agricultural Grant Advisory",
-  "public_intake_url": "https://zys-goldfields-intake.onrender.com"
+  "public_intake_url": "https://zys-goldfields-intake.onrender.com",
+  "firm_postal_address": "",
+  "unsubscribe_email": "",
+  "notifications": {
+    "provider": "auto",
+    "admin_email": "",
+    "from_email": "",
+    "smtp_host": "",
+    "smtp_port": 587,
+    "smtp_use_tls": true,
+    "backup_webhook_url": "",
+    "notify_on_preview": true,
+    "timeout_seconds": 12.0,
+    "_secrets_note": "Never put secrets here. Set RESEND_API_KEY or SMTP_USERNAME/SMTP_PASSWORD, plus optional BACKUP_WEBHOOK_SECRET, as Render environment variables. ADMIN_NOTIFICATION_EMAIL, NOTIFICATION_FROM_EMAIL, BACKUP_WEBHOOK_URL env vars override the values above."
+  }
 }

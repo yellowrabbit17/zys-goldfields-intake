@@ -948,18 +948,15 @@ def build_california_prospects_dataset(
     records: list[ProspectRecord] = []
     for idx, (prob_score, raw_acreage, _, row, ein_final, best_match) in enumerate(qualified_tuples, start=1):
         bd = best_match.probability_breakdown
-        query_params = urlencode(
-            {
-                "name": row["name"],
-                "email": row["email"],
-                "county": row["county"],
-                "acres": int(raw_acreage) if raw_acreage.is_integer() else raw_acreage,
-            }
-        )
-        intake_link = f"{public_base}/?{query_params}"
+        prospect_id = f"CA-T1-{idx:03d}"
+        # 1-click pre-filled magic link: /claim resolves Organization, County, EIN,
+        # acreage and Matched Grant server-side from california_prospects.csv.
+        intake_link = f"{public_base}/claim?{urlencode({'prospect_id': prospect_id})}"
+        outreach_segment = "Channel_Partner" if row["category"] == "Land Trust" else "Direct_Client"
 
         prospect = ProspectRecord(
-            prospect_id=f"CA-T1-{idx:03d}",
+            prospect_id=prospect_id,
+            outreach_segment=outreach_segment,
             organization_name=row["name"],
             category=row["category"],
             county=row["county"],
@@ -992,6 +989,7 @@ def build_california_prospects_dataset(
         "prospect_id",
         "organization_name",
         "category",
+        "outreach_segment",
         "county",
         "service_counties",
         "city",

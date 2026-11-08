@@ -4,16 +4,18 @@ Implements the legally binding 'Conservation Advisory & Origination Agreement' f
 including:
   1. California Uniform Electronic Transactions Act (UETA, Cal. Civ. Code § 1633.1 et seq.) and
      federal ESIGN Act (15 U.S.C. § 7001 et seq.) electronic execution governance.
-  2. Strict Federal & State Grant Accounting Protection (2 CFR § 200.459): explicit representation
-     that the 7% Advisory Success Fee is an origination and administrative consulting fee paid
-     strictly from the Client's separate general/operating funds upon grant award verification,
-     and is never billed to or deducted from restricted federal or state grant funds.
+  2. Strict Federal & State Grant Accounting Protection (2 CFR § 200.459): the 7% "Deferred Administrative
+     Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" is payable only from the Client's
+     general non-grant funds and is never billed to or deducted from restricted federal or state grant funds.
   3. Payment Triggers & Remedies: 7% invoice triggered upon official Agency Award Notice (or execution
      of the RCD/Agency Grant Agreement), payable within 5 business days of initial tranche disbursement,
      1.5% monthly late fee, Sacramento County, California exclusive venue, and prevailing-party
      attorneys' fees (Cal. Civ. Code § 1717).
-  4. Cryptographic SHA-256 contract digest computation and downloadable signed_advisory_agreement.md
+  4. CAL FIRE RPF / RCD / agency coordination disclosure (Advisor is not an RPF under Cal. Pub. Resources
+     Code § 750 et seq. and is not affiliated with CAL FIRE, any RCD, or USDA NRCS; no award guarantee).
+  5. Cryptographic SHA-256 contract digest computation and downloadable signed_advisory_agreement.md
      receipt generation.
+  6. CAN-SPAM Act (15 U.S.C. § 7704) compliant footer for every outbound email template.
 """
 
 from __future__ import annotations
@@ -25,7 +27,7 @@ import re
 
 from models import ClientIntake, ESignatureAuditRecord, GrantRecord, MatcherConfig
 
-AGREEMENT_VERSION = "CA-UETA-ESIGN-2026.1"
+AGREEMENT_VERSION = "CA-UETA-ESIGN-2026.2"
 DEFAULT_SIGNED_AGREEMENT_PATH = Path(__file__).resolve().parent / "signed_advisory_agreement.md"
 
 
@@ -39,6 +41,9 @@ def _escape_md_dollars(text: str) -> str:
         else:
             out.append(re.sub(r"(?<!\\)\$", r"\$", part))
     return "".join(out)
+
+
+FEE_DISPLAY_NAME = "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)"
 
 
 def render_canonical_contract_text(
@@ -71,22 +76,60 @@ Advisory Firm: {firm_name} ({firm_subtitle})
 Governing Statutes: California Uniform Electronic Transactions Act (Cal. Civ. Code § 1633.1 et seq.); Federal ESIGN Act (15 U.S.C. § 7001 et seq.); Federal Uniform Guidance (2 CFR § 200.459)
 
 1. PARTIES & PROPERTY IDENTIFICATION
-This Conservation Advisory & Origination Agreement ("Agreement") is entered into by and between {firm_name} ({firm_subtitle}) ("Advisor") and {client_name} ({client_email}) ("Client"), owner or authorized steward of real property located in {county} County, {state}, identified as Assessor's Parcel Number (APN) {apn} comprising approximately {acreage_str} ("Property"), in connection with conservation grant underwriting and application preparation for {matched_grant_title} (Estimated Grant Request: {req_str}).
+This Conservation Advisory & Origination Agreement ("Agreement") is entered into by and between {firm_name} ({firm_subtitle}) ("Advisor") and {client_name} ({client_email}) ("Client"), owner or authorized steward of real property located in {county} County, {state}, identified as Assessor's Parcel Number (APN) {apn} comprising approximately {acreage_str} ("Property"), in connection with conservation grant eligibility screening and application packaging for {matched_grant_title} (Estimated Grant Request: {req_str}).
 
 2. SCOPE OF ORIGINATION & TECHNICAL PACKAGING SERVICES ("SIGN-TO-UNLOCK" WORK PRODUCT)
-Advisor provides proprietary conservation grant underwriting, statutory eligibility verification, multi-benefit project narrative drafting, line-item cost-share budget engineering, and asynchronous County Resource Conservation District (RCD), USDA Natural Resources Conservation Service (NRCS), and state agency co-sponsorship packaging. Client acknowledges that Advisor's grant selection, solicitation routing, budget engineering, and RCD Co-Sponsor Memorandum constitute proprietary work product unlocked upon execution of this Agreement. Client agrees not to circumvent Advisor by submitting, adapting, or filing Advisor's unlocked narrative, solicitation routing, or RCD handoff dossier directly or through any third party without satisfying the contingent fee obligation herein.
+Advisor provides conservation grant eligibility screening, multi-benefit project narrative drafting, preliminary line-item cost-share budget estimates, and asynchronous coordination packaging for the County Resource Conservation District (RCD), USDA Natural Resources Conservation Service (NRCS), and the administering agency. Client acknowledges that Advisor's grant selection, solicitation routing, budget estimates, and RCD Co-Sponsor Memorandum constitute proprietary work product unlocked upon execution of this Agreement. Client agrees not to circumvent Advisor by submitting, adapting, or filing Advisor's unlocked narrative, solicitation routing, or RCD handoff dossier directly or through any third party without satisfying the deferred fee obligation herein.
 
-3. FEDERAL & STATE GRANT COMPLIANCE CLAUSE (2 CFR § 200.459 PROTECTION — SEPARATE OPERATING FUNDS)
-Explicit Statutory Compliance Representation: Client and Advisor expressly agree that the {fee_str} Advisory Success Fee is a private origination and administrative consulting fee paid strictly from the Client's separate general, operating, or personal funds upon grant award verification, and is NOT billed to, charged against, or deducted from restricted federal or state grant funds. In strict compliance with federal Uniform Guidance (2 CFR § 200.459 — Professional Service Costs) and California Climate Investments / state conservation grant guidelines, 100% of direct and indirect line items in the agency grant budget represent eligible on-the-ground conservation, forestry, habitat, and technical implementation costs.
+3. FEDERAL & STATE GRANT COMPLIANCE CLAUSE (2 CFR § 200.459 — GENERAL NON-GRANT FUNDS ONLY)
+Client and Advisor expressly agree that the {fee_str} {FEE_DISPLAY_NAME} is a private administrative origination and packaging fee payable solely from Client's general, operating, or personal non-grant funds, and is NOT billed to, charged against, budgeted in, reimbursed by, or deducted from any restricted federal or state grant funds. Advisor's fee shall not appear as a line item in any agency grant budget. Consistent with federal Uniform Guidance (2 CFR § 200.459 — Professional Service Costs) and California Climate Investments / state conservation grant guidelines, every line item in the agency grant budget shall represent eligible conservation, forestry, habitat, and technical implementation costs only.
 
-4. CONTINGENT {fee_str} SUCCESS FEE, PAYMENT TRIGGERS & REMEDIES
-(a) Zero Upfront Cost / No-Win, No-Fee: Client pays $0 upfront for eligibility screening, narrative drafting, budget engineering, and RCD handoff packaging. If no conservation grant award is approved for the Property, Client owes Advisor $0.
-(b) Fee Calculation & Invoice Trigger: Upon official Agency Award Notice (or execution of the County RCD / Agency Grant Agreement or landowner cost-share contract for the Property, whichever occurs first), Advisor earns and shall issue an invoice for a contingent Advisory Success Fee equal to {fee_str} of the gross approved grant award amount (estimated at {fee_amt_str} based on a {req_str} award).
-(c) Payment Due Date (5 Business Days): The {fee_str} Advisory Success Fee is payable in full within five (5) business days of initial grant tranche disbursement (or execution of the funding/reimbursement disbursement authorization).
-(d) Late Fee, Venue & Prevailing-Party Attorneys' Fees: Any balance unpaid after the 5-business-day payment window shall accrue a late charge of 1.5% per month (18.0% per annum, or the maximum rate permitted under California law). This Agreement shall be governed by and construed under the laws of the State of California, with exclusive jurisdiction and venue vested in the state and federal courts located in Sacramento County, California. In any action or proceeding arising out of or relating to this Agreement or collection of the Advisory Success Fee, the prevailing party shall recover its reasonable attorneys' fees, court costs, and collection expenses pursuant to California Civil Code § 1717.
+4. {fee_str} DEFERRED ADMINISTRATIVE ORIGINATION & PACKAGING FEE — PAYMENT TRIGGERS & REMEDIES
+(a) $0 Upfront; 100% Waived if Grant is Not Awarded: Client pays $0 upfront for eligibility screening, narrative drafting, budget estimates, and RCD handoff packaging. If no conservation grant is awarded for the Property, the fee is waived in full and Client owes Advisor $0.
+(b) Fee Calculation & Invoice Trigger: Upon official Agency Award Notice (or execution of the County RCD / Agency Grant Agreement or landowner cost-share contract for the Property, whichever occurs first), Advisor shall invoice the Deferred Administrative Origination & Packaging Fee equal to {fee_str} of the gross approved grant award amount (estimated at {fee_amt_str} based on a {req_str} award).
+(c) Payment Due Date (5 Business Days): The fee is payable in full from Client's general non-grant funds within five (5) business days of initial grant tranche disbursement (or execution of the funding/reimbursement disbursement authorization).
+(d) Late Fee, Venue & Prevailing-Party Attorneys' Fees: Any balance unpaid after the 5-business-day payment window shall accrue a late charge of 1.5% per month (18.0% per annum, or the maximum rate permitted under California law, whichever is less). This Agreement shall be governed by and construed under the laws of the State of California, with exclusive jurisdiction and venue vested in the state and federal courts located in Sacramento County, California. In any action or proceeding arising out of or relating to this Agreement or collection of the fee, the prevailing party shall recover its reasonable attorneys' fees, court costs, and collection expenses pursuant to California Civil Code § 1717.
 
-5. CALIFORNIA UETA & FEDERAL ESIGN ACT ELECTRONIC EXECUTION
-By typing their Full Legal Name and Title, checking "I agree to the ZYS GoldFields PRO LLC Advisory Agreement," and submitting the digital intake form, the undersigned represents and warrants that they have authority to bind Client and Property (APN {apn}), and consents to execute this Agreement electronically pursuant to the California Uniform Electronic Transactions Act (UETA, Cal. Civ. Code § 1633.1 et seq.) and the federal Electronic Signatures in Global and National Commerce Act (ESIGN Act, 15 U.S.C. § 7001 et seq.). The system automatically records the UTC timestamp, Client IP address, browser User-Agent string, and cryptographic SHA-256 digest of this Agreement as a permanent, tamper-evident audit record."""
+5. CAL FIRE RPF, RCD & AGENCY COORDINATION DISCLOSURE
+(a) Independent Packaging Consultant: Advisor is an independent private grant-packaging consultant. Advisor is NOT a Registered Professional Forester (RPF) licensed under the California Professional Foresters Law (Cal. Pub. Resources Code § 750 et seq.), and is not affiliated with, endorsed by, or acting on behalf of the California Department of Forestry and Fire Protection (CAL FIRE), the State Board of Forestry and Fire Protection, any Resource Conservation District (RCD), USDA NRCS, or any grantor agency.
+(b) Licensed Forestry Work: Any forest management plan, silvicultural prescription, timber or fuels treatment layout, or other professional forestry service required by the California Forest Improvement Program (CFIP) or any similar program must be prepared and signed by a California-licensed RPF retained by Client or provided through the applicable RCD or agency. Advisor's budget figures are preliminary estimates subject to RPF, RCD, and agency verification.
+(c) Agency Discretion; No Guarantee: RCD co-sponsorship, NRCS technical assistance, eligibility determinations, scoring, ranking, and award decisions rest solely with the applicable public agency. Advisor's "Tier-1 Statutory Eligibility Match" is an internal screening opinion, not an agency determination, and Advisor does not guarantee any co-sponsorship, ranking, or award.
+(d) No Lobbying: Advisor does not lobby or otherwise attempt to influence any agency officer or employee regarding any award decision, and no portion of the fee is paid for such activity.
+
+6. CALIFORNIA UETA & FEDERAL ESIGN ACT ELECTRONIC EXECUTION
+By typing their Full Legal Name and Title, checking "I agree to the ZYS GoldFields PRO LLC Advisory Agreement," and submitting the digital intake form, the undersigned represents and warrants that they have authority to bind Client and Property (APN {apn}), and consents to execute this Agreement electronically pursuant to the California Uniform Electronic Transactions Act (UETA, Cal. Civ. Code § 1633.1 et seq.) and the federal Electronic Signatures in Global and National Commerce Act (ESIGN Act, 15 U.S.C. § 7001 et seq.). Client may request a paper copy of this Agreement at no charge by emailing Advisor. The system automatically records the UTC timestamp, Client IP address, browser User-Agent string, and cryptographic SHA-256 digest of this Agreement as a permanent, tamper-evident audit record."""
+
+
+def render_can_spam_footer(config: MatcherConfig, recipient_email: str = "", segment: str = "") -> str:
+    """CAN-SPAM Act (15 U.S.C. § 7704) compliant footer appended to every outbound commercial email.
+
+    Includes: clear sender identification, advertisement disclosure, a valid physical postal address,
+    and a functioning opt-out mechanism honored within 10 business days.
+    """
+    postal = config.firm_postal_address.strip() or "[REQUIRED BEFORE SENDING: set firm_postal_address in config.json]"
+    optout_mailbox = config.unsubscribe_email.strip() or config.notifications.admin_email.strip()
+    if optout_mailbox:
+        optout = (
+            f'reply with "UNSUBSCRIBE" or email {optout_mailbox} with the subject "UNSUBSCRIBE"'
+        )
+    else:
+        optout = 'reply to this email with "UNSUBSCRIBE" in the subject line'
+    recipient_line = f"This message was sent to {recipient_email} " if recipient_email else "This message was sent "
+    reason = (
+        "because your organization is publicly listed as a California land trust that partners with private landowners."
+        if segment == "Channel_Partner"
+        else "because your organization is publicly listed as a California conservation property steward."
+    )
+    return (
+        "---\n"
+        f"*This is a commercial message (advertisement) from **{config.firm_name}** — {config.firm_subtitle}.*  \n"
+        f"*Mailing address: {postal}*  \n"
+        f"*{recipient_line}{reason} To stop receiving emails from us, {optout}. "
+        "Opt-out requests are honored within 10 business days, and we will not sell or transfer your address.*  \n"
+        f"*{config.firm_name} is an independent consultant and is not affiliated with CAL FIRE, any Resource "
+        "Conservation District, USDA NRCS, or any grantor agency. Eligibility screening is not a guarantee of award.*"
+    )
+
 
 
 def compute_contract_sha256(contract_text: str) -> str:
@@ -167,7 +210,8 @@ def render_signed_agreement_markdown(
 - **Agreement Version:** `{audit.agreement_version}`
 - **Execution Status:** **`EXECUTED & LEGALLY BINDING (agreement_signed = True)`**
 - **Governing Law & Venue:** State of California (California UETA `Cal. Civ. Code § 1633.1 et seq.` & Federal ESIGN Act `15 U.S.C. § 7001 et seq.`) · Exclusive Venue: **Sacramento County, California**
-- **Grant Accounting Compliance:** `2 CFR § 200.459` Protected — {fee_str} Fee Payable Strictly from Separate Client Operating Funds
+- **Grant Accounting Compliance:** `2 CFR § 200.459` Protected — {fee_str} Deferred Fee Payable Only from General Non-Grant Funds (100% Waived if Grant is Not Awarded)
+- **Agency Disclosure:** Advisor is not a CAL FIRE Registered Professional Forester and is not affiliated with CAL FIRE, any RCD, or USDA NRCS
 
 ---
 
@@ -185,7 +229,7 @@ def render_signed_agreement_markdown(
 | **Browser User-Agent String** | `{audit.signer_user_agent}` |
 | **Matched Grant Program** | **{audit.matched_grant_title}** (`{audit.matched_grant_id}`) |
 | **Engineered Grant Request** | **${audit.engineered_grant_request:,}** |
-| **Contingent {fee_str} Origination Fee** | **${audit.contingent_fee_dollars:,}** (*$0 upfront; triggered upon Agency Award Notice; due within 5 business days of initial tranche disbursement from separate Client funds*) |
+| **{fee_str} Deferred Administrative Origination & Packaging Fee** | **${audit.contingent_fee_dollars:,}** (*$0 upfront; 100% waived if grant is not awarded; invoiced upon Agency Award Notice; due within 5 business days of initial tranche disbursement from general non-grant funds*) |
 | **SHA-256 Contract Text Digest** | `{audit.contract_sha256_hash}` |
 
 ---
@@ -235,8 +279,9 @@ Please take notice that **{audit.client_name}** (by and through its authorized s
 
 ### 2. Federal & State Grant Accounting Compliance Certification (`2 CFR § 200.459`)
 Both Landowner and Advisor certify to **{rcd_name}**, **USDA NRCS**, and the administering state/federal agency that:
-1. **100% Direct Conservation Project Budget:** Every dollar requested in Section A.5 (**${audit.engineered_grant_request:,}** grant request) is allocated strictly to eligible on-the-ground conservation practices, Registered Professional Forester (RPF) / NRCS technical planning, and ecological restoration.
-2. **Separate Operating Funds Protection (`2 CFR § 200.459`):** Advisor's contingent **{fee_str} Advisory Success Fee** (**${audit.contingent_fee_dollars:,}**) is a private origination and administrative consulting fee paid strictly from the Client's **separate general or operating funds** upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, with a 1.5% monthly late fee and Sacramento County, California venue), and is **never** billed to, reimbursed by, or deducted from restricted federal or state grant funds.
+1. **100% Direct Conservation Project Budget:** Every dollar requested in Section A.5 (**${audit.engineered_grant_request:,}** grant request) is allocated strictly to eligible on-the-ground conservation practices, Registered Professional Forester (RPF) / NRCS technical planning, and ecological restoration. Advisor's fee does not appear in the grant budget.
+3. **CAL FIRE RPF / RCD Coordination Disclosure:** **{config.firm_name}** is an independent packaging consultant, is **not** a Registered Professional Forester (Cal. Pub. Resources Code § 750 et seq.), and is not affiliated with CAL FIRE, **{rcd_name}**, or USDA NRCS. All forestry prescriptions and plans will be prepared and signed by a California-licensed RPF, and all eligibility, co-sponsorship, and award decisions remain at the sole discretion of the RCD and administering agency.
+2. **General Non-Grant Funds Only (`2 CFR § 200.459`):** Advisor's **{fee_str} Deferred Administrative Origination & Packaging Fee** (**${audit.contingent_fee_dollars:,}**, 100% waived if the grant is not awarded) is a private fee paid solely from the Client's **general non-grant funds** upon official Agency Award Notice (payable within 5 business days of initial tranche disbursement, with a 1.5% monthly late fee and Sacramento County, California venue), and is **never** billed to, reimbursed by, or deducted from restricted federal or state grant funds.
 
 ### 3. Tamper-Evident E-Signature Audit Record (California UETA & Federal ESIGN Act)
 

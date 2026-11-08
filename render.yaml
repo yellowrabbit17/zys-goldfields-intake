@@ -5,9 +5,31 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python intake_app.py --host 0.0.0.0 --port $PORT
-    healthCheckPath: /api/health
+    healthCheckPath: /healthz
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: PUBLIC_MODE
         value: "1"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_NOTIFICATION_EMAIL
+        sync: false
+      - key: NOTIFICATION_FROM_EMAIL
+        sync: false
+      - key: BACKUP_WEBHOOK_URL
+        sync: false
+      - key: BACKUP_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_USE_TLS
+        sync: false
+      - key: ADMIN_API_TOKEN
+        sync: false

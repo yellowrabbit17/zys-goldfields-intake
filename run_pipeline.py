@@ -7,6 +7,7 @@ from http.server import ThreadingHTTPServer
 import json
 import sqlite3
 import threading
+import time
 from pathlib import Path
 
 import requests
@@ -69,10 +70,25 @@ def verify_intake_portal_and_packager() -> None:
         ):
             assert expected_token in home_resp.text, f"Missing expected token '{expected_token}' in portal HTML"
 
-        # 1b. Verify GET /api/health and GET /api/prospects
+        # 1a. Verify /healthz (GET and HEAD) for external cron keep-alive
+        healthz_head = requests.head(f"{base_url}/healthz", timeout=5)
+        assert healthz_head.status_code == 200, f"Expected 200 on HEAD /healthz, got {healthz_head.status_code}"
+        healthz_get = requests.get(f"{base_url}/healthz", timeout=5)
+        assert healthz_get.status_code == 200, f"Expected 200 on GET /healthz, got {healthz_get.status_code}"
+        assert healthz_get.text == "ok\n", f"Unexpected /healthz body: {healthz_get.text}"
+
+        # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001
+        claim_resp = requests.get(f"{base_url}/claim?prospect_id=CA-T1-001", timeout=5)
+        assert claim_resp.status_code == 200, f"Expected 200 on /claim, got {claim_resp.status_code}"
+        for token in ("Paicines Ranch", "Pre-Screened Grant Allocation", "CA-T1-001", "83-3255248", "San Benito"):
+            assert token in claim_resp.text, f"Missing token '{token}' in /claim?prospect_id=CA-T1-001 HTML"
+
+        # 1c. Verify GET /api/health and GET /api/prospects
         health_resp = requests.get(f"{base_url}/api/health", timeout=5)
         assert health_resp.status_code == 200
-        assert health_resp.json()["status"] == "healthy"
+        health_json = health_resp.json()
+        assert health_json["status"] == "healthy"
+        assert "notifications" in health_json
 
         prospects_resp = requests.get(f"{base_url}/api/prospects", timeout=5)
         assert prospects_resp.status_code == 200
@@ -156,6 +172,8 @@ def verify_intake_portal_and_packager() -> None:
             "state": "CA",
             "apn": "089-140-027-000",
             "acreage": 45.0,
+            "prospect_id": "CA-T1-002",
+            "ein": "94-8271039",
             "land_condition": (
                 "45-acre degraded blue oak, black oak, and ponderosa pine woodland in El Dorado County "
                 "experiencing post-drought canopy mortality, heavy manzanita/buckbrush fuel buildup, "
@@ -185,12 +203,23 @@ def verify_intake_portal_and_packager() -> None:
         assert body["matched_grant_id"] == "CCI-california-forest-improvement-program"
         assert "California Forest Improvement Program" in body["matched_grant_title"]
         assert int(body["probability_score"].split("/")[0]) >= 75
+        assert body["eligibility_tier"] == "Tier-1 Statutory Eligibility Match (4/4 Core Criteria Met)"
+        assert body["prospect_id"] == "CA-T1-002"
+        assert body["ein"] == "94-8271039"
         assert body["signer_full_name"] == "Elena Vance"
         assert body["signer_title"] == "Managing Co-Owner & Steward, Sierra Ridge Oak Woodland"
         assert body["signer_ip_address"] == "198.51.100.45"
         assert "ZYS-Vance-Verification/2.0" in body["signer_user_agent"]
         assert len(body["contract_sha256_hash"]) == 64
         intake_id = body["intake_id"]
+
+        # Wait briefly for background thread to write backup journal
+        time.sleep(0.4)
+        backup_journal = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
+        assert backup_journal.exists(), f"Expected backup journal at {backup_journal}"
+        journal_text = backup_journal.read_text(encoding="utf-8")
+        assert "Elena Vance" in journal_text
+        assert "CA-T1-002" in journal_text
 
         # 5. Verify GET /api/packet/latest, GET /api/packet/<id>, GET /api/agreement/latest, GET /api/agreement/<id>, GET /api/audits
         dl_resp = requests.get(f"{base_url}/api/packet/latest", timeout=5)
@@ -254,6 +283,8 @@ def verify_outputs(
     assert (root_dir / "render.yaml").exists(), "Missing Render deployment blueprint render.yaml"
     assert (root_dir / "start_public_tunnel.sh").exists(), "Missing Cloudflare tunnel script start_public_tunnel.sh"
     assert (root_dir / "legal_agreement.py").exists(), "Missing legal_agreement.py"
+    assert (root_dir / "notifier.py").exists(), "Missing notifier.py"
+    assert (root_dir / "followup_templates.md").exists(), "Missing followup_templates.md"
 
     with sqlite3.connect(str(db_path)) as conn:
         grant_cols = [r[1] for r in conn.execute("PRAGMA table_info(grants)").fetchall()]
@@ -304,6 +335,12 @@ def verify_outputs(
         assert row["county"] in ca_county_set, f"Non-California county {row['county']} in {row}"
         assert row["state"] == "CA"
         assert row["personalized_intake_url"].startswith("https://")
+        assert "/claim?prospect_id=" in row["personalized_intake_url"]
+        assert row["outreach_segment"] in ("Direct_Client", "Channel_Partner")
+        if row["category"] == "Land Trust":
+            assert row["outreach_segment"] == "Channel_Partner", f"Land Trust {row['organization_name']} not Channel_Partner"
+        else:
+            assert row["outreach_segment"] == "Direct_Client", f"{row['organization_name']} not Direct_Client"
         sc = int(row["probability_score"])
         assert sc >= 75, f"Candidate {row['organization_name']} has score {sc} < 75!"
         assert len(row["score_rationale"]) > 25, f"Missing 1-sentence score_rationale on {row['organization_name']}"
@@ -315,12 +352,24 @@ def verify_outputs(
     assert NO_CALL_NEXT_STEP in md_text, "Missing zero-call digital intake CTA in outreach_pitches.md"
     assert cfg.firm_name in md_text, "Missing ZYS GoldFields PRO LLC signature in outreach_pitches.md"
     assert cfg.firm_subtitle in md_text, "Missing Conservation & Agricultural Grant Advisory subtitle"
-    assert "Grant Win Probability Score" in md_text, "Missing Probability Score label in outreach_pitches.md"
-    assert "1-Sentence Score Rationale" in md_text, "Missing 1-Sentence Score Rationale in outreach_pitches.md"
+    assert "Tier-1 Statutory Eligibility Match (4/4 Core Criteria Met)" in md_text
+    assert "/claim?prospect_id=" in md_text
+    assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in md_text
+    assert "This is a commercial message (advertisement)" in md_text
+
+    followup_md = (root_dir / "followup_templates.md").read_text(encoding="utf-8")
+    assert "Day 4 Follow-Up Email" in followup_md
+    assert "Day 9 Follow-Up Email" in followup_md
+    assert "/claim?prospect_id=" in followup_md
+    assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in followup_md
+    assert "This is a commercial message (advertisement)" in followup_md
 
     signed_md = signed_agreement_path.read_text(encoding="utf-8")
     assert "California Uniform Electronic Transactions Act" in signed_md
     assert "2 CFR § 200.459" in signed_md
+    assert "Deferred Administrative Origination & Packaging Fee" in signed_md
+    assert "100% Waived if Grant is Not Awarded" in signed_md
+    assert "Registered Professional Forester" in signed_md
     assert "5 business days" in signed_md
     assert "1.5%" in signed_md
     assert "Sacramento County, California" in signed_md
@@ -352,6 +401,7 @@ def verify_outputs(
     print(f"  Signed Agreement:    {signed_agreement_path} ({len(signed_md):,} bytes — Elena Vance SHA-256 verified)")
     print(f"  Stage A Preview:     {preview_path} ({len(preview_path.read_text(encoding='utf-8')):,} bytes — Masked gate summary)")
     print(f"  Unlocked Dossier:    {packet_path} ({len(packet_md):,} bytes — Stage B unlocked with Notice of Representation)")
+    print(f"  Follow-up Templates: {root_dir / 'followup_templates.md'} ({len(followup_md):,} bytes — Day 4 & Day 9 sequences)")
 
 
 def main() -> None:
@@ -368,6 +418,9 @@ def main() -> None:
     if packets_dir.exists():
         for old_pkt in packets_dir.glob("*.md"):
             old_pkt.unlink()
+    backup_file = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
+    if backup_file.exists():
+        backup_file.unlink()
     verify_intake_portal_and_packager()
     verify_outputs()
 

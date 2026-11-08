@@ -24,6 +24,7 @@ import re
 import requests
 
 from db import DEFAULT_DB_PATH, fetch_all_grants, fetch_all_profiles, fetch_all_prospects
+from legal_agreement import render_can_spam_footer
 from models import (
     GrantMatch,
     GrantRecord,
@@ -31,6 +32,7 @@ from models import (
     MatcherConfig,
     ProbabilityScoreBreakdown,
     ProspectRecord,
+    eligibility_tier_label,
 )
 
 logging.basicConfig(
@@ -45,9 +47,10 @@ DEFAULT_LLM_MODEL = os.environ.get("OPENAI_MODEL", "")
 DEFAULT_LLM_API_KEY = os.environ.get("OPENAI_API_KEY", "local-no-key")
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent / "config.json"
 DEFAULT_OUTPUT_PATH = Path(__file__).resolve().parent / "outreach_pitches.md"
+DEFAULT_FOLLOWUP_PATH = Path(__file__).resolve().parent / "followup_templates.md"
 
 NO_CALL_NEXT_STEP = (
-    "Reply 'READY' to receive our 2-minute digital property intake link—no phone calls or meetings required."
+    "Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required)."
 )
 
 STATE_NAME_MAP = {
@@ -1009,6 +1012,7 @@ def match_single_profile(
     website: str = "",
     personalized_intake_url: str = "",
     enforce_min_score: bool = True,
+    outreach_segment: str = "Direct_Client",
 ) -> list[GrantMatch]:
     """Score, filter (>= min_probability_score), and rank active grants for a single candidate."""
     cfg = config or load_matcher_config()
@@ -1070,6 +1074,7 @@ def match_single_profile(
                 ein=ein,
                 website=website,
                 personalized_intake_url=personalized_intake_url,
+                outreach_segment=outreach_segment,
             )
         )
 
@@ -1140,6 +1145,7 @@ def match_prospects_to_grants(
         )
         if not filter_profiles_by_config([prof], cfg):
             continue
+        segment = getattr(p, "outreach_segment", "") or ("Channel_Partner" if p.category == "Land Trust" else "Direct_Client")
         top = match_single_profile(
             profile=prof,
             grants=grants,
@@ -1151,6 +1157,7 @@ def match_prospects_to_grants(
             website=p.website,
             personalized_intake_url=p.personalized_intake_url,
             enforce_min_score=True,
+            outreach_segment=segment,
         )
         if top:
             tier1_matches.append(top[0])
@@ -1207,33 +1214,39 @@ def generate_pitch_via_llm(
     config: MatcherConfig | None = None,
     base_url: str = DEFAULT_LLM_BASE_URL,
 ) -> str | None:
-    """Call local OpenAI-compatible /chat/completions endpoint and verify zero-call CTA + signature + score."""
+    """Call local OpenAI-compatible /chat/completions endpoint and verify zero-call CTA + signature + tier."""
     cfg = config or load_matcher_config()
-    fee_str = cfg.fee_label()
     p = match.profile
     g = match.grant
-    score_str = f"{match.score}/100"
+    tier_label = eligibility_tier_label(match.probability_breakdown, match.score)
+    segment = match.outreach_segment or ("Channel_Partner" if match.organization_category == "Land Trust" else "Direct_Client")
+    fee_name = cfg.fee_name()
+    magic_link = match.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+
     system_prompt = (
         f"You are writing a 1-page cold-outreach brief in Markdown on behalf of {cfg.firm_name} "
         f"({cfg.firm_subtitle}). Never offer phone calls, Zoom meetings, or walk-through calls. "
-        f"Explicitly include the Grant Win Probability Score ({score_str}) and 1-sentence Score Rationale, "
-        f"exact grant name, available funding, deadline, and {fee_str} contingent success fee "
-        f"($0 upfront). End with the exact Next Step: \"{NO_CALL_NEXT_STEP}\" and sign strictly as:\n"
-        f"{cfg.firm_name}\n{cfg.firm_subtitle}"
+        f"Explicitly include the Statutory Eligibility Assessment ('{tier_label}'), "
+        f"1-sentence underwriting rationale, exact grant name, available funding, deadline, and "
+        f"'{fee_name}' ($0 upfront, payable strictly from general operating non-grant funds). "
+        f"Include the 1-click magic link CTA pointing to {magic_link}. "
+        f"Sign strictly as:\n{cfg.firm_name}\n{cfg.firm_subtitle}"
     )
     user_prompt = (
         f"Organization / Landowner: {p.name}\n"
+        f"Outreach Segment: {segment} ({match.organization_category})\n"
         f"Property: {p.acreage:,.0f} acres in {p.county} County, {p.state} ({p.land_type})\n"
-        f"Grant Win Probability Score: {score_str}\n"
-        f"Score Rationale: {match.score_rationale}\n"
+        f"Statutory Eligibility: {tier_label}\n"
+        f"Underwriting Rationale: {match.score_rationale}\n"
         f"Exact Grant Name: {g.title}\n"
         f"Agency: {g.agency}\n"
         f"Available Funding: {g.funding_amount}\n"
         f"Deadline: {g.deadline}\n"
         f"Application Pathway: {match.application_pathway}\n"
         f"Recommended Scope: {match.recommended_project_focus}\n"
-        f"{fee_str} Success Fee Math: {match.fee_example}\n"
+        f"Commercial Fee: {fee_name} ({match.fee_example})\n"
         f"Official URL: {g.url}\n"
+        f"1-Click Magic Link: {magic_link}\n"
     )
     try:
         resp = requests.post(
@@ -1257,15 +1270,15 @@ def generate_pitch_via_llm(
         content = resp.json()["choices"][0]["message"]["content"].strip()
         required_checks = (
             g.title[:25].lower() in content.lower()
-            and score_str in content
-            and fee_str in content
-            and NO_CALL_NEXT_STEP in content
+            and "statutory eligibility" in content.lower()
             and cfg.firm_name in content
             and cfg.firm_subtitle in content
+            and magic_link in content
             and "walk-through call" not in content.lower()
         )
         if required_checks:
-            return _escape_md_dollars(content)
+            footer = render_can_spam_footer(cfg, recipient_email=match.contact_email, segment=segment)
+            return _escape_md_dollars(content + "\n\n" + footer)
     except Exception as exc:
         logger.warning("LLM generation failed (%s); using structured rule-based brief.", exc)
     return None
@@ -1284,23 +1297,22 @@ def generate_rule_based_pitch(
     pitch_index: int,
     config: MatcherConfig | None = None,
 ) -> str:
-    """Deterministic rule-based 1-page cold-outreach brief composer displaying Probability Score & Rationale."""
+    """Deterministic rule-based 1-page cold-outreach brief composer displaying Statutory Eligibility & Magic Link."""
     cfg = config or load_matcher_config()
-    fee_str = cfg.fee_label()
     p = match.profile
     g = match.grant
     owner_name, property_label = _extract_recipient_salutation(p.name)
-    breakdown_str = match.probability_breakdown.summary_tag() if match.probability_breakdown else "4-Pillar Verified"
+    tier_label = eligibility_tier_label(match.probability_breakdown, match.score)
+    segment = match.outreach_segment or ("Channel_Partner" if match.organization_category == "Land Trust" else "Direct_Client")
+    fee_name = cfg.fee_name()
+    magic_link = match.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+
     contact_row = (
-        f"| **Verified Contact & EIN** | `{match.contact_email}` · `{match.ein or 'Verified Landowner'}` |\n"
+        f"| **Verified Contact & EIN** | `{match.contact_email}` · `{match.ein or 'Verified Entity'}` |\n"
         if match.contact_email
         else ""
     )
-    intake_row = (
-        f"| **Pre-Filled Digital Intake** | [{match.personalized_intake_url}]({match.personalized_intake_url}) |\n"
-        if match.personalized_intake_url
-        else ""
-    )
+    intake_row = f"| **1-Click Pre-Filled Intake** | [{magic_link}]({magic_link}) |\n"
 
     co_sponsor_sentence = (
         f"Because your organization/parcel qualifies for **{match.application_pathway}**, our automated advisory desk "
@@ -1308,14 +1320,84 @@ def generate_rule_based_pitch(
         f"your local {p.county} County Resource Conservation District (RCD) or agency planner—entirely asynchronously."
     )
 
-    raw_brief = f"""## Tier-1 Outreach Brief #{pitch_index}: {p.name} ({match.score}/100)
+    one_click_cta = (
+        f"**Next Step (1-Click Verification & Packet Unlock):**\n"
+        f"{NO_CALL_NEXT_STEP}\n\n"
+        f"👉 **[Verify Parcel APN & Unlock Filing Dossier ({_table_safe(p.name)}) →]({magic_link})**\n\n"
+        f"*(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*"
+    )
+
+    can_spam_footer = render_can_spam_footer(cfg, recipient_email=match.contact_email, segment=segment)
+
+    if segment == "Channel_Partner":
+        letter_block = f"""### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
+
+**Subject:** Land Trust Co-Sponsorship & Grant Allocation Match for *{property_label}*: **{g.title}**
+
+Dear {owner_name} Conservation Team,
+
+Our California conservation grant underwriting desk evaluated **{p.name}** ({p.acreage:,.0f} acres in **{p.county} County, {p.state}**) and confirmed a **{tier_label}** for active public conservation and easement funding under the **{g.title}**, administered by **{g.agency}**.
+
+#### 1. Grant Funding, Deadline & Co-Sponsorship Assessment
+- **Exact Grant Opportunity:** {g.title}
+- **Available Funding:** **{g.funding_amount}**
+- **Application Deadline:** **{g.deadline}**
+- **Statutory Eligibility Assessment:** **{tier_label}**
+- **Co-Sponsorship Rationale:** {match.score_rationale}
+- **Recommended Project & Easement Scope:** {match.recommended_project_focus}
+
+#### 2. Turnkey Land Trust Partnership & Packaging — {fee_name} ($0 Upfront)
+Land trust staff time is heavily constrained during competitive grant cycles. Our automated advisory desk acts as an asynchronous technical packaging partner for your easement holders and member landowners:
+- **Zero Staff Overhead:** We prepare turnkey RCD co-sponsor memorandums, applicant parcel schedules, GIS mapping narratives, and budget engineering tables.
+- **$0 Upfront / 100% Waived if Not Awarded:** The landowner or applicant pays **$0** upfront. Our **{fee_name}** ({match.fee_example}) applies only upon verified award disbursement and is payable strictly from general non-grant funds (2 CFR § 200.459 compliance).
+- **Asynchronous Digital Coordination:** No meetings or phone calls required; all materials are staged digitally for your team's review.
+
+{one_click_cta}
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+    else:
+        letter_block = f"""### Cold-Outreach Letter (1-Page Tier-1 Brief)
+
+**Subject:** {tier_label} for *{property_label}* ({p.county} County): **{g.title}**
+
+Dear {owner_name} Stewardship Team,
+
+Our California conservation grant underwriting engine evaluated **{p.name}** ({p.acreage:,.0f} acres in **{p.county} County, {p.state}**) and confirmed a **{tier_label}** for active public conservation funding under the **{g.title}**, administered by **{g.agency}**.
+
+#### 1. Grant Funding, Deadline & Statutory Eligibility Assessment
+- **Exact Grant Opportunity:** {g.title}
+- **Available Funding:** **{g.funding_amount}**
+- **Application Deadline:** **{g.deadline}**
+- **Statutory Eligibility Assessment:** **{tier_label}**
+- **Statutory Underwriting Rationale:** {match.score_rationale}
+- **Recommended Project Scope:** {match.recommended_project_focus}
+
+#### 2. Turnkey Application Paperwork Offer — {fee_name} ($0 Upfront)
+Public conservation grants leave millions of dollars unclaimed each cycle because agency portals, GIS parcel mapping, technical scoring rubrics, and cost-share engineering require 35–60 hours of specialized preparation. **We handle 100% of the application paperwork from start to finish for a strictly deferred origination fee payable only from general non-grant operating funds:**
+- **$0 Upfront / 100% Waived if Not Awarded:** You pay **$0** for eligibility verification, project narrative drafting, budget engineering, and agency submission packaging. If grant funds are not awarded, our fee is 100% waived.
+- **Zero-Call Digital Workflow & RCD Coordination:** {co_sponsor_sentence}
+- **Strict Grant Compliance (2 CFR § 200.459):** Our **{fee_name}** ({match.fee_example}) is an administrative origination fee paid strictly from separate general operating funds upon grant award verification, and is never billed to or deducted from restricted public grant dollars.
+
+{one_click_cta}
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+
+    raw_brief = f"""## Tier-1 Outreach Brief #{pitch_index}: {p.name}
 
 | Field | Verified Tier-1 Opportunity Details |
 | :--- | :--- |
 | **Candidate & Location** | **{_table_safe(p.name)}** ({p.acreage:,.0f} acres — {p.county} County, {p.state}) |
-| **Category & Land Type** | {_table_safe(match.organization_category or 'Private Landowner')} — {_table_safe(p.land_type)} |
-{contact_row}| **Grant Win Probability Score** | **{match.score}/100** (`{breakdown_str}`) |
-| **1-Sentence Score Rationale** | {_table_safe(match.score_rationale)} |
+| **Category & Outreach Segment** | {_table_safe(match.organization_category or 'Private Landowner')} — `{segment}` |
+{contact_row}| **Statutory Eligibility Match** | **{tier_label}** |
+| **Statutory Underwriting Rationale** | {_table_safe(match.score_rationale)} |
 | **Exact Grant Name** | **{_table_safe(g.title)}** |
 | **Administering Agency** | {_table_safe(g.agency)} |
 | **Available Funding** | **{_table_safe(g.funding_amount)}** |
@@ -1323,33 +1405,7 @@ def generate_rule_based_pitch(
 | **Filing Pathway** | {_table_safe(match.application_pathway)} |
 {intake_row}| **Official Solicitation** | [{g.url}]({g.url}) |
 
-### Cold-Outreach Letter (1-Page Tier-1 Brief)
-
-**Subject:** Tier-1 Grant Eligibility (**{match.score}/100 Win Probability**) for *{property_label}* ({p.county} County): **{g.title}**
-
-Dear {owner_name} Stewardship Team,
-
-Our California conservation grant underwriting engine evaluated **{p.name}** ({p.acreage:,.0f} acres in **{p.county} County, {p.state}**) and assigned a **Tier-1 Grant Win Probability Score of {match.score}/100** for active public conservation funding under the **{g.title}**, administered by **{g.agency}**.
-
-#### 1. Grant Funding, Deadline & Win Probability Assessment
-- **Exact Grant Opportunity:** {g.title}
-- **Available Funding:** **{g.funding_amount}**
-- **Application Deadline:** **{g.deadline}**
-- **Grant Win Probability Score:** **{match.score}/100** (`{breakdown_str}`)
-- **Why You Have a High Chance of Winning:** {match.score_rationale}
-- **Recommended Project Scope:** {match.recommended_project_focus}
-
-#### 2. Turnkey Application Paperwork Offer — Contingent {fee_str} Success Fee ($0 Upfront)
-Public conservation grants leave millions of dollars unclaimed each cycle because agency portals, GIS parcel mapping, technical scoring rubrics, and cost-share engineering require 35–60 hours of specialized preparation. **We handle 100% of the application paperwork from start to finish for a strictly contingent {fee_str} success fee:**
-- **$0 Upfront / No-Win, No-Fee:** You pay **$0** for eligibility verification, project narrative drafting, budget engineering, and agency submission packaging.
-- **Zero-Call Digital Workflow & RCD Coordination:** {co_sponsor_sentence}
-- **Transparent {fee_str} Fee Structure:** Our **{fee_str} success fee** is earned *only* if and when grant funds are officially awarded to your project ({match.fee_example}).
-
-**Next Step:** {NO_CALL_NEXT_STEP}
-
-Sincerely,  
-**{cfg.firm_name}**  
-*{cfg.firm_subtitle}*
+{letter_block}
 """
     return _escape_md_dollars(raw_brief)
 
@@ -1363,12 +1419,12 @@ def build_outreach_markdown(
 ) -> str:
     """Assemble outreach_pitches.md ranked strictly from highest Probability Score to lowest (score >= 75)."""
     cfg = config or load_matcher_config()
-    fee_str = cfg.fee_label()
+    fee_name = cfg.fee_name()
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M %Z").strip()
     engine_desc = (
         f"Local OpenAI-Compatible LLM (`{DEFAULT_LLM_BASE_URL}`, model `{llm_model_used}`)"
         if llm_model_used
-        else f"4-Pillar Grant Award Probability Scoring Engine (`min_probability_score >= {cfg.min_probability_score}/100`)"
+        else f"4-Pillar Statutory Eligibility & Scoring Engine (`min_probability_score >= {cfg.min_probability_score}/100`)"
     )
     county_filter_label = (
         ", ".join(sorted(cfg.normalized_counties())).title()
@@ -1377,30 +1433,32 @@ def build_outreach_markdown(
     )
 
     ranking_rows = [
-        "| Rank | Candidate | County | Acres | Score | 1-Sentence Win Probability Rationale | Matched Grant |",
-        "| :---: | :--- | :--- | ---: | :---: | :--- | :--- |",
+        "| Rank | Candidate | Category | Segment | County | Acres | Score | Statutory Eligibility Match | Matched Grant |",
+        "| :---: | :--- | :--- | :---: | :--- | ---: | :---: | :--- | :--- |",
     ]
     for rank_idx, m in enumerate(matches, start=1):
+        tier_lbl = eligibility_tier_label(m.probability_breakdown, m.score)
         ranking_rows.append(
-            f"| {rank_idx} | **{_table_safe(m.profile.name)}** | {m.profile.county} | "
-            f"{m.profile.acreage:,.0f} | **{m.score}/100** | {_table_safe(m.score_rationale)} | "
-            f"{_table_safe(m.grant.title)} |"
+            f"| {rank_idx} | **{_table_safe(m.profile.name)}** | {_table_safe(m.organization_category or 'Private')} | "
+            f"`{m.outreach_segment}` | {m.profile.county} | {m.profile.acreage:,.0f} | **{m.score}/100** | "
+            f"{tier_lbl} | {_table_safe(m.grant.title)} |"
         )
 
     header_block = _escape_md_dollars(
         "\n".join(
             [
-                f"# {cfg.firm_name} — Tier-1 Conservation Grant Outreach Briefs (Score >= {cfg.min_probability_score}/100)",
+                f"# {cfg.firm_name} — Tier-1 Conservation Grant Outreach Briefs",
                 "",
                 f"- **Advisory Practice:** **{cfg.firm_name}** — *{cfg.firm_subtitle}*",
                 f"- **Generated:** `{timestamp_str}`",
-                f"- **Active Filter & Cutoff Config (`config.json`):** State=`{cfg.state or 'ANY'}`, Counties=`{county_filter_label}`, Acreage=`{cfg.min_acreage:g}–{cfg.max_acreage:g} ac`, Min Grant=`${cfg.min_grant_amount:,}`, **Min Win Probability=`{cfg.min_probability_score}/100`**",
+                f"- **Active Filter & Cutoff Config (`config.json`):** State=`{cfg.state or 'ANY'}`, Counties=`{county_filter_label}`, Acreage=`{cfg.min_acreage:g}–{cfg.max_acreage:g} ac`, Min Grant=`${cfg.min_grant_amount:,}`, **Internal Score Cutoff=`{cfg.min_probability_score}/100`**",
                 f"- **Active Grants Indexed in `grants.db`:** `{total_grants_count}` live federal & California Climate Investments opportunities",
                 f"- **Tier-1 Qualification Funnel:** `{len(matches)}` qualified Tier-1 candidates retained (`score >= {cfg.min_probability_score}/100`) out of `{evaluated_candidates_count}` evaluated leads (all `< {cfg.min_probability_score}/100` and statutory non-compliant leads excluded)",
                 f"- **Underwriting & Pitch Engine:** {engine_desc}",
-                f"- **Commercial Terms & Onboarding:** Contingent **{fee_str} success fee** ($0 upfront) · 100% digital intake (zero phone calls)",
+                f"- **Commercial Terms:** {fee_name} ($0 upfront) · 1-click digital magic link onboarding (zero phone calls)",
+                f"- **Compliance:** Governed by California UETA, Federal ESIGN Act, and 2 CFR § 200.459 · Full CAN-SPAM opt-out disclosures included",
                 "",
-                "## Executive Tier-1 Candidate Ranking (Highest Probability Score to Lowest)",
+                "## Internal Underwriting & Candidate Ranking (Not Client-Facing)",
                 "",
                 *ranking_rows,
                 "",
@@ -1423,14 +1481,143 @@ def build_outreach_markdown(
     return "\n".join(sections).rstrip() + "\n"
 
 
+def build_followup_markdown(
+    matches: list[GrantMatch],
+    config: MatcherConfig | None = None,
+) -> str:
+    """Generate followup_templates.md with Day 4 and Day 9 follow-up email templates for every candidate."""
+    cfg = config or load_matcher_config()
+    fee_name = cfg.fee_name()
+    timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M %Z").strip()
+
+    header = _escape_md_dollars(
+        f"# {cfg.firm_name} — Automated Follow-Up Email Sequences (Day 4 & Day 9)\n\n"
+        f"- **Advisory Practice:** **{cfg.firm_name}** — *{cfg.firm_subtitle}*\n"
+        f"- **Generated:** `{timestamp_str}`\n"
+        f"- **Coverage:** `{len(matches)}` qualified Tier-1 candidates\n"
+        f"- **Workflow Cadence:** Day 0 Initial Brief (`outreach_pitches.md`) → Day 4 Staged Packet Reminder → Day 9 Agency Cycle Urgency Notice\n"
+        f"- **Commercial Terms:** {fee_name} ($0 upfront, 100% waived if not awarded) · 1-click digital intake magic links\n\n"
+        f"---\n"
+    )
+
+    sections: list[str] = [header]
+
+    for idx, m in enumerate(matches, start=1):
+        p = m.profile
+        g = m.grant
+        owner_name, property_label = _extract_recipient_salutation(p.name)
+        tier_label = eligibility_tier_label(m.probability_breakdown, m.score)
+        segment = m.outreach_segment or ("Channel_Partner" if m.organization_category == "Land Trust" else "Direct_Client")
+        magic_link = m.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+        can_spam_footer = render_can_spam_footer(cfg, recipient_email=m.contact_email, segment=segment)
+
+        if segment == "Channel_Partner":
+            day4_body = f"""**Subject:** Re: Land Trust Co-Sponsorship & Staged Packet for *{property_label}* ({g.title})
+
+Dear {owner_name} Conservation Team,
+
+Following up on our brief regarding the **{g.title}** ({g.funding_amount}, deadline: {g.deadline}). 
+
+Our advisory desk has already pre-staged your Land Trust Co-Sponsorship & Partner Landowner Allocation dossier. You can review the easement parcel schedules, confirm your EIN/APN, and access your ready-to-file package below—no phone calls or meetings needed:
+
+👉 **[Access Staged Co-Sponsorship Packet ({_table_safe(p.name)}) →]({magic_link})**
+
+Reminder: Our {fee_name} applies only upon verified award receipt and is payable strictly from general non-grant funds (2 CFR § 200.459 compliant). Zero upfront cost to the land trust.
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+
+            day9_body = f"""**Subject:** Upcoming Solicitation Deadline Notice: {g.title} co-sponsorship for *{property_label}*
+
+Dear {owner_name} Conservation Team,
+
+A quick final note regarding the upcoming application cycle for **{g.title}** (closing **{g.deadline}**). 
+
+Agency review queues and local RCD co-sponsorship approvals require 10–14 days of advance coordination. If your land trust wishes to deploy our pre-staged co-sponsorship narrative and parcel schedules, your digital filing dossier remains ready for immediate 1-click execution:
+
+👉 **[Unlock & Finalize Co-Sponsorship Dossier ({_table_safe(p.name)}) →]({magic_link})**
+
+Zero upfront cost · 100% waived if not awarded · No phone calls or meetings required.
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+
+        else:
+            day4_body = f"""**Subject:** Re: {tier_label} — Pre-filled filing packet for *{property_label}* ({g.title})
+
+Dear {owner_name} Stewardship Team,
+
+Following up on our conservation underwriting brief for **{p.name}** regarding the **{g.title}** ({g.funding_amount}, deadline: {g.deadline}).
+
+We have already engineered your project budget and drafted your local Resource Conservation District (RCD) handoff narrative. You can verify your parcel APN, e-sign the advisory terms ($0 upfront, 100% waived if not awarded), and instantly unlock your complete agency packet below:
+
+👉 **[Verify Parcel APN & Access Staged Packet ({_table_safe(p.name)}) →]({magic_link})**
+
+Reminder: Our {fee_name} is payable strictly from general operating non-grant funds only upon verified award receipt. Zero upfront cost.
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+
+            day9_body = f"""**Subject:** Upcoming Solicitation Deadline Notice: {g.title} filing for *{property_label}*
+
+Dear {owner_name} Stewardship Team,
+
+A quick final notice regarding the open filing window for **{g.title}** (closing **{g.deadline}**). 
+
+Because County Resource Conservation District (RCD) technical coordination and RPF forestry consultations require advance review time, we recommend unlocking your filing dossier this week. Everything is pre-filled—you can review, e-sign, and download your turnkey submission package in under 2 minutes:
+
+👉 **[Verify Parcel APN & Unlock Filing Dossier ({_table_safe(p.name)}) →]({magic_link})**
+
+Zero upfront cost · 100% waived if not awarded · No phone calls or meetings required.
+
+Sincerely,  
+**{cfg.firm_name}**  
+*{cfg.firm_subtitle}*
+
+{can_spam_footer}"""
+
+        entry = f"""## Follow-Up Sequences #{idx}: {p.name} ({segment})
+
+| Field | Prospect Follow-Up Context |
+| :--- | :--- |
+| **Candidate** | **{_table_safe(p.name)}** ({p.county} County, {p.acreage:,.0f} acres) |
+| **Outreach Segment** | `{segment}` ({_table_safe(m.organization_category or 'Private Landowner')}) |
+| **Statutory Eligibility** | **{tier_label}** |
+| **Matched Grant** | **{_table_safe(g.title)}** (Deadline: **{_table_safe(g.deadline)}**) |
+| **Direct Magic Link** | [{magic_link}]({magic_link}) |
+
+### Day 4 Follow-Up Email (Staged Packet & APN Verification Reminder)
+
+{day4_body}
+
+### Day 9 Follow-Up Email (Urgency & Agency Filing Window Notice)
+
+{day9_body}
+"""
+        sections.append(_escape_md_dollars(entry))
+        sections.append("\n---\n\n")
+
+    return "\n".join(sections).rstrip() + "\n"
+
+
 def run_matcher(
     db_path: Path | str = DEFAULT_DB_PATH,
     output_path: Path | str = DEFAULT_OUTPUT_PATH,
     config_path: Path | str = DEFAULT_CONFIG_PATH,
     top_k_per_profile: int | None = None,
     total_evaluated_override: int | None = None,
+    followup_output_path: Path | str = DEFAULT_FOLLOWUP_PATH,
 ) -> tuple[list[GrantMatch], Path]:
-    """Rank Tier-1 candidates (score >= min_probability_score) highest-to-lowest and write outreach_pitches.md."""
+    """Rank Tier-1 candidates (score >= min_probability_score) highest-to-lowest, write outreach_pitches.md & followup_templates.md."""
     cfg = load_matcher_config(config_path)
     grants = fetch_all_grants(db_path=db_path)
     if not grants:
@@ -1479,6 +1666,17 @@ def run_matcher(
         out_file,
         len(markdown_doc),
     )
+
+    followup_doc = build_followup_markdown(matches=matches, config=cfg)
+    followup_file = Path(followup_output_path)
+    followup_file.write_text(followup_doc, encoding="utf-8")
+    logger.info(
+        "Generated %d Day 4 and Day 9 follow-up email sequences -> %s (%d bytes)",
+        len(matches),
+        followup_file,
+        len(followup_doc),
+    )
+
     return matches, out_file
 
 
@@ -1486,8 +1684,10 @@ if __name__ == "__main__":
     matched_list, out_md = run_matcher()
     print(f"\n=== Generated {len(matched_list)} Tier-1 Outreach Pitches in {out_md} ===")
     for i, m in enumerate(matched_list[:20], start=1):
+        lbl = eligibility_tier_label(m.probability_breakdown, m.score)
         print(
-            f"{i:2d}. [{m.score:3d}/100] {m.profile.name[:38]:38s} ({m.profile.county:14s}, {m.profile.acreage:5.0f} ac) -> {m.grant.title}"
+            f"{i:2d}. [{m.score:3d}/100 | {m.outreach_segment[:15]:15s}] {m.profile.name[:32]:32s} ({m.profile.county:12s}) -> {lbl}"
         )
     if len(matched_list) > 20:
         print(f"... plus {len(matched_list) - 20} additional Tier-1 briefs ranked in {out_md}.")
+

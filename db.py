@@ -85,6 +85,8 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
             ("signer_user_agent", "TEXT NOT NULL DEFAULT ''"),
             ("contract_sha256_hash", "TEXT NOT NULL DEFAULT ''"),
             ("signed_agreement_path", "TEXT NOT NULL DEFAULT ''"),
+            ("prospect_id", "TEXT NOT NULL DEFAULT ''"),
+            ("ein", "TEXT NOT NULL DEFAULT ''"),
         ]
         for col_name, col_ddl in new_intake_cols:
             if col_name not in intake_cols:
@@ -142,7 +144,8 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
                 score_breakdown TEXT NOT NULL DEFAULT '',
                 score_rationale TEXT NOT NULL DEFAULT '',
                 personalized_intake_url TEXT NOT NULL,
-                registry_source TEXT NOT NULL
+                registry_source TEXT NOT NULL,
+                outreach_segment TEXT NOT NULL DEFAULT 'Direct_Client'
             )
             """
         )
@@ -157,6 +160,7 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH) -> None:
             ("comatch_score", "INTEGER NOT NULL DEFAULT 0"),
             ("score_breakdown", "TEXT NOT NULL DEFAULT ''"),
             ("score_rationale", "TEXT NOT NULL DEFAULT ''"),
+            ("outreach_segment", "TEXT NOT NULL DEFAULT 'Direct_Client'"),
         ]
         for col_name, col_ddl in new_cols:
             if col_name not in existing_cols:
@@ -247,9 +251,10 @@ def insert_client_intake(
                 land_condition, project_goals, agreed_to_terms,
                 agreement_signed, signer_full_name, signer_title,
                 signature_timestamp_utc, signer_ip_address, signer_user_agent,
-                contract_sha256_hash, signed_agreement_path, submitted_at
+                contract_sha256_hash, signed_agreement_path, submitted_at,
+                prospect_id, ein
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 intake.name,
@@ -270,6 +275,8 @@ def insert_client_intake(
                 intake.contract_sha256_hash,
                 intake.signed_agreement_path,
                 ts,
+                intake.prospect_id,
+                intake.ein,
             ),
         )
         conn.commit()
@@ -342,7 +349,8 @@ def fetch_client_intake_by_id(
                    land_condition, project_goals, agreed_to_terms,
                    agreement_signed, signer_full_name, signer_title,
                    signature_timestamp_utc, signer_ip_address, signer_user_agent,
-                   contract_sha256_hash, signed_agreement_path, submitted_at
+                   contract_sha256_hash, signed_agreement_path, submitted_at,
+                   prospect_id, ein
             FROM client_intakes
             WHERE id = ?
             """,
@@ -467,7 +475,8 @@ def fetch_all_intakes(db_path: Path | str = DEFAULT_DB_PATH) -> list[ClientIntak
                    land_condition, project_goals, agreed_to_terms,
                    agreement_signed, signer_full_name, signer_title,
                    signature_timestamp_utc, signer_ip_address, signer_user_agent,
-                   contract_sha256_hash, signed_agreement_path, submitted_at
+                   contract_sha256_hash, signed_agreement_path, submitted_at,
+                   prospect_id, ein
             FROM client_intakes
             ORDER BY id DESC
             """
@@ -501,9 +510,9 @@ def upsert_prospects(
                 top_matched_grant, matched_grant_deadline,
                 probability_score, acreage_score, entity_score, ecological_score,
                 comatch_score, score_breakdown, score_rationale,
-                personalized_intake_url, registry_source
+                personalized_intake_url, registry_source, outreach_segment
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(prospect_id) DO UPDATE SET
                 organization_name = excluded.organization_name,
                 category = excluded.category,
@@ -528,7 +537,8 @@ def upsert_prospects(
                 score_breakdown = excluded.score_breakdown,
                 score_rationale = excluded.score_rationale,
                 personalized_intake_url = excluded.personalized_intake_url,
-                registry_source = excluded.registry_source
+                registry_source = excluded.registry_source,
+                outreach_segment = excluded.outreach_segment
             """,
             [
                 (
@@ -557,6 +567,7 @@ def upsert_prospects(
                     p.score_rationale,
                     p.personalized_intake_url,
                     p.registry_source,
+                    p.outreach_segment,
                 )
                 for p in rows
             ],
@@ -577,7 +588,7 @@ def fetch_all_prospects(db_path: Path | str = DEFAULT_DB_PATH) -> list[ProspectR
                    top_matched_grant, matched_grant_deadline,
                    probability_score, acreage_score, entity_score, ecological_score,
                    comatch_score, score_breakdown, score_rationale,
-                   personalized_intake_url, registry_source
+                   personalized_intake_url, registry_source, outreach_segment
             FROM california_prospects
             ORDER BY probability_score DESC, estimated_acreage DESC, organization_name ASC
             """

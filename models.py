@@ -14,6 +14,26 @@ def _clean_text(value: str) -> str:
     return re.sub(r"\s+", " ", unescaped).strip()
 
 
+class NotificationSettings(BaseModel):
+    """Non-secret admin notification & backup settings (secrets are read ONLY from environment variables).
+
+    Environment variable overrides (take precedence over config.json):
+      ADMIN_NOTIFICATION_EMAIL, NOTIFICATION_FROM_EMAIL, NOTIFICATION_PROVIDER (resend | smtp | none),
+      RESEND_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_USE_TLS,
+      BACKUP_WEBHOOK_URL, BACKUP_WEBHOOK_SECRET
+    """
+
+    provider: str = Field(default="auto", description="auto | resend | smtp | none")
+    admin_email: str = Field(default="", description="Admin inbox that receives every signed submission")
+    from_email: str = Field(default="", description="Verified sender address (Resend domain or SMTP mailbox)")
+    smtp_host: str = Field(default="")
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_use_tls: bool = Field(default=True)
+    backup_webhook_url: str = Field(default="", description="Persistent JSON backup endpoint (POST)")
+    notify_on_preview: bool = Field(default=True, description="Also back up Stage-A (unsigned) lead previews")
+    timeout_seconds: float = Field(default=12.0, gt=0, le=60)
+
+
 class MatcherConfig(BaseModel):
     """Configuration controlling matcher filters, fee structure, and firm signature."""
 
@@ -39,6 +59,15 @@ class MatcherConfig(BaseModel):
         default="https://zys-goldfields-intake.onrender.com",
         description="Public HTTPS URL for the Zero-Call Digital Client Intake Portal",
     )
+    firm_postal_address: str = Field(
+        default="",
+        description="Valid physical postal address required by CAN-SPAM (15 U.S.C. § 7704(a)(5)) in every email",
+    )
+    unsubscribe_email: str = Field(
+        default="",
+        description="Mailbox that receives opt-out requests (honored within 10 business days)",
+    )
+    notifications: NotificationSettings = Field(default_factory=NotificationSettings)
 
     def normalized_counties(self) -> set[str]:
         if isinstance(self.county, str):
@@ -50,6 +79,31 @@ class MatcherConfig(BaseModel):
         if float(self.success_fee_percent).is_integer():
             return f"{int(self.success_fee_percent)}%"
         return f"{self.success_fee_percent:g}%"
+
+    def fee_name(self) -> str:
+        """Client-facing name of the deferred, award-contingent fee."""
+        return (
+            f"{self.fee_label()} Deferred Administrative Origination & Packaging Fee "
+            "(100% Waived if Grant is Not Awarded)"
+        )
+
+
+def eligibility_tier_label(breakdown: "ProbabilityScoreBreakdown | None", score: int = 0) -> str:
+    """Translate the internal 0-100 score into client-facing statutory eligibility language.
+
+    A core criterion counts as "met" when it earns at least 60% of its pillar maximum.
+    """
+    if breakdown is None:
+        return "Tier-1 Statutory Eligibility Match" if score >= 75 else "Statutory Eligibility Review Pending"
+    pillars = (
+        (breakdown.acreage_threshold_pts, 30),
+        (breakdown.entity_eligibility_pts, 25),
+        (breakdown.ecological_priority_pts, 25),
+        (breakdown.scale_comatch_pts, 20),
+    )
+    met = sum(1 for pts, mx in pillars if pts >= 0.6 * mx)
+    tier = "Tier-1" if (breakdown.total_score >= 75 and not breakdown.hard_disqualified) else "Tier-2"
+    return f"{tier} Statutory Eligibility Match ({met}/4 Core Criteria Met)"
 
 
 class GrantRecord(BaseModel):
@@ -139,6 +193,7 @@ class GrantMatch(BaseModel):
     ein: str = Field(default="")
     website: str = Field(default="")
     personalized_intake_url: str = Field(default="")
+    outreach_segment: str = Field(default="Direct_Client")
 
 
 class ESignatureAuditRecord(BaseModel):
@@ -201,6 +256,8 @@ class ClientIntake(BaseModel):
     contract_sha256_hash: str = Field(default="", description="SHA-256 hash of the signed contract text")
     signed_agreement_path: str = Field(default="", description="Path to generated signed_advisory_agreement.md")
     submitted_at: Optional[str] = Field(default=None, description="ISO UTC submission timestamp")
+    prospect_id: str = Field(default="", description="Prospect ID when submitted via a /claim magic link")
+    ein: str = Field(default="", description="IRS EIN (optional; pre-filled from california_prospects.csv)")
 
     @field_validator("name", "email", "county", "state", "apn", "land_condition", "project_goals")
     @classmethod
@@ -256,6 +313,10 @@ class ProspectRecord(BaseModel):
     score_rationale: str = Field(default="", description="1-sentence rationale explaining win probability")
     personalized_intake_url: str = Field(default="")
     registry_source: str = Field(..., min_length=3)
+    outreach_segment: str = Field(
+        default="Direct_Client",
+        description="Channel_Partner (Land Trusts) | Direct_Client (Sanctuaries, Ranches, Farms)",
+    )
 
     @field_validator("contact_email")
     @classmethod
