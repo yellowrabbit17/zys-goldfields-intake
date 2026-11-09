@@ -486,17 +486,48 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
       border-radius: var(--radius-sm);
     }}
 
-    .esign-grid {{
+    .esign-signatory-attestation {{
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
+      background: #fff;
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
       margin-bottom: 14px;
     }}
 
     @media (max-width: 640px) {{
-      .esign-grid {{
+      .esign-signatory-attestation {{
         grid-template-columns: 1fr;
       }}
+    }}
+
+    .esign-sig-col {{
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }}
+
+    .esign-sig-label {{
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }}
+
+    .esign-sig-val {{
+      font-size: 0.92rem;
+      color: var(--ink-primary);
+      font-weight: 600;
+    }}
+
+    .esign-sig-val.empty {{
+      color: var(--ink-muted);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.84rem;
     }}
 
     .checkbox-row {{
@@ -742,7 +773,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     <main>
       <section class="sheet" aria-labelledby="form-heading">
         <div class="sheet-toolbar">
-          <h2 id="form-heading">1. Parcel &amp; Conservation Scope</h2>
+          <h2 id="form-heading">1. Landowner, Signer &amp; Parcel Intake</h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <a id="btn-repo-zip" href="/api/repo-archive.zip" download="zys-goldfields-intake.zip" class="btn-ghost" style="text-decoration:none;">
               Download GitHub Repo (.zip)
@@ -765,6 +796,16 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
             <div class="field-group">
               <label for="input-email">Email Address <span class="label-hint">(for dossier &amp; signed receipt)</span></label>
               <input type="email" id="input-email" name="email" required value="{html.escape(prefill_email)}" placeholder="name@domain.com" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-signer-name">Full Legal Name of Signer <span class="label-hint">(Required to Unlock Dossier)</span></label>
+              <input type="text" id="input-signer-name" name="signer_full_name" required placeholder="e.g., Elena Vance" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-signer-title">Title / Legal Capacity <span class="label-hint">(e.g., Managing Co-Owner, Executive Director)</span></label>
+              <input type="text" id="input-signer-title" name="signer_title" required placeholder="e.g., Managing Co-Owner &amp; Steward" />
             </div>
 
             <div class="field-group">
@@ -831,14 +872,14 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
             <div id="scrollable-agreement-box" class="scrollable-contract" tabindex="0" aria-label="Conservation Advisory and Origination Agreement">{sample_contract_escaped}</div>
 
             <div class="esign-box">
-              <div class="esign-grid">
-                <div class="field-group">
-                  <label for="input-signer-name">Full Legal Name of Signer <span class="label-hint">(Required to Unlock Dossier)</span></label>
-                  <input type="text" id="input-signer-name" name="signer_full_name" placeholder="e.g., Elena Vance" />
+              <div class="esign-signatory-attestation">
+                <div class="esign-sig-col">
+                  <span class="esign-sig-label">Authorized Electronic Signatory</span>
+                  <span id="esign-preview-name" class="esign-sig-val mono empty">(Enter Full Legal Name in Section 1 above)</span>
                 </div>
-                <div class="field-group">
-                  <label for="input-signer-title">Title / Legal Capacity <span class="label-hint">(e.g., Managing Co-Owner, Executive Director)</span></label>
-                  <input type="text" id="input-signer-title" name="signer_title" placeholder="e.g., Managing Co-Owner &amp; Steward" />
+                <div class="esign-sig-col">
+                  <span class="esign-sig-label">Title / Legal Capacity</span>
+                  <span id="esign-preview-title" class="esign-sig-val mono empty">(Enter Title / Capacity in Section 1 above)</span>
                 </div>
               </div>
 
@@ -846,7 +887,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
                 <input type="checkbox" id="checkbox-terms" name="agreed_to_terms" value="true" required />
                 <span class="terms-text">
                   <strong>I agree to the ZYS GoldFields PRO LLC Advisory Agreement.</strong>
-                  By typing my Full Legal Name and Title above and checking this box, I execute a legally binding
+                  By entering my Full Legal Name and Title in the intake form above and checking this box, I execute a legally binding
                   electronic signature under the California Uniform Electronic Transactions Act (UETA) and federal
                   ESIGN Act, agreeing to the <strong>{fee_name}</strong> paid strictly from
                   separate general operating non-grant funds (<strong>2 CFR § 200.459 compliant</strong>) within <strong>5 business
@@ -987,12 +1028,47 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     if (urlParams.get('acres')) {{
       document.getElementById('input-acreage').value = urlParams.get('acres');
     }}
+    if (urlParams.get('signer_name')) {{
+      document.getElementById('input-signer-name').value = urlParams.get('signer_name');
+    }}
+    if (urlParams.get('signer_title')) {{
+      document.getElementById('input-signer-title').value = urlParams.get('signer_title');
+    }}
     if (urlParams.get('condition')) {{
       document.getElementById('input-condition').value = urlParams.get('condition');
     }}
     if (urlParams.get('goals')) {{
       document.getElementById('input-goals').value = urlParams.get('goals');
     }}
+
+    const signerNameInput = document.getElementById('input-signer-name');
+    const signerTitleInput = document.getElementById('input-signer-title');
+    const esignPreviewName = document.getElementById('esign-preview-name');
+    const esignPreviewTitle = document.getElementById('esign-preview-title');
+
+    function syncEsignPreview() {{
+      if (!esignPreviewName || !esignPreviewTitle) return;
+      const nm = signerNameInput ? signerNameInput.value.trim() : '';
+      const ttl = signerTitleInput ? signerTitleInput.value.trim() : '';
+      if (nm) {{
+        esignPreviewName.textContent = nm;
+        esignPreviewName.classList.remove('empty');
+      }} else {{
+        esignPreviewName.textContent = '(Enter Full Legal Name in Section 1 above)';
+        esignPreviewName.classList.add('empty');
+      }}
+      if (ttl) {{
+        esignPreviewTitle.textContent = ttl;
+        esignPreviewTitle.classList.remove('empty');
+      }} else {{
+        esignPreviewTitle.textContent = '(Enter Title / Capacity in Section 1 above)';
+        esignPreviewTitle.classList.add('empty');
+      }}
+    }}
+
+    if (signerNameInput) signerNameInput.addEventListener('input', syncEsignPreview);
+    if (signerTitleInput) signerTitleInput.addEventListener('input', syncEsignPreview);
+    syncEsignPreview();
 
     prefillBtn.addEventListener('click', () => {{
       document.getElementById('input-name').value = 'Elena & Marcus Vance';
@@ -1010,6 +1086,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
       document.getElementById('checkbox-terms').checked = true;
       errorEl.className = 'alert-banner';
       errorEl.textContent = '';
+      syncEsignPreview();
     }});
 
     copyBtn.addEventListener('click', async () => {{
