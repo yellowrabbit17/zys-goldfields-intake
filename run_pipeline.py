@@ -356,6 +356,7 @@ def verify_outputs(
     assert "/claim?prospect_id=" in md_text
     assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in md_text
     assert "This is a commercial message (advertisement)" in md_text
+    assert "8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624" in md_text
 
     followup_md = (root_dir / "followup_templates.md").read_text(encoding="utf-8")
     assert "Day 4 Follow-Up Email" in followup_md
@@ -363,6 +364,7 @@ def verify_outputs(
     assert "/claim?prospect_id=" in followup_md
     assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in followup_md
     assert "This is a commercial message (advertisement)" in followup_md
+    assert "8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624" in followup_md
 
     signed_md = signed_agreement_path.read_text(encoding="utf-8")
     assert "California Uniform Electronic Transactions Act" in signed_md
