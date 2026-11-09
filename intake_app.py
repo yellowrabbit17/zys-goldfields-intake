@@ -1596,19 +1596,27 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             return True
         return False
 
-    def _send_json(self, status: int, payload: dict[str, Any]) -> None:
+    def _send_json(self, status: int, payload: dict[str, Any], no_cache: bool = True) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        if no_cache:
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_html(self, status: int, html_body: str) -> None:
+    def _send_html(self, status: int, html_body: str, no_cache: bool = True) -> None:
         body = html_body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        if no_cache:
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
         self.end_headers()
         self.wfile.write(body)
 
@@ -1618,24 +1626,33 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/markdown; charset=utf-8")
         self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.end_headers()
         self.wfile.write(data)
 
     def do_HEAD(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/healthz", "/claim"):
+        if parsed.path in ("/", "/index.html", "/healthz", "/claim", "/intake_portal.html"):
             self.send_response(HTTPStatus.OK)
             if parsed.path == "/healthz":
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.send_header("Content-Length", "3")
             else:
                 self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
             self.end_headers()
             return
 
         if parsed.path == "/api/health":
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             return
 
@@ -1644,7 +1661,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html"):
+        if parsed.path in ("/", "/index.html", "/intake_portal.html"):
             self._send_html(HTTPStatus.OK, render_portal_html())
             return
 
@@ -1711,6 +1728,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "followup_templates.md",
                 "grants.db",
                 "intake_app.py",
+                "intake_portal.html",
                 "legal_agreement.py",
                 "matcher.py",
                 "models.py",
@@ -1889,9 +1907,21 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})
 
 
+def save_portal_static_html(output_path: Path | None = None) -> Path:
+    """Render and save the static intake_portal.html file."""
+    target = output_path or (Path(__file__).resolve().parent / "intake_portal.html")
+    html_content = render_portal_html()
+    target.write_text(html_content, encoding="utf-8")
+    return target
+
+
 def run_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
     """Start the ThreadingHTTPServer for the digital intake & e-signature portal."""
     ensure_database_ready(DEFAULT_DB_PATH)
+    try:
+        save_portal_static_html()
+    except Exception as exc:
+        logger.warning("Could not auto-write static intake_portal.html: %s", exc)
     server = ThreadingHTTPServer((host, port), IntakePortalHandler)
     logger.info("ZYS GoldFields PRO Intake & E-Signature Portal listening on http://%s:%d", host, port)
     try:
@@ -1906,5 +1936,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ZYS GoldFields PRO Zero-Call Digital Client Intake Portal.")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Bind host (default 0.0.0.0)")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Bind port (defaults to $PORT or 8080)")
+    parser.add_argument("--build-html", action="store_true", help="Generate static intake_portal.html and exit")
     args = parser.parse_args()
-    run_server(host=args.host, port=args.port)
+    if args.build_html:
+        out = save_portal_static_html()
+        print(f"Generated {out}")
+    else:
+        run_server(host=args.host, port=args.port)

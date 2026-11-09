@@ -47,6 +47,10 @@ def verify_intake_portal_and_packager() -> None:
             timeout=5,
         )
         assert home_resp.status_code == 200
+        assert "no-cache" in home_resp.headers.get("Cache-Control", "")
+        assert "no-store" in home_resp.headers.get("Cache-Control", "")
+        assert home_resp.headers.get("Pragma") == "no-cache"
+        assert home_resp.headers.get("Expires") == "0"
         for expected_token in (
             "input-name",
             "input-email",
@@ -80,8 +84,30 @@ def verify_intake_portal_and_packager() -> None:
         # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001
         claim_resp = requests.get(f"{base_url}/claim?prospect_id=CA-T1-001", timeout=5)
         assert claim_resp.status_code == 200, f"Expected 200 on /claim, got {claim_resp.status_code}"
+        assert "no-cache" in claim_resp.headers.get("Cache-Control", "")
+        assert "no-store" in claim_resp.headers.get("Cache-Control", "")
         for token in ("Paicines Ranch", "Pre-Screened Grant Allocation", "CA-T1-001", "83-3255248", "San Benito"):
             assert token in claim_resp.text, f"Missing token '{token}' in /claim?prospect_id=CA-T1-001 HTML"
+
+        # 1c. Verify /intake_portal.html direct routing and no-cache headers
+        portal_resp = requests.get(f"{base_url}/intake_portal.html", timeout=5)
+        assert portal_resp.status_code == 200, f"Expected 200 on /intake_portal.html, got {portal_resp.status_code}"
+        assert "no-cache" in portal_resp.headers.get("Cache-Control", "")
+        assert "input-signer-name" in portal_resp.text
+        assert "input-signer-title" in portal_resp.text
+
+        # 1d. Verify HEAD requests on /, /claim, and /intake_portal.html emit no-cache headers
+        for path in ("/", "/claim", "/intake_portal.html"):
+            h_resp = requests.head(f"{base_url}{path}", timeout=5)
+            assert h_resp.status_code == 200, f"Expected 200 on HEAD {path}, got {h_resp.status_code}"
+            assert "no-cache" in h_resp.headers.get("Cache-Control", ""), f"Missing no-cache header on HEAD {path}"
+
+        # 1e. Verify root intake_portal.html file exists on disk and contains aligned fields
+        static_html_file = Path(__file__).resolve().parent / "intake_portal.html"
+        assert static_html_file.exists(), f"Static file {static_html_file} does not exist"
+        static_html_text = static_html_file.read_text(encoding="utf-8")
+        assert "input-signer-name" in static_html_text
+        assert "input-signer-title" in static_html_text
 
         # 1c. Verify GET /api/health and GET /api/prospects
         health_resp = requests.get(f"{base_url}/api/health", timeout=5)

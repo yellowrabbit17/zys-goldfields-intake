@@ -18,7 +18,7 @@
 | **Executed By (Full Legal Name)** | **`/s/ Elena Vance`** |
 | **Signer Title / Capacity** | **Managing Co-Owner & Steward, Sierra Ridge Oak Woodland** |
 | **Affirmative Consent Attestation** | `[x]` *"I agree to the ZYS GoldFields PRO LLC Advisory Agreement."* |
-| **UTC Execution Timestamp** | `2026-11-09T02:14:53Z` |
+| **UTC Execution Timestamp** | `2026-11-09T16:58:42Z` |
 | **Client IP Address** | `198.51.100.45` |
 | **Browser User-Agent String** | `Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 ZYS-Vance-Verification/2.0` |
 | **Matched Grant Program** | **California Forest Improvement Program** (`CCI-california-forest-improvement-program`) |
@@ -67,6 +67,6 @@ By typing their Full Legal Name and Title, checking "I agree to the ZYS GoldFiel
 
 - **CLIENT / AUTHORIZED SIGNATORY:** `/s/ Elena Vance` (Managing Co-Owner & Steward, Sierra Ridge Oak Woodland)
 - **LANDOWNER / ENTITY:** Elena & Marcus Vance (`APN 089-140-027-000`, El Dorado County, CA)
-- **EXECUTED TIMESTAMP (UTC):** `2026-11-09T02:14:53Z`
+- **EXECUTED TIMESTAMP (UTC):** `2026-11-09T16:58:42Z`
 - **CRYPTOGRAPHIC SHA-256 HASH:** `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b`
 - **ADVISOR COUNTER-ACCEPTANCE:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*

@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZYS GoldFields PRO LLC — Digital Property Grant Intake &amp; California UETA E-Signature Portal</title>
+  <meta name="description" content="2-minute zero-call digital property intake and California UETA / federal ESIGN e-signature portal for ZYS GoldFields PRO LLC (Conservation & Agricultural Grant Advisory)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-paper: hsl(40, 28%, 96%);
+      --surface-sheet: hsl(40, 38%, 99%);
+      --surface-subtle: hsl(40, 22%, 93%);
+      --ink-primary: hsl(154, 36%, 14%);
+      --ink-secondary: hsl(152, 14%, 33%);
+      --ink-muted: hsl(150, 10%, 46%);
+      --accent-pine: hsl(154, 42%, 22%);
+      --accent-pine-hover: hsl(154, 46%, 17%);
+      --accent-ochre: hsl(38, 64%, 36%);
+      --border-stone: hsl(38, 18%, 83%);
+      --border-focus: hsl(154, 42%, 28%);
+      --danger-bg: hsl(4, 68%, 96%);
+      --danger-ink: hsl(4, 62%, 34%);
+      --warning-bg: hsl(38, 86%, 94%);
+      --warning-ink: hsl(32, 78%, 26%);
+      --success-bg: hsl(146, 36%, 94%);
+      --success-ink: hsl(152, 48%, 20%);
+      --shadow-sheet: 0 1px 2px hsla(154, 30%, 12%, 0.04), 0 12px 32px -8px hsla(154, 28%, 12%, 0.08);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-shell {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 36px 20px 72px;
+    }
+
+    header.masthead {
+      border-bottom: 1px solid var(--border-stone);
+      padding-bottom: 22px;
+      margin-bottom: 28px;
+    }
+
+    .firm-lockup {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .firm-name {
+      font-family: 'Newsreader', Georgia, serif;
+      font-weight: 600;
+      font-size: 1.18rem;
+      letter-spacing: 0.02em;
+      color: var(--ink-primary);
+    }
+
+    .firm-practice {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-ochre);
+    }
+
+    h1 {
+      font-family: 'Newsreader', Georgia, serif;
+      font-weight: 500;
+      font-size: clamp(1.8rem, 3.5vw, 2.35rem);
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+      margin: 0 0 10px;
+      color: var(--ink-primary);
+    }
+
+    .lead-copy {
+      margin: 0;
+      color: var(--ink-secondary);
+      max-width: 68ch;
+      font-size: 0.96rem;
+    }
+
+    .assurance-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-stone);
+      font-size: 0.82rem;
+      color: var(--ink-secondary);
+    }
+
+    .assurance-strip span strong {
+      color: var(--ink-primary);
+      font-weight: 600;
+    }
+
+    .sheet {
+      background: var(--surface-sheet);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sheet);
+      padding: clamp(22px, 4vw, 36px);
+    }
+
+    .sheet-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-stone);
+    }
+
+    .sheet-toolbar h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border-stone);
+      color: var(--ink-secondary);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface-subtle);
+      color: var(--ink-primary);
+      border-color: var(--ink-muted);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 18px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+    }
+
+    .label-hint {
+      font-weight: 400;
+      color: var(--ink-muted);
+      font-size: 0.77rem;
+      margin-left: 4px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      background-color: #fff;
+      color: var(--ink-primary);
+      font-family: inherit;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input.mono-input {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.87rem;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px hsla(154, 42%, 28%, 0.12);
+    }
+
+    .agreement-section {
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border-stone);
+    }
+
+    .agreement-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .agreement-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ink-primary);
+    }
+
+    .agreement-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.73rem;
+      color: var(--accent-pine);
+      background: var(--success-bg);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .compliance-highlights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .compliance-pill {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+      line-height: 1.45;
+    }
+
+    .compliance-pill strong {
+      display: block;
+      color: var(--ink-primary);
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }
+
+    .scrollable-contract {
+      background: #fff;
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: var(--ink-primary);
+      margin-bottom: 16px;
+    }
+
+    .esign-box {
+      padding: 18px;
+      background-color: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+    }
+
+    .esign-signatory-attestation {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      background: #fff;
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .esign-signatory-attestation {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .esign-sig-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .esign-sig-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .esign-sig-val {
+      font-size: 0.92rem;
+      color: var(--ink-primary);
+      font-weight: 600;
+    }
+
+    .esign-sig-val.empty {
+      color: var(--ink-muted);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.84rem;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      padding-top: 6px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 3px;
+      accent-color: var(--accent-pine);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .terms-text {
+      font-size: 0.85rem;
+      color: var(--ink-secondary);
+      line-height: 1.52;
+    }
+
+    .terms-text strong {
+      color: var(--ink-primary);
+    }
+
+    .submit-row {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1.45fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 680px) {
+      .submit-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px 18px;
+      background-color: var(--accent-pine);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background-color 0.16s ease, transform 0.08s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-pine-hover);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 13px 16px;
+      background-color: #fff;
+      color: var(--ink-primary);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-subtle);
+      border-color: var(--ink-muted);
+    }
+
+    .btn-primary:disabled,
+    .btn-secondary:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
+    .alert-banner {
+      display: none;
+      padding: 12px 15px;
+      border-radius: var(--radius-sm);
+      font-size: 0.87rem;
+      margin-top: 16px;
+    }
+
+    .alert-banner.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger-ink);
+      border: 1px solid hsla(4, 62%, 34%, 0.25);
+    }
+
+    .confirmation-panel {
+      display: none;
+      margin-top: 28px;
+      background: var(--surface-sheet);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sheet);
+      padding: clamp(22px, 4vw, 34px);
+    }
+
+    .confirmation-panel.visible {
+      display: block;
+    }
+
+    .status-header {
+      background: var(--success-bg);
+      color: var(--success-ink);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .status-header.locked {
+      background: var(--warning-bg);
+      color: var(--warning-ink);
+      border: 1px solid hsla(32, 78%, 26%, 0.25);
+    }
+
+    .summary-dl {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+      gap: 14px;
+      margin: 0 0 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-stone);
+    }
+
+    .summary-item dt {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      margin-bottom: 3px;
+    }
+
+    .summary-item dd {
+      margin: 0;
+      font-weight: 600;
+      font-size: 0.91rem;
+      color: var(--ink-primary);
+      word-break: break-word;
+    }
+
+    .summary-item dd.mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+    }
+
+    .audit-strip {
+      display: none;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      color: var(--ink-secondary);
+      line-height: 1.55;
+    }
+
+    .audit-strip.visible {
+      display: block;
+    }
+
+    .packet-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-download {
+      display: inline-block;
+      text-decoration: none;
+      background: var(--accent-pine);
+      color: #fff;
+      padding: 9px 15px;
+      border-radius: var(--radius-sm);
+      font-size: 0.83rem;
+      font-weight: 600;
+    }
+
+    .btn-download.secondary {
+      background: hsl(38, 64%, 32%);
+    }
+
+    .packet-preview {
+      background: hsl(40, 20%, 97%);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      max-height: 440px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      color: var(--ink-primary);
+    }
+
+    footer.site-footer {
+      margin-top: 34px;
+      text-align: center;
+      font-size: 0.79rem;
+      color: var(--ink-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="masthead">
+      <div class="firm-lockup">
+        <span class="firm-name">ZYS GoldFields PRO LLC</span>
+        <span class="firm-practice">Conservation & Agricultural Grant Advisory</span>
+      </div>
+      <h1>Digital Property Grant Intake &amp; E-Signature</h1>
+      <p class="lead-copy">
+        Complete this 2-minute property intake to preview your matched conservation grant &amp; engineered
+        budget, and e-sign the California UETA / ESIGN Advisory Agreement to unlock your complete County
+        Resource Conservation District (RCD) filing dossier—100% online with zero phone calls.
+      </p>
+      <div class="assurance-strip">
+        <span><strong>$0 Upfront Cost</strong> · Strictly 100% Waived if Not Awarded</span>
+        <span><strong>2 CFR § 200.459 Compliant</strong> · Paid Strictly From Separate General Funds Upon Award</span>
+        <span><strong>California UETA &amp; ESIGN Audit Trail</strong> · Cryptographic SHA-256 Hash</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="sheet" aria-labelledby="form-heading">
+        <div class="sheet-toolbar">
+          <h2 id="form-heading">1. Landowner, Signer &amp; Parcel Intake</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a id="btn-repo-zip" href="/api/repo-archive.zip" download="zys-goldfields-intake.zip" class="btn-ghost" style="text-decoration:none;">
+              Download GitHub Repo (.zip)
+            </a>
+            <button type="button" id="btn-prefill-vance" class="btn-ghost">
+              Load Sample Parcel &amp; Signer (Elena &amp; Marcus Vance — El Dorado 45 ac)
+            </button>
+          </div>
+        </div>
+
+        
+
+        <form id="intake-form" action="/submit" method="post" novalidate>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="input-name">Landowner / Entity Name</label>
+              <input type="text" id="input-name" name="name" required value="" placeholder="e.g., Elena &amp; Marcus Vance" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-email">Email Address <span class="label-hint">(for dossier &amp; signed receipt)</span></label>
+              <input type="email" id="input-email" name="email" required value="" placeholder="name@domain.com" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-signer-name">Full Legal Name of Signer <span class="label-hint">(Required to Unlock Dossier)</span></label>
+              <input type="text" id="input-signer-name" name="signer_full_name" required placeholder="e.g., Elena Vance" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-signer-title">Title / Legal Capacity <span class="label-hint">(e.g., Managing Co-Owner, Executive Director)</span></label>
+              <input type="text" id="input-signer-title" name="signer_title" required placeholder="e.g., Managing Co-Owner &amp; Steward" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-county">California County</label>
+              <input type="text" id="input-county" name="county" list="ca-counties" required value="" placeholder="e.g., El Dorado" />
+              <datalist id="ca-counties">
+                <option value="Alameda"></option><option value="Alpine"></option><option value="Amador"></option><option value="Butte"></option><option value="Calaveras"></option><option value="Colusa"></option><option value="Contra Costa"></option><option value="Del Norte"></option><option value="El Dorado"></option><option value="Fresno"></option><option value="Glenn"></option><option value="Humboldt"></option><option value="Imperial"></option><option value="Inyo"></option><option value="Kern"></option><option value="Kings"></option><option value="Lake"></option><option value="Lassen"></option><option value="Los Angeles"></option><option value="Madera"></option><option value="Marin"></option><option value="Mariposa"></option><option value="Mendocino"></option><option value="Merced"></option><option value="Modoc"></option><option value="Mono"></option><option value="Monterey"></option><option value="Napa"></option><option value="Nevada"></option><option value="Orange"></option><option value="Placer"></option><option value="Plumas"></option><option value="Riverside"></option><option value="Sacramento"></option><option value="San Benito"></option><option value="San Bernardino"></option><option value="San Diego"></option><option value="San Francisco"></option><option value="San Joaquin"></option><option value="San Luis Obispo"></option><option value="San Mateo"></option><option value="Santa Barbara"></option><option value="Santa Clara"></option><option value="Santa Cruz"></option><option value="Shasta"></option><option value="Sierra"></option><option value="Siskiyou"></option><option value="Solano"></option><option value="Sonoma"></option><option value="Stanislaus"></option><option value="Sutter"></option><option value="Tehama"></option><option value="Trinity"></option><option value="Tulare"></option><option value="Tuolumne"></option><option value="Ventura"></option><option value="Yolo"></option><option value="Yuba"></option>
+              </datalist>
+            </div>
+
+            <div class="field-group">
+              <label for="input-ein">Employer Identification Number (EIN / Tax ID)</label>
+              <input type="text" id="input-ein" name="ein" class="mono-input" value="" placeholder="e.g., 94-1234567" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-apn">Parcel APN Number</label>
+              <input type="text" id="input-apn" name="apn" class="mono-input" required placeholder="e.g., 089-140-027-000" />
+            </div>
+
+            <div class="field-group">
+              <label for="input-acreage">Total Parcel Acreage</label>
+              <input type="number" id="input-acreage" name="acreage" class="mono-input" min="1" max="100000" step="0.1" required value="" placeholder="e.g., 45" />
+            </div>
+
+            <input type="hidden" id="input-prospect-id" name="prospect_id" value="" />
+
+            <div class="field-group field-full">
+              <label for="input-condition">Current Land Condition</label>
+              <textarea id="input-condition" name="land_condition" required placeholder="Describe existing vegetation, oak/forest mortality, brush fuel load, streambank/riparian condition, or soil erosion..."></textarea>
+            </div>
+
+            <div class="field-group field-full">
+              <label for="input-goals">Project Goals</label>
+              <textarea id="input-goals" name="project_goals" required placeholder="Describe desired improvements: reforestation, RPF forest management plan, fuels thinning, riparian culvert replacement, solar irrigation, or conservation easement..."></textarea>
+            </div>
+          </div>
+
+          <div class="agreement-section">
+            <div class="agreement-header">
+              <h3>2. Conservation Advisory &amp; Origination Agreement</h3>
+              <span class="agreement-badge">CA-UETA-ESIGN-2026.2 · Cal. Civ. Code § 1633.1 / 15 U.S.C. § 7001</span>
+            </div>
+
+            <div class="compliance-highlights">
+              <div class="compliance-pill">
+                <strong>2 CFR § 200.459 Compliance</strong>
+                7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded) applies only upon verified award receipt, payable strictly from Client's separate general/operating funds—never deducted from restricted grant funds.
+              </div>
+              <div class="compliance-pill">
+                <strong>Payment Trigger &amp; 5-Day Settlement</strong>
+                Invoiced upon official Agency Award Notice (or RCD Grant Agreement), payable within 5 business days of initial tranche disbursement ($0 upfront).
+              </div>
+              <div class="compliance-pill">
+                <strong>CAL FIRE RPF &amp; RCD Coordination</strong>
+                Forester and RCD technical coordination conducted under applicable professional standards; awards remain within sole agency discretion.
+              </div>
+              <div class="compliance-pill">
+                <strong>Remedies &amp; Sacramento Venue</strong>
+                1.5% monthly late fee after 5 business days; exclusive venue in Sacramento County, CA with prevailing-party attorney fees (Cal. Civ. Code § 1717).
+              </div>
+            </div>
+
+            <div id="scrollable-agreement-box" class="scrollable-contract" tabindex="0" aria-label="Conservation Advisory and Origination Agreement">CONSERVATION ADVISORY &amp; ORIGINATION AGREEMENT
+Document Version: CA-UETA-ESIGN-2026.2
+Advisory Firm: ZYS GoldFields PRO LLC (Conservation &amp; Agricultural Grant Advisory)
+Governing Statutes: California Uniform Electronic Transactions Act (Cal. Civ. Code § 1633.1 et seq.); Federal ESIGN Act (15 U.S.C. § 7001 et seq.); Federal Uniform Guidance (2 CFR § 200.459)
+
+1. PARTIES &amp; PROPERTY IDENTIFICATION
+This Conservation Advisory &amp; Origination Agreement (&quot;Agreement&quot;) is entered into by and between ZYS GoldFields PRO LLC (Conservation &amp; Agricultural Grant Advisory) (&quot;Advisor&quot;) and [Landowner / Entity Name Entered Above] ([Client Email Entered Above]) (&quot;Client&quot;), owner or authorized steward of real property located in [California County Entered Above] County, CA, identified as Assessor&#x27;s Parcel Number (APN) [Parcel APN Entered Above] comprising approximately 45 acres (&quot;Property&quot;), in connection with conservation grant eligibility screening and application packaging for [Matched Conservation / Agricultural Grant Program] (Estimated Grant Request: $30,375).
+
+2. SCOPE OF ORIGINATION &amp; TECHNICAL PACKAGING SERVICES (&quot;SIGN-TO-UNLOCK&quot; WORK PRODUCT)
+Advisor provides conservation grant eligibility screening, multi-benefit project narrative drafting, preliminary line-item cost-share budget estimates, and asynchronous coordination packaging for the County Resource Conservation District (RCD), USDA Natural Resources Conservation Service (NRCS), and the administering agency. Client acknowledges that Advisor&#x27;s grant selection, solicitation routing, budget estimates, and RCD Co-Sponsor Memorandum constitute proprietary work product unlocked upon execution of this Agreement. Client agrees not to circumvent Advisor by submitting, adapting, or filing Advisor&#x27;s unlocked narrative, solicitation routing, or RCD handoff dossier directly or through any third party without satisfying the deferred fee obligation herein.
+
+3. FEDERAL &amp; STATE GRANT COMPLIANCE CLAUSE (2 CFR § 200.459 — GENERAL NON-GRANT FUNDS ONLY)
+Client and Advisor expressly agree that the 7% Deferred Administrative Origination &amp; Packaging Fee (100% Waived if Grant is Not Awarded) is a private administrative origination and packaging fee payable solely from Client&#x27;s general, operating, or personal non-grant funds, and is NOT billed to, charged against, budgeted in, reimbursed by, or deducted from any restricted federal or state grant funds. Advisor&#x27;s fee shall not appear as a line item in any agency grant budget. Consistent with federal Uniform Guidance (2 CFR § 200.459 — Professional Service Costs) and California Climate Investments / state conservation grant guidelines, every line item in the agency grant budget shall represent eligible conservation, forestry, habitat, and technical implementation costs only.
+
+4. 7% DEFERRED ADMINISTRATIVE ORIGINATION &amp; PACKAGING FEE — PAYMENT TRIGGERS &amp; REMEDIES
+(a) $0 Upfront; 100% Waived if Grant is Not Awarded: Client pays $0 upfront for eligibility screening, narrative drafting, budget estimates, and RCD handoff packaging. If no conservation grant is awarded for the Property, the fee is waived in full and Client owes Advisor $0.
+(b) Fee Calculation &amp; Invoice Trigger: Upon official Agency Award Notice (or execution of the County RCD / Agency Grant Agreement or landowner cost-share contract for the Property, whichever occurs first), Advisor shall invoice the Deferred Administrative Origination &amp; Packaging Fee equal to 7% of the gross approved grant award amount (estimated at $2,126 based on a $30,375 award).
+(c) Payment Due Date (5 Business Days): The fee is payable in full from Client&#x27;s general non-grant funds within five (5) business days of initial grant tranche disbursement (or execution of the funding/reimbursement disbursement authorization).
+(d) Late Fee, Venue &amp; Prevailing-Party Attorneys&#x27; Fees: Any balance unpaid after the 5-business-day payment window shall accrue a late charge of 1.5% per month (18.0% per annum, or the maximum rate permitted under California law, whichever is less). This Agreement shall be governed by and construed under the laws of the State of California, with exclusive jurisdiction and venue vested in the state and federal courts located in Sacramento County, California. In any action or proceeding arising out of or relating to this Agreement or collection of the fee, the prevailing party shall recover its reasonable attorneys&#x27; fees, court costs, and collection expenses pursuant to California Civil Code § 1717.
+
+5. CAL FIRE RPF, RCD &amp; AGENCY COORDINATION DISCLOSURE
+(a) Independent Packaging Consultant: Advisor is an independent private grant-packaging consultant. Advisor is NOT a Registered Professional Forester (RPF) licensed under the California Professional Foresters Law (Cal. Pub. Resources Code § 750 et seq.), and is not affiliated with, endorsed by, or acting on behalf of the California Department of Forestry and Fire Protection (CAL FIRE), the State Board of Forestry and Fire Protection, any Resource Conservation District (RCD), USDA NRCS, or any grantor agency.
+(b) Licensed Forestry Work: Any forest management plan, silvicultural prescription, timber or fuels treatment layout, or other professional forestry service required by the California Forest Improvement Program (CFIP) or any similar program must be prepared and signed by a California-licensed RPF retained by Client or provided through the applicable RCD or agency. Advisor&#x27;s budget figures are preliminary estimates subject to RPF, RCD, and agency verification.
+(c) Agency Discretion; No Guarantee: RCD co-sponsorship, NRCS technical assistance, eligibility determinations, scoring, ranking, and award decisions rest solely with the applicable public agency. Advisor&#x27;s &quot;Tier-1 Statutory Eligibility Match&quot; is an internal screening opinion, not an agency determination, and Advisor does not guarantee any co-sponsorship, ranking, or award.
+(d) No Lobbying: Advisor does not lobby or otherwise attempt to influence any agency officer or employee regarding any award decision, and no portion of the fee is paid for such activity.
+
+6. CALIFORNIA UETA &amp; FEDERAL ESIGN ACT ELECTRONIC EXECUTION
+By typing their Full Legal Name and Title, checking &quot;I agree to the ZYS GoldFields PRO LLC Advisory Agreement,&quot; and submitting the digital intake form, the undersigned represents and warrants that they have authority to bind Client and Property (APN [Parcel APN Entered Above]), and consents to execute this Agreement electronically pursuant to the California Uniform Electronic Transactions Act (UETA, Cal. Civ. Code § 1633.1 et seq.) and the federal Electronic Signatures in Global and National Commerce Act (ESIGN Act, 15 U.S.C. § 7001 et seq.). Client may request a paper copy of this Agreement at no charge by emailing Advisor. The system automatically records the UTC timestamp, Client IP address, browser User-Agent string, and cryptographic SHA-256 digest of this Agreement as a permanent, tamper-evident audit record.</div>
+
+            <div class="esign-box">
+              <div class="esign-signatory-attestation">
+                <div class="esign-sig-col">
+                  <span class="esign-sig-label">Authorized Electronic Signatory</span>
+                  <span id="esign-preview-name" class="esign-sig-val mono empty">(Enter Full Legal Name in Section 1 above)</span>
+                </div>
+                <div class="esign-sig-col">
+                  <span class="esign-sig-label">Title / Legal Capacity</span>
+                  <span id="esign-preview-title" class="esign-sig-val mono empty">(Enter Title / Capacity in Section 1 above)</span>
+                </div>
+              </div>
+
+              <label class="checkbox-row" for="checkbox-terms">
+                <input type="checkbox" id="checkbox-terms" name="agreed_to_terms" value="true" required />
+                <span class="terms-text">
+                  <strong>I agree to the ZYS GoldFields PRO LLC Advisory Agreement.</strong>
+                  By entering my Full Legal Name and Title in the intake form above and checking this box, I execute a legally binding
+                  electronic signature under the California Uniform Electronic Transactions Act (UETA) and federal
+                  ESIGN Act, agreeing to the <strong>7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)</strong> paid strictly from
+                  separate general operating non-grant funds (<strong>2 CFR § 200.459 compliant</strong>) within <strong>5 business
+                  days</strong> of initial grant tranche disbursement ($0 upfront).
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div id="form-error" class="alert-banner" role="alert"></div>
+
+          <div class="submit-row">
+            <button type="button" id="btn-preview-only" class="btn-secondary">
+              Stage A: Preview Match &amp; Budget Summary (Locked)
+            </button>
+            <button type="submit" id="btn-submit-intake" class="btn-primary">
+              Stage B: E-Sign &amp; Unlock Full RCD Filing Dossier
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section id="confirmation-panel" class="confirmation-panel" aria-live="polite">
+        <div id="status-banner" class="status-header">
+          UNLOCKED — E-Signature Verified &amp; Complete RCD Filing Dossier Ready
+        </div>
+
+        <dl class="summary-dl">
+          <div class="summary-item">
+            <dt>Filing Gate Status</dt>
+            <dd id="res-gate-status" class="mono">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Primary Matched Grant</dt>
+            <dd id="res-grant">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Solicitation ID</dt>
+            <dd id="res-grant-id" class="mono">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Engineered Grant Request</dt>
+            <dd id="res-request" class="mono">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Statutory Eligibility Assessment</dt>
+            <dd id="res-score" class="mono">—</dd>
+          </div>
+          <div class="summary-item">
+            <dt>Assigned Local Handoff Target</dt>
+            <dd id="res-rcd">—</dd>
+          </div>
+        </dl>
+
+        <div id="audit-strip" class="audit-strip"></div>
+
+        <div class="packet-actions">
+          <a href="/api/packet/latest" id="btn-download-packet" class="btn-download" download="client_submission_packet.md">
+            Download client_submission_packet.md
+          </a>
+          <a href="/api/agreement/latest" id="btn-download-agreement" class="btn-download secondary" download="signed_advisory_agreement.md">
+            Download signed_advisory_agreement.md
+          </a>
+          <button type="button" id="btn-copy-packet" class="btn-ghost">
+            Copy Dossier Markdown
+          </button>
+        </div>
+
+        <div id="packet-preview" class="packet-preview"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      &copy; ZYS GoldFields PRO LLC &middot; Conservation & Agricultural Grant Advisory &middot; California UETA &amp; ESIGN Compliant (f055f656d69511b3…)
+    </footer>
+  </div>
+
+  <script>
+    const PUBLIC_MODE = false;
+    const PROSPECT_PREFILL = null;
+    const form = document.getElementById('intake-form');
+    const errorEl = document.getElementById('form-error');
+    const submitBtn = document.getElementById('btn-submit-intake');
+    const previewOnlyBtn = document.getElementById('btn-preview-only');
+    const confirmPanel = document.getElementById('confirmation-panel');
+    const statusBanner = document.getElementById('status-banner');
+    const auditStrip = document.getElementById('audit-strip');
+    const previewEl = document.getElementById('packet-preview');
+    const prefillBtn = document.getElementById('btn-prefill-vance');
+    const repoZipBtn = document.getElementById('btn-repo-zip');
+    const copyBtn = document.getElementById('btn-copy-packet');
+    const dlPacketBtn = document.getElementById('btn-download-packet');
+    const dlAgreementBtn = document.getElementById('btn-download-agreement');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (PUBLIC_MODE) {
+      if (repoZipBtn) repoZipBtn.style.display = 'none';
+    }
+    if (PUBLIC_MODE || urlParams.has('name') || urlParams.has('org') || PROSPECT_PREFILL) {
+      prefillBtn.style.display = 'none';
+    }
+    if (PROSPECT_PREFILL) {
+      const p = PROSPECT_PREFILL;
+      if (p.organization_name) {
+        document.getElementById('input-name').value = p.organization_name;
+        document.getElementById('input-signer-name').value = p.organization_name;
+      }
+      if (p.contact_email) document.getElementById('input-email').value = p.contact_email;
+      if (p.county) document.getElementById('input-county').value = p.county;
+      if (p.estimated_acreage) document.getElementById('input-acreage').value = p.estimated_acreage;
+      if (p.ein) document.getElementById('input-ein').value = p.ein;
+      if (p.prospect_id) document.getElementById('input-prospect-id').value = p.prospect_id;
+      if (p.conservation_focus) {
+        if (!document.getElementById('input-condition').value) {
+          document.getElementById('input-condition').value =
+            `Working conservation parcel in ${p.county} County (${p.estimated_acreage} acres). Focus: ${p.conservation_focus}.`;
+        }
+        if (!document.getElementById('input-goals').value) {
+          document.getElementById('input-goals').value =
+            `Implement resource stewardship under ${p.top_matched_grant || 'active conservation grant programs'}, focusing on ${p.conservation_focus} and local RCD technical coordination.`;
+        }
+      }
+    }
+    if (urlParams.get('name') || urlParams.get('org')) {
+      const nm = urlParams.get('name') || urlParams.get('org');
+      document.getElementById('input-name').value = nm;
+      document.getElementById('input-signer-name').value = nm;
+    }
+    if (urlParams.get('email')) {
+      document.getElementById('input-email').value = urlParams.get('email');
+    }
+    if (urlParams.get('county')) {
+      document.getElementById('input-county').value = urlParams.get('county');
+    }
+    if (urlParams.get('ein')) {
+      document.getElementById('input-ein').value = urlParams.get('ein');
+    }
+    if (urlParams.get('acres')) {
+      document.getElementById('input-acreage').value = urlParams.get('acres');
+    }
+    if (urlParams.get('signer_name')) {
+      document.getElementById('input-signer-name').value = urlParams.get('signer_name');
+    }
+    if (urlParams.get('signer_title')) {
+      document.getElementById('input-signer-title').value = urlParams.get('signer_title');
+    }
+    if (urlParams.get('condition')) {
+      document.getElementById('input-condition').value = urlParams.get('condition');
+    }
+    if (urlParams.get('goals')) {
+      document.getElementById('input-goals').value = urlParams.get('goals');
+    }
+
+    const signerNameInput = document.getElementById('input-signer-name');
+    const signerTitleInput = document.getElementById('input-signer-title');
+    const esignPreviewName = document.getElementById('esign-preview-name');
+    const esignPreviewTitle = document.getElementById('esign-preview-title');
+
+    function syncEsignPreview() {
+      if (!esignPreviewName || !esignPreviewTitle) return;
+      const nm = signerNameInput ? signerNameInput.value.trim() : '';
+      const ttl = signerTitleInput ? signerTitleInput.value.trim() : '';
+      if (nm) {
+        esignPreviewName.textContent = nm;
+        esignPreviewName.classList.remove('empty');
+      } else {
+        esignPreviewName.textContent = '(Enter Full Legal Name in Section 1 above)';
+        esignPreviewName.classList.add('empty');
+      }
+      if (ttl) {
+        esignPreviewTitle.textContent = ttl;
+        esignPreviewTitle.classList.remove('empty');
+      } else {
+        esignPreviewTitle.textContent = '(Enter Title / Capacity in Section 1 above)';
+        esignPreviewTitle.classList.add('empty');
+      }
+    }
+
+    if (signerNameInput) signerNameInput.addEventListener('input', syncEsignPreview);
+    if (signerTitleInput) signerTitleInput.addEventListener('input', syncEsignPreview);
+    syncEsignPreview();
+
+    prefillBtn.addEventListener('click', () => {
+      document.getElementById('input-name').value = 'Elena & Marcus Vance';
+      document.getElementById('input-email').value = 'vance.family@sierraridgeoak.com';
+      document.getElementById('input-county').value = 'El Dorado';
+      document.getElementById('input-ein').value = '94-8271039';
+      document.getElementById('input-apn').value = '089-140-027-000';
+      document.getElementById('input-acreage').value = '45';
+      document.getElementById('input-condition').value =
+        '45-acre degraded blue oak, black oak, and ponderosa pine woodland in El Dorado County experiencing post-drought canopy mortality, invasive brush fuel accumulation, and seasonal gully soil erosion.';
+      document.getElementById('input-goals').value =
+        'Complete a Registered Professional Forester (RPF) Forest Management Plan, mechanical understory fuels thinning, native oak and pine reforestation, gully erosion stabilization, and wildlife habitat restoration.';
+      document.getElementById('input-signer-name').value = 'Elena Vance';
+      document.getElementById('input-signer-title').value = 'Managing Co-Owner & Steward, Sierra Ridge Oak Woodland';
+      document.getElementById('checkbox-terms').checked = true;
+      errorEl.className = 'alert-banner';
+      errorEl.textContent = '';
+      syncEsignPreview();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      if (!previewEl.textContent) return;
+      await navigator.clipboard.writeText(previewEl.textContent);
+      const orig = copyBtn.textContent;
+      copyBtn.textContent = 'Copied to Clipboard';
+      setTimeout(() => { copyBtn.textContent = orig; }, 1800);
+    });
+
+    async function submitIntakeRequest(previewOnly) {
+      errorEl.className = 'alert-banner';
+      errorEl.textContent = '';
+
+      const payload = {
+        name: document.getElementById('input-name').value.trim(),
+        email: document.getElementById('input-email').value.trim(),
+        county: document.getElementById('input-county').value.trim(),
+        state: 'CA',
+        apn: document.getElementById('input-apn').value.trim(),
+        acreage: parseFloat(document.getElementById('input-acreage').value || '0'),
+        ein: document.getElementById('input-ein').value.trim(),
+        prospect_id: document.getElementById('input-prospect-id').value.trim(),
+        land_condition: document.getElementById('input-condition').value.trim(),
+        project_goals: document.getElementById('input-goals').value.trim(),
+        signer_full_name: document.getElementById('input-signer-name').value.trim(),
+        signer_title: document.getElementById('input-signer-title').value.trim(),
+        agreed_to_terms: previewOnly ? false : document.getElementById('checkbox-terms').checked,
+        preview_only: previewOnly
+      };
+
+      submitBtn.disabled = true;
+      previewOnlyBtn.disabled = true;
+
+      try {
+        const resp = await fetch('/api/intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Please check all required parcel fields and e-signature boxes.');
+        }
+
+        document.getElementById('res-grant').textContent = data.matched_grant_title;
+        document.getElementById('res-grant-id').textContent = data.matched_grant_id;
+        document.getElementById('res-request').textContent = data.engineered_grant_request;
+        document.getElementById('res-score').textContent = data.eligibility_tier || data.probability_score;
+        document.getElementById('res-rcd').textContent = data.rcd_target;
+        previewEl.textContent = data.packet_markdown;
+
+        if (data.agreement_signed) {
+          statusBanner.className = 'status-header';
+          statusBanner.textContent =
+            'STAGE B UNLOCKED — E-Signature Verified & Complete RCD Filing Dossier Ready for Dispatch';
+          document.getElementById('res-gate-status').textContent = 'UNLOCKED (Stage B)';
+          auditStrip.className = 'audit-strip visible';
+          auditStrip.textContent =
+            `UETA/ESIGN Audit Trail | Signer: ${data.signer_full_name} (${data.signer_title}) | ` +
+            `UTC: ${data.signature_timestamp_utc} | IP: ${data.signer_ip_address} | ` +
+            `SHA-256: ${data.contract_sha256_hash}`;
+          dlPacketBtn.href = data.packet_download_url || '/api/packet/latest';
+          dlPacketBtn.textContent = 'Download Unlocked client_submission_packet.md';
+          dlAgreementBtn.style.display = 'inline-block';
+          dlAgreementBtn.href = data.signed_agreement_download_url || '/api/agreement/latest';
+        } else {
+          statusBanner.className = 'status-header locked';
+          statusBanner.textContent =
+            'STAGE A PREVIEW (LOCKED) — E-Sign Agreement Above to Unlock Solicitation ID, Narrative & RCD Memo';
+          document.getElementById('res-gate-status').textContent = 'LOCKED PREVIEW (Stage A)';
+          auditStrip.className = 'audit-strip';
+          auditStrip.textContent = '';
+          dlPacketBtn.href = data.packet_download_url || '/api/packet/latest';
+          dlPacketBtn.textContent = 'Download Stage A Preview Summary (.md)';
+          dlAgreementBtn.style.display = 'none';
+        }
+
+        confirmPanel.classList.add('visible');
+        confirmPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.className = 'alert-banner error';
+      } finally {
+        submitBtn.disabled = false;
+        previewOnlyBtn.disabled = false;
+      }
+    }
+
+    previewOnlyBtn.addEventListener('click', () => submitIntakeRequest(true));
+    form.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      submitIntakeRequest(false);
+    });
+  </script>
+</body>
+</html>
