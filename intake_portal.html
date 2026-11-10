@@ -511,6 +511,59 @@
       font-size: 0.82rem;
     }
 
+    .breakdown-card {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      margin-bottom: 18px;
+    }
+
+    .breakdown-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--ink-forest);
+      margin: 0 0 4px 0;
+    }
+
+    .breakdown-subtitle {
+      font-size: 0.81rem;
+      color: var(--ink-muted);
+      margin: 0 0 12px 0;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    .breakdown-table th, .breakdown-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-stone);
+      text-align: left;
+    }
+
+    .breakdown-table th {
+      background: rgba(22, 53, 39, 0.05);
+      color: var(--ink-forest);
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .breakdown-table tr.total-row td {
+      border-top: 2px solid var(--border-stone);
+      border-bottom: none;
+      background: rgba(184, 134, 11, 0.07);
+      font-size: 0.88rem;
+    }
+
     .audit-strip {
       display: none;
       background: var(--surface-subtle);
@@ -791,6 +844,31 @@ By typing their Full Legal Name and Title, checking &quot;I agree to the ZYS Gol
           </div>
         </dl>
 
+        <div id="breakdown-card" class="breakdown-card" style="display: none;">
+          <h3 class="breakdown-title">Verified Grant Allocation Breakdown (from <code>grants.db</code>)</h3>
+          <p class="breakdown-subtitle">Exact California conservation cost-share programs, solicitations, and itemized allocations engineered for this parcel:</p>
+          <div class="table-container">
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th style="width: 44px; text-align: center;">#</th>
+                  <th>Grant Program &amp; Solicitation ID</th>
+                  <th>Administering Agency</th>
+                  <th>Practice Scope</th>
+                  <th style="text-align: right;">Individual Award Amount</th>
+                </tr>
+              </thead>
+              <tbody id="res-allocation-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="4" style="text-align: right; font-weight: 700;">TOTAL ESTIMATED FUNDING (Combined Solicitations):</td>
+                  <td id="res-allocation-total" class="mono" style="text-align: right; font-weight: 700; color: var(--gold-deep);">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
         <div id="audit-strip" class="audit-strip"></div>
 
         <div class="packet-actions">
@@ -946,6 +1024,16 @@ By typing their Full Legal Name and Title, checking &quot;I agree to the ZYS Gol
       setTimeout(() => { copyBtn.textContent = orig; }, 1800);
     });
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function submitIntakeRequest(previewOnly) {
       errorEl.className = 'alert-banner';
       errorEl.textContent = '';
@@ -987,6 +1075,28 @@ By typing their Full Legal Name and Title, checking &quot;I agree to the ZYS Gol
         document.getElementById('res-score').textContent = data.eligibility_tier || data.probability_score;
         document.getElementById('res-rcd').textContent = data.rcd_target;
         previewEl.textContent = data.packet_markdown;
+
+        const allocCard = document.getElementById('breakdown-card');
+        const allocTbody = document.getElementById('res-allocation-tbody');
+        const allocTotal = document.getElementById('res-allocation-total');
+        if (allocCard && allocTbody && data.grant_allocations && data.grant_allocations.length > 0) {
+          allocTbody.innerHTML = '';
+          data.grant_allocations.forEach((alloc) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="text-align:center;font-weight:600;">#${alloc.rank}</td>
+              <td><strong>${escapeHtml(alloc.grant_name)}</strong><br><span class="mono" style="font-size:0.8rem;color:var(--ink-muted);">${escapeHtml(alloc.grant_id)}</span></td>
+              <td>${escapeHtml(alloc.agency)}</td>
+              <td style="font-size:0.83rem;color:var(--ink-muted);">${escapeHtml(alloc.practice_scope)}</td>
+              <td class="mono" style="text-align:right;font-weight:600;color:var(--ink-forest);">$${Number(alloc.award_amount).toLocaleString()}</td>
+            `;
+            allocTbody.appendChild(tr);
+          });
+          if (allocTotal) allocTotal.textContent = data.total_estimated_funding || data.engineered_grant_request;
+          allocCard.style.display = 'block';
+        } else if (allocCard) {
+          allocCard.style.display = 'none';
+        }
 
         if (data.agreement_signed) {
           statusBanner.className = 'status-header';

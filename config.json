@@ -14,8 +14,8 @@
   "unsubscribe_email": "",
   "notifications": {
     "provider": "auto",
-    "admin_email": "",
-    "from_email": "",
+    "admin_email": "Ksandzhar@gmail.com",
+    "from_email": "onboarding@resend.dev",
     "smtp_host": "",
     "smtp_port": 587,
     "smtp_use_tls": true,

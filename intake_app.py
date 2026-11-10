@@ -29,6 +29,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 import zipfile
@@ -38,7 +39,9 @@ from pydantic import ValidationError
 from admin_packager import (
     DEFAULT_PACKET_PATH,
     DEFAULT_PREVIEW_PATH,
+    _clean_grant_id,
     build_budget_engineering_table,
+    build_grant_allocation_breakdown,
     generate_submission_packet,
     resolve_local_agency_contacts,
 )
@@ -59,7 +62,7 @@ from legal_agreement import (
 )
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
 from models import ClientIntake, eligibility_tier_label
-from notifier import dispatch_intake_backup_async, notification_status
+from notifier import dispatch_intake_backup_async, notification_status, test_email_notification
 
 logging.basicConfig(
     level=logging.INFO,
@@ -689,6 +692,59 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
       font-size: 0.82rem;
     }}
 
+    .breakdown-card {{
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-stone);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      margin-bottom: 18px;
+    }}
+
+    .breakdown-title {{
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--ink-forest);
+      margin: 0 0 4px 0;
+    }}
+
+    .breakdown-subtitle {{
+      font-size: 0.81rem;
+      color: var(--ink-muted);
+      margin: 0 0 12px 0;
+    }}
+
+    .table-container {{
+      overflow-x: auto;
+    }}
+
+    .breakdown-table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }}
+
+    .breakdown-table th, .breakdown-table td {{
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-stone);
+      text-align: left;
+    }}
+
+    .breakdown-table th {{
+      background: rgba(22, 53, 39, 0.05);
+      color: var(--ink-forest);
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }}
+
+    .breakdown-table tr.total-row td {{
+      border-top: 2px solid var(--border-stone);
+      border-bottom: none;
+      background: rgba(184, 134, 11, 0.07);
+      font-size: 0.88rem;
+    }}
+
     .audit-strip {{
       display: none;
       background: var(--surface-subtle);
@@ -942,6 +998,31 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
           </div>
         </dl>
 
+        <div id="breakdown-card" class="breakdown-card" style="display: none;">
+          <h3 class="breakdown-title">Verified Grant Allocation Breakdown (from <code>grants.db</code>)</h3>
+          <p class="breakdown-subtitle">Exact California conservation cost-share programs, solicitations, and itemized allocations engineered for this parcel:</p>
+          <div class="table-container">
+            <table class="breakdown-table">
+              <thead>
+                <tr>
+                  <th style="width: 44px; text-align: center;">#</th>
+                  <th>Grant Program &amp; Solicitation ID</th>
+                  <th>Administering Agency</th>
+                  <th>Practice Scope</th>
+                  <th style="text-align: right;">Individual Award Amount</th>
+                </tr>
+              </thead>
+              <tbody id="res-allocation-tbody"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="4" style="text-align: right; font-weight: 700;">TOTAL ESTIMATED FUNDING (Combined Solicitations):</td>
+                  <td id="res-allocation-total" class="mono" style="text-align: right; font-weight: 700; color: var(--gold-deep);">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
         <div id="audit-strip" class="audit-strip"></div>
 
         <div class="packet-actions">
@@ -1097,6 +1178,16 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
       setTimeout(() => {{ copyBtn.textContent = orig; }}, 1800);
     }});
 
+    function escapeHtml(str) {{
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }}
+
     async function submitIntakeRequest(previewOnly) {{
       errorEl.className = 'alert-banner';
       errorEl.textContent = '';
@@ -1138,6 +1229,28 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
         document.getElementById('res-score').textContent = data.eligibility_tier || data.probability_score;
         document.getElementById('res-rcd').textContent = data.rcd_target;
         previewEl.textContent = data.packet_markdown;
+
+        const allocCard = document.getElementById('breakdown-card');
+        const allocTbody = document.getElementById('res-allocation-tbody');
+        const allocTotal = document.getElementById('res-allocation-total');
+        if (allocCard && allocTbody && data.grant_allocations && data.grant_allocations.length > 0) {{
+          allocTbody.innerHTML = '';
+          data.grant_allocations.forEach((alloc) => {{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="text-align:center;font-weight:600;">#${{alloc.rank}}</td>
+              <td><strong>${{escapeHtml(alloc.grant_name)}}</strong><br><span class="mono" style="font-size:0.8rem;color:var(--ink-muted);">${{escapeHtml(alloc.grant_id)}}</span></td>
+              <td>${{escapeHtml(alloc.agency)}}</td>
+              <td style="font-size:0.83rem;color:var(--ink-muted);">${{escapeHtml(alloc.practice_scope)}}</td>
+              <td class="mono" style="text-align:right;font-weight:600;color:var(--ink-forest);">$${{Number(alloc.award_amount).toLocaleString()}}</td>
+            `;
+            allocTbody.appendChild(tr);
+          }});
+          if (allocTotal) allocTotal.textContent = data.total_estimated_funding || data.engineered_grant_request;
+          allocCard.style.display = 'block';
+        }} else if (allocCard) {{
+          allocCard.style.display = 'none';
+        }}
 
         if (data.agreement_signed) {{
           statusBanner.className = 'status-header';
@@ -1187,6 +1300,110 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
 """
 
 
+CALIFORNIA_COUNTIES = {
+    "alameda", "alpine", "amador", "butte", "calaveras", "colusa", "contra costa",
+    "del norte", "el dorado", "fresno", "glenn", "humboldt", "imperial", "inyo",
+    "kern", "kings", "lake", "lassen", "los angeles", "madera", "marin", "mariposa",
+    "mendocino", "merced", "modoc", "mono", "monterey", "napa", "nevada", "orange",
+    "placer", "plumas", "riverside", "sacramento", "san benito", "san bernardino",
+    "san diego", "san francisco", "san joaquin", "san luis obispo", "san mateo",
+    "santa barbara", "santa clara", "santa cruz", "shasta", "sierra", "siskiyou",
+    "solano", "sonoma", "stanislaus", "sutter", "tehama", "trinity", "tulare",
+    "tuolumne", "ventura", "yolo", "yuba",
+}
+
+DISALLOWED_NAMES = {
+    "test", "testing", "asdf", "foo", "bar", "none", "xxx", "123", "sample",
+    "admin", "null", "undefined", "na", "n/a", "no name", "tester",
+}
+
+CONSERVATION_KEYWORDS = {
+    "oak", "pine", "forest", "woodland", "ranch", "range", "rangeland", "pasture",
+    "grazing", "soil", "creek", "stream", "river", "riparian", "watershed", "erosion",
+    "fuel", "fuels", "wildfire", "fire", "brush", "canopy", "habitat", "wildlife",
+    "wetland", "vernal", "corridor", "orchard", "vineyard", "crop", "cropland",
+    "timber", "manzanita", "grassland", "vegetation", "invasive", "drought", "tree",
+    "trees", "conifer", "slope", "agricultural", "agriculture", "easement", "plan",
+    "management", "thinning", "reforestation", "planting", "restoration", "stabilization",
+    "mulching", "waterbars", "fencing", "rpf", "forester", "irrigation", "solar",
+    "culvert", "fish", "passage", "carbon", "stewardship", "biodiversity", "conservation",
+}
+
+
+def validate_intake_payload(raw_data: dict[str, Any]) -> None:
+    """Validate intake form inputs before processing or grant matching.
+
+    Rejects random, nonsense, or incomplete entries with specific, actionable error messages.
+    """
+    prospect_id = str(raw_data.get("prospect_id") or "").strip()
+
+    name = str(raw_data.get("name") or "").strip()
+    if len(name) < 3:
+        raise ValueError("Landowner / Entity Name must be at least 3 characters.")
+    if name.lower() in DISALLOWED_NAMES or not re.search(r"[A-Za-z]", name):
+        raise ValueError(
+            f"Invalid Landowner / Entity Name '{name}'. Please enter a legitimate individual, "
+            "trust, ranch, or organization name."
+        )
+
+    email = str(raw_data.get("email") or "").strip()
+    if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email):
+        raise ValueError(f"Invalid contact email address: '{email}'. Please enter a valid email format.")
+
+    county_raw = str(raw_data.get("county") or "").strip().lower()
+    county_clean = re.sub(r"\s+county$", "", county_raw).strip()
+    if county_clean not in CALIFORNIA_COUNTIES:
+        raise ValueError(
+            f"Invalid county '{raw_data.get('county')}'. Must be one of California's 58 counties "
+            "(e.g., El Dorado, San Benito, Calaveras, Sacramento, Placer)."
+        )
+
+    apn = str(raw_data.get("apn") or "").strip()
+    if len(apn) < 6 or apn.lower() in ("none", "000-000", "000000", "test", "123456", "asdf"):
+        raise ValueError(
+            f"Invalid Assessor's Parcel Number (APN) '{apn}'. California APNs typically follow a 3-part format "
+            "(e.g., 089-140-027-000). Please check your property tax bill or county assessor portal."
+        )
+
+    try:
+        acreage = float(raw_data.get("acreage") or 0)
+    except (ValueError, TypeError):
+        raise ValueError("Acreage must be a valid positive number.")
+    if acreage < 1.0 or acreage > 100000:
+        raise ValueError("Parcel acreage must be between 1.0 and 100,000 acres.")
+    if acreage < 5.0 and not prospect_id:
+        raise ValueError(
+            f"Parcel acreage ({acreage:g} ac) is below the 5.0-acre threshold required for California "
+            "public conservation, forestry, and agricultural cost-share programs (e.g. CFIP, WCB, SALC)."
+        )
+
+    cond = str(raw_data.get("land_condition") or "").strip()
+    if len(cond) < 20:
+        raise ValueError(
+            "Current Land & Resource Condition description is too brief (minimum 20 characters). "
+            "Please describe your parcel's natural features, vegetation, fuel loading, or erosion concerns."
+        )
+    cond_words = set(re.findall(r"[a-z]+", cond.lower()))
+    if len(cond_words.intersection(CONSERVATION_KEYWORDS)) < 2 and not prospect_id:
+        raise ValueError(
+            "Input Validation: Land condition description must specify genuine natural resource concerns "
+            "(e.g., forest fuels, oak/pine canopy, soil erosion, riparian corridor, or rangeland grazing)."
+        )
+
+    goals = str(raw_data.get("project_goals") or "").strip()
+    if len(goals) < 20:
+        raise ValueError(
+            "Conservation & Stewardship Goals description is too brief (minimum 20 characters). "
+            "Please describe your planned conservation practices or desired improvements."
+        )
+    goal_words = set(re.findall(r"[a-z]+", goals.lower()))
+    if len(goal_words.intersection(CONSERVATION_KEYWORDS)) < 2 and not prospect_id:
+        raise ValueError(
+            "Input Validation: Project goals must specify legitimate conservation practices "
+            "(e.g., fuels reduction thinning, native reforestation, erosion stabilization, or wildlife habitat restoration)."
+        )
+
+
 def _process_intake_payload(
     raw_data: dict[str, Any],
     *,
@@ -1202,6 +1419,8 @@ def _process_intake_payload(
             "You must check 'I agree to the ZYS GoldFields PRO LLC Advisory Agreement' "
             "or select Stage A Preview."
         )
+
+    validate_intake_payload(raw_data)
 
     name_val = str(raw_data.get("name", "")).strip()
     signer_full_name = str(raw_data.get("signer_full_name") or "").strip()
@@ -1245,9 +1464,10 @@ def _process_intake_payload(
         persist_intake=True,
     )
     primary = matches[0]
+    clean_gid = _clean_grant_id(primary.grant.id)
     tier_label = eligibility_tier_label(primary.probability_breakdown, primary.score)
-    _, total_cost, grant_req, _, fee_dollars = build_budget_engineering_table(
-        saved, primary.grant, fee_percent=cfg.success_fee_percent
+    allocations, total_cost, grant_req, owner_match, fee_dollars, breakdown_md = build_grant_allocation_breakdown(
+        saved, matches, fee_percent=cfg.success_fee_percent
     )
     contacts = resolve_local_agency_contacts(saved.county, saved.state)
     packet_md = packet_path.read_text(encoding="utf-8")
@@ -1265,7 +1485,7 @@ def _process_intake_payload(
                 "apn": saved.apn,
                 "acreage": saved.acreage,
                 "matched_grant": primary.grant.title,
-                "matched_grant_id": primary.grant.id,
+                "matched_grant_id": clean_gid,
                 "engineered_grant_request": grant_req,
                 "eligibility_tier": tier_label,
                 "probability_score": primary.score,
@@ -1297,6 +1517,11 @@ def _process_intake_payload(
             "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
             "contingent_fee_upon_award": f"${fee_dollars:,}",
             "rcd_target": "[LOCKED — E-Sign Advisory Agreement to Unlock County RCD Co-Sponsor Memo]",
+            "grant_allocations": [
+                {**a, "grant_id": "[LOCKED — E-SIGNATURE REQUIRED]"}
+                for a in allocations
+            ],
+            "total_estimated_funding": f"${grant_req:,}",
             "packet_path": str(packet_path),
             "packet_download_url": f"/api/preview/{saved.id}" if saved.id else "/api/preview/latest",
             "packet_markdown": packet_md,
@@ -1384,7 +1609,7 @@ def _process_intake_payload(
         "client_name": saved.name,
         "apn": saved.apn,
         "county": saved.county,
-        "matched_grant_id": primary.grant.id,
+        "matched_grant_id": clean_gid,
         "matched_grant_title": primary.grant.title,
         "probability_score": f"{primary.score}/100",
         "eligibility_tier": tier_label,
@@ -1393,6 +1618,8 @@ def _process_intake_payload(
         "deadline": primary.grant.deadline,
         "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
         "contingent_fee_upon_award": f"${fee_dollars:,}",
+        "grant_allocations": allocations,
+        "total_estimated_funding": f"${grant_req:,}",
         "rcd_target": f"{contacts['rcd_name']} / {contacts['nrcs_office']}",
         "signer_full_name": saved.signer_full_name,
         "signer_title": saved.signer_title,
@@ -1454,9 +1681,10 @@ def _unlock_existing_intake(
         persist_intake=True,
     )
     primary = matches[0]
+    clean_gid = _clean_grant_id(primary.grant.id)
     tier_label = eligibility_tier_label(primary.probability_breakdown, primary.score)
-    _, total_cost, grant_req, _, fee_dollars = build_budget_engineering_table(
-        saved, primary.grant, fee_percent=cfg.success_fee_percent
+    allocations, total_cost, grant_req, owner_match, fee_dollars, breakdown_md = build_grant_allocation_breakdown(
+        saved, matches, fee_percent=cfg.success_fee_percent
     )
     contacts = resolve_local_agency_contacts(saved.county, saved.state)
     packet_md = packet_path.read_text(encoding="utf-8")
@@ -1487,7 +1715,7 @@ def _unlock_existing_intake(
             "eligibility_tier": tier_label,
             "probability_score": primary.score,
             "matched_grant_title": primary.grant.title,
-            "matched_grant_id": primary.grant.id,
+            "matched_grant_id": clean_gid,
             "engineered_grant_request": grant_req,
             "total_project_budget": total_cost,
             "contingent_fee_dollars": fee_dollars,
@@ -1506,7 +1734,7 @@ def _unlock_existing_intake(
         "apn": saved.apn,
         "acreage": saved.acreage,
         "matched_grant": primary.grant.title,
-        "matched_grant_id": primary.grant.id,
+        "matched_grant_id": clean_gid,
         "engineered_grant_request": grant_req,
         "contingent_fee_dollars": fee_dollars,
         "contract_sha256_hash": saved.contract_sha256_hash,
@@ -1542,7 +1770,7 @@ def _unlock_existing_intake(
         "client_name": saved.name,
         "apn": saved.apn,
         "county": saved.county,
-        "matched_grant_id": primary.grant.id,
+        "matched_grant_id": clean_gid,
         "matched_grant_title": primary.grant.title,
         "probability_score": f"{primary.score}/100",
         "eligibility_tier": tier_label,
@@ -1551,6 +1779,8 @@ def _unlock_existing_intake(
         "deadline": primary.grant.deadline,
         "engineered_grant_request": f"${grant_req:,} (of ${total_cost:,} total project budget)",
         "contingent_fee_upon_award": f"${fee_dollars:,}",
+        "grant_allocations": allocations,
+        "total_estimated_funding": f"${grant_req:,}",
         "rcd_target": f"{contacts['rcd_name']} / {contacts['nrcs_office']}",
         "signer_full_name": saved.signer_full_name,
         "signer_title": saved.signer_title,
@@ -1647,7 +1877,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        if parsed.path == "/api/health":
+        if parsed.path in ("/api/health", "/api/test-email"):
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
@@ -1692,6 +1922,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     "notifications": notification_status(cfg),
                 },
             )
+            return
+
+        if parsed.path == "/api/test-email":
+            cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+            diagnostic = test_email_notification(cfg)
+            status_code = HTTPStatus.OK if diagnostic.get("status") in ("sent", "missing_credentials") else HTTPStatus.INTERNAL_SERVER_ERROR
+            self._send_json(status_code, diagnostic)
             return
 
         if parsed.path == "/api/prospects":
@@ -1877,6 +2114,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 logger.exception("Error processing /api/sign")
                 self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+            return
+
+        if parsed.path == "/api/test-email":
+            cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+            diagnostic = test_email_notification(cfg)
+            status_code = HTTPStatus.OK if diagnostic.get("status") in ("sent", "missing_credentials") else HTTPStatus.INTERNAL_SERVER_ERROR
+            self._send_json(status_code, diagnostic)
             return
 
         if parsed.path == "/submit":

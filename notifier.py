@@ -84,6 +84,8 @@ def notification_status(cfg: MatcherConfig) -> dict[str, Any]:
     s = resolve_settings(cfg)
     return {
         "email_provider": s["provider"],
+        "admin_email": s["admin_email"] or "Ksandzhar@gmail.com",
+        "from_email": s["from_email"] or "onboarding@resend.dev",
         "email_ready": bool(
             s["admin_email"]
             and s["from_email"]
@@ -95,6 +97,108 @@ def notification_status(cfg: MatcherConfig) -> dict[str, Any]:
         "backup_webhook_ready": bool(s["backup_webhook_url"]),
         "webhook_signed": bool(s["backup_webhook_secret"]),
     }
+
+
+def test_email_notification(cfg: MatcherConfig) -> dict[str, Any]:
+    """Diagnostic check for email sending.
+
+    If credentials are missing, returns exact missing environment variables and 2-minute setup instructions.
+    If credentials are present, attempts to send a real test email to admin_email and returns the outcome.
+    """
+    s = resolve_settings(cfg)
+    admin_email = s.get("admin_email") or "Ksandzhar@gmail.com"
+    from_email = s.get("from_email") or "onboarding@resend.dev"
+    provider = s.get("provider", "none")
+
+    diagnostic = {
+        "admin_email": admin_email,
+        "from_email": from_email,
+        "provider": provider,
+        "resend_api_key_set": bool(s.get("resend_api_key")),
+        "smtp_host_set": bool(s.get("smtp_host")),
+        "smtp_username_set": bool(s.get("smtp_username")),
+        "backup_webhook_url": s.get("backup_webhook_url", ""),
+    }
+
+    if provider == "none" or not (s.get("resend_api_key") or s.get("smtp_host")):
+        diagnostic.update({
+            "status": "missing_credentials",
+            "error": "No email delivery provider configured on Render. RESEND_API_KEY or SMTP credentials are missing.",
+            "diagnostics": {
+                "why_did_form_not_email": (
+                    f"When an applicant submits an intake or signs the agreement on Render, the backend attempts to email "
+                    f"the dossier to {admin_email}. However, Render virtual machines do not have outbound SMTP email access by default. "
+                    "Because neither RESEND_API_KEY nor SMTP credentials were set in the Render Dashboard Environment, "
+                    "email dispatch was skipped with status 'not_configured'."
+                ),
+                "resolution_options": [
+                    {
+                        "method": "Resend API (Recommended — 2 Minutes Free)",
+                        "steps": [
+                            "1. Go to https://resend.com and sign up for a free account (100 free emails/day, no credit card required).",
+                            "2. Click 'API Keys' -> 'Create API Key' (Name: 'ZYS Render', Permission: 'Sending access').",
+                            "3. Copy the generated key (starts with 're_...').",
+                            "4. In your Render Dashboard: Navigate to your 'zys-goldfields-intake' Web Service -> 'Environment'.",
+                            "5. Click 'Add Environment Variable': Key = 'RESEND_API_KEY', Value = 're_...'.",
+                            "6. (Optional) Key = 'ADMIN_NOTIFICATION_EMAIL', Value = 'Ksandzhar@gmail.com'.",
+                            "7. (Optional) Key = 'NOTIFICATION_FROM_EMAIL', Value = 'onboarding@resend.dev'.",
+                            "8. Click 'Save Changes'. Render will automatically restart the instance with live email delivery active!"
+                        ]
+                    },
+                    {
+                        "method": "Gmail SMTP with App Password (Alternative)",
+                        "steps": [
+                            "1. Go to https://myaccount.google.com/security with Ksandzhar@gmail.com.",
+                            "2. Ensure 2-Step Verification is ON, then search for 'App Passwords'.",
+                            "3. Create an app password named 'ZYS Intake' (generates a 16-character code like 'abcd efgh ijkl mnop').",
+                            "4. In your Render Dashboard -> 'Environment', add:",
+                            "   - SMTP_HOST = smtp.gmail.com",
+                            "   - SMTP_PORT = 587",
+                            "   - SMTP_USE_TLS = true",
+                            "   - SMTP_USERNAME = Ksandzhar@gmail.com",
+                            "   - SMTP_PASSWORD = <16-char app password>",
+                            "   - ADMIN_NOTIFICATION_EMAIL = Ksandzhar@gmail.com",
+                            "   - NOTIFICATION_FROM_EMAIL = Ksandzhar@gmail.com",
+                            "5. Click 'Save Changes'."
+                        ]
+                    }
+                ]
+            }
+        })
+        return diagnostic
+
+    # If credentials are present, attempt sending a real test email!
+    subject = f"[ZYS GoldFields PRO] System Diagnostic & Test Email -> {admin_email}"
+    body = (
+        "ZYS GoldFields PRO LLC — Email Delivery Diagnostic Verification\n"
+        "-----------------------------------------------------------------\n"
+        f"Timestamp (UTC): {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%SZ')}\n"
+        f"Provider:        {provider.upper()}\n"
+        f"From Address:    {from_email}\n"
+        f"Target Admin:    {admin_email}\n"
+        "Status:          ACTIVE & VERIFIED\n\n"
+        "This confirms that your Render web service is successfully communicating with your email provider.\n"
+        "All future landowner e-signatures and Stage A/B intake packets will be immediately delivered to this inbox with Markdown and audit receipts attached.\n\n"
+        "ZYS GoldFields PRO LLC · 8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624\n"
+    )
+    test_attachments = {
+        "diagnostic_check.txt": "ZYS GoldFields PRO LLC — Diagnostic test attachment verified."
+    }
+
+    try:
+        if provider == "resend":
+            result = _send_via_resend(s, subject, body, test_attachments)
+        else:
+            result = _send_via_smtp(s, subject, body, test_attachments)
+        diagnostic["status"] = "success"
+        diagnostic["delivery_result"] = result
+        diagnostic["message"] = f"Test email successfully dispatched to {admin_email} via {provider.upper()}."
+    except Exception as exc:
+        diagnostic["status"] = "failed"
+        diagnostic["error"] = f"{type(exc).__name__}: {exc}"
+        diagnostic["message"] = f"Attempted to send test email via {provider.upper()} but encountered an error."
+
+    return diagnostic
 
 
 def _append_journal(entry: dict[str, Any]) -> None:

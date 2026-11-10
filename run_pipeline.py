@@ -126,6 +126,18 @@ def verify_intake_portal_and_packager() -> None:
         assert all(s >= 75 for s in api_scores), f"Found sub-75 prospect in /api/prospects: {min(api_scores)}"
         assert api_scores == sorted(api_scores, reverse=True), "/api/prospects is not ranked highest-to-lowest"
 
+        # 1d. Verify /api/test-email diagnostic endpoint (GET, HEAD, POST)
+        email_head = requests.head(f"{base_url}/api/test-email", timeout=5)
+        assert email_head.status_code == 200, f"Expected 200 on HEAD /api/test-email, got {email_head.status_code}"
+        email_test_get = requests.get(f"{base_url}/api/test-email", timeout=5)
+        assert email_test_get.status_code == 200, f"Expected 200 on GET /api/test-email, got {email_test_get.status_code}"
+        diag_data = email_test_get.json()
+        assert diag_data["admin_email"] == "Ksandzhar@gmail.com"
+        assert "status" in diag_data
+        if diag_data["status"] == "missing_credentials":
+            assert "RESEND_API_KEY" in diag_data["error"]
+            assert len(diag_data["diagnostics"]["resolution_options"]) >= 2
+
         # 2. Verify unchecked Advisory Agreement checkbox is rejected with HTTP 400 when attempting Stage B unlock
         bad_payload = {
             "name": "Elena & Marcus Vance",
@@ -141,6 +153,47 @@ def verify_intake_portal_and_packager() -> None:
         }
         bad_resp = requests.post(f"{base_url}/api/intake", json=bad_payload, timeout=5)
         assert bad_resp.status_code == 400, f"Expected 400 when terms unchecked, got {bad_resp.status_code}"
+
+        # 2a. Verify rejection of random/nonsense entries (Issue 2)
+        nonsense_payloads = [
+            # Junk name
+            {
+                "name": "test",
+                "email": "test@example.com",
+                "county": "El Dorado",
+                "apn": "089-140-027-000",
+                "acreage": 45.0,
+                "land_condition": "This is a random test text with no genuine meaning at all.",
+                "project_goals": "Random test project goals for testing random input.",
+                "agreed_to_terms": True,
+            },
+            # Acreage < 5.0 acres without prospect_id
+            {
+                "name": "Small Lot Owner",
+                "email": "owner@lot.com",
+                "county": "El Dorado",
+                "apn": "089-140-027-000",
+                "acreage": 2.5,
+                "land_condition": "Oak woodland with forest fuels and tree mortality.",
+                "project_goals": "Fuels thinning and pine tree reforestation.",
+                "agreed_to_terms": True,
+            },
+            # Non-conservation description
+            {
+                "name": "Commercial Developer",
+                "email": "dev@urbanllc.com",
+                "county": "Sacramento",
+                "apn": "089-140-027-000",
+                "acreage": 50.0,
+                "land_condition": "Empty parking lot with cracked asphalt and concrete buildings.",
+                "project_goals": "Build a shopping strip mall and multi-family residential apartments.",
+                "agreed_to_terms": True,
+            },
+        ]
+        for idx, nonsense in enumerate(nonsense_payloads):
+            resp = requests.post(f"{base_url}/api/intake", json=nonsense, timeout=5)
+            assert resp.status_code == 400, f"Expected 400 for nonsense payload #{idx}, got {resp.status_code}: {resp.text}"
+            assert "error" in resp.json()
 
         # 3. Verify Stage A ("Sign-to-Unlock" Gate when agreement_signed == False):
         #    Shows matched grant, engineered budget total, and probability score, but masks
@@ -174,6 +227,15 @@ def verify_intake_portal_and_packager() -> None:
         assert "$" in preview_body["engineered_grant_request"] and "total project budget" in preview_body["engineered_grant_request"]
         assert int(preview_body["probability_score"].split("/")[0]) >= 75
         assert preview_body["matched_grant_id"] == "[LOCKED — E-SIGNATURE REQUIRED]"
+        assert "grant_allocations" in preview_body
+        assert len(preview_body["grant_allocations"]) >= 1
+        alloc_sum = sum(a["award_amount"] for a in preview_body["grant_allocations"])
+        assert f"${alloc_sum:,}" == preview_body["total_estimated_funding"]
+        for alloc in preview_body["grant_allocations"]:
+            assert "grant_name" in alloc and len(alloc["grant_name"]) > 5
+            assert "agency" in alloc and len(alloc["agency"]) > 2
+            assert alloc["award_amount"] > 0
+
         preview_md = preview_body["packet_markdown"]
         assert "Stage A: Client Grant Eligibility & Budget Preview Summary (LOCKED DOSSIER)" in preview_md
         # Ensure solicitation ID, copy-paste narrative, and RCD co-sponsor memo are masked in Stage A
@@ -237,6 +299,10 @@ def verify_intake_portal_and_packager() -> None:
         assert body["signer_ip_address"] == "198.51.100.45"
         assert "ZYS-Vance-Verification/2.0" in body["signer_user_agent"]
         assert len(body["contract_sha256_hash"]) == 64
+        assert "grant_allocations" in body
+        assert len(body["grant_allocations"]) >= 1
+        b_sum = sum(a["award_amount"] for a in body["grant_allocations"])
+        assert f"${b_sum:,}" == body["total_estimated_funding"]
         intake_id = body["intake_id"]
 
         # Wait briefly for background thread to write backup journal
@@ -346,6 +412,12 @@ def verify_outputs(
         assert audit_count >= 1, f"Expected >= 1 e-signature audit record in grants.db, found {audit_count}"
         assert 25 <= prospect_db_count < 70, f"Expected Tier-1 filtered prospect count in [25, 69], found {prospect_db_count}"
         assert min_db_prob >= 75, f"Expected all DB prospects >= 75/100, found min={min_db_prob}"
+
+        typo_grants = conn.execute("SELECT id, title FROM grants WHERE id LIKE '%-progra'").fetchall()
+        assert len(typo_grants) == 0, f"Found grants with truncated '-progra' slug: {typo_grants}"
+        car_grant = conn.execute("SELECT id FROM grants WHERE title LIKE '%Climate Adaptation and Resiliency%'").fetchone()
+        assert car_grant is not None, "Climate Adaptation and Resiliency Program grant not found in grants.db"
+        assert car_grant[0] == "CCI-climate-adaptation-and-resiliency-program", f"Unexpected grant ID: {car_grant[0]}"
 
     with prospects_csv_path.open("r", encoding="utf-8", newline="") as fh:
         csv_rows = list(csv.DictReader(fh))

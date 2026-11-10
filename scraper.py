@@ -515,7 +515,7 @@ def fetch_cci_opportunities(session: requests.Session) -> list[GrantRecord]:
         else:
             deadline = "Open Solicitation (Active CCI Funding Round)"
 
-        slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40]
+        slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:80].strip("-")
         elig_summary_parts = [
             "Jurisdiction: California Statewide (California Climate Investments).",
             f"Eligible Applicants: {who_is_eligible or ', '.join(tags) or 'See program guidelines'}.",
