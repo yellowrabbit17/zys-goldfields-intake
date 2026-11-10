@@ -210,15 +210,32 @@ def _append_journal(entry: dict[str, Any]) -> None:
         logger.warning("Could not append local backup journal: %s", exc)
 
 
-def _send_via_resend(s: dict[str, Any], subject: str, body: str, attachments: dict[str, str]) -> str:
+def _normalize_attachments(attachments: Any) -> list[tuple[str, bytes]]:
+    result = []
+    if isinstance(attachments, dict):
+        for name, content in attachments.items():
+            b_content = content.encode("utf-8") if isinstance(content, str) else bytes(content)
+            result.append((str(name), b_content))
+    elif isinstance(attachments, (list, tuple)):
+        for item in attachments:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                name = item[0]
+                content = item[1]
+                b_content = content.encode("utf-8") if isinstance(content, str) else bytes(content)
+                result.append((str(name), b_content))
+    return result
+
+
+def _send_via_resend(s: dict[str, Any], subject: str, body: str, attachments: Any) -> str:
+    norm_attachments = _normalize_attachments(attachments)
     payload = {
         "from": s["from_email"],
         "to": [s["admin_email"]],
         "subject": subject,
         "text": body,
         "attachments": [
-            {"filename": name, "content": base64.b64encode(content.encode("utf-8")).decode("ascii")}
-            for name, content in attachments.items()
+            {"filename": name, "content": base64.b64encode(b_content).decode("ascii")}
+            for name, b_content in norm_attachments
         ],
     }
     resp = requests.post(
@@ -231,16 +248,17 @@ def _send_via_resend(s: dict[str, Any], subject: str, body: str, attachments: di
     return f"resend:{resp.json().get('id', 'sent')}"
 
 
-def _send_via_smtp(s: dict[str, Any], subject: str, body: str, attachments: dict[str, str]) -> str:
+def _send_via_smtp(s: dict[str, Any], subject: str, body: str, attachments: Any) -> str:
     msg = EmailMessage()
     msg["From"] = s["from_email"]
     msg["To"] = s["admin_email"]
     msg["Subject"] = subject
     msg.set_content(body)
-    for name, content in attachments.items():
+    norm_attachments = _normalize_attachments(attachments)
+    for name, b_content in norm_attachments:
         subtype = "json" if name.endswith(".json") else "markdown"
         maintype = "application" if subtype == "json" else "text"
-        msg.add_attachment(content.encode("utf-8"), maintype=maintype, subtype=subtype, filename=name)
+        msg.add_attachment(b_content, maintype=maintype, subtype=subtype, filename=name)
 
     if s["smtp_port"] == 465:
         server: smtplib.SMTP = smtplib.SMTP_SSL(s["smtp_host"], s["smtp_port"], timeout=s["timeout"])
@@ -317,12 +335,21 @@ def dispatch_intake_backup(
     """
     s = resolve_settings(cfg)
     results: dict[str, str] = {}
+    norm_attachments = _normalize_attachments(attachments)
+    files_map = {
+        name: (
+            b_content.decode("utf-8", errors="replace")
+            if name.endswith((".md", ".json", ".txt"))
+            else f"<binary {len(b_content)} bytes>"
+        )
+        for name, b_content in norm_attachments
+    }
     envelope = {
         "event": event,
         "dispatched_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "firm": cfg.firm_name,
         "record": record,
-        "files": attachments,
+        "files": files_map,
     }
 
     if event != "agreement_signed" and not s["notify_on_preview"]:

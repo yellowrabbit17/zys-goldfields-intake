@@ -2,7 +2,7 @@
 
 - **Dossier Reference:** `ZYS-ELD-08914002`
 - **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Preview Generated:** `2026-11-10 00:29 UTC`
+- **Preview Generated:** `2026-11-10 04:03 UTC`
 - **Filing Gate Status:** **`LOCKED — AWAITING CALIFORNIA UETA / ESIGN ELECTRONIC SIGNATURE (agreement_signed = False)`**
 
 ---

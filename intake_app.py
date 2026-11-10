@@ -62,7 +62,12 @@ from legal_agreement import (
 )
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
 from models import ClientIntake, eligibility_tier_label
-from notifier import dispatch_intake_backup_async, notification_status, test_email_notification
+from notifier import (
+    dispatch_intake_backup,
+    dispatch_intake_backup_async,
+    notification_status,
+    test_email_notification,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -1490,10 +1495,10 @@ def _process_intake_payload(
                 "eligibility_tier": tier_label,
                 "probability_score": primary.score,
             }
-            dispatch_intake_backup_async(
+            preview_delivery = dispatch_intake_backup(
                 event="preview_generated",
                 record=preview_record,
-                attachments=[("client_preview_summary.md", packet_md.encode("utf-8"), "text/markdown")],
+                attachments={"client_preview_summary.md": packet_md},
                 cfg=cfg,
             )
 
@@ -1507,6 +1512,7 @@ def _process_intake_payload(
             "client_name": saved.name,
             "apn": saved.apn,
             "county": saved.county,
+            "email_delivery": preview_delivery.get("email") if cfg.notifications.notify_on_preview else None,
             "matched_grant_id": "[LOCKED — E-SIGNATURE REQUIRED]",
             "matched_grant_title": primary.grant.title,
             "probability_score": f"{primary.score}/100",
@@ -1586,13 +1592,13 @@ def _process_intake_payload(
         "probability_score": primary.score,
     }
 
-    attachments = [
-        ("signed_advisory_agreement.md", signed_agreement_md.encode("utf-8"), "text/markdown"),
-        ("client_submission_packet.md", packet_md.encode("utf-8"), "text/markdown"),
-        ("esignature_audit_record.json", audit_json.encode("utf-8"), "application/json"),
-    ]
+    attachments = {
+        "signed_advisory_agreement.md": signed_agreement_md,
+        "client_submission_packet.md": packet_md,
+        "esignature_audit_record.json": audit_json,
+    }
 
-    dispatch_intake_backup_async(
+    delivery = dispatch_intake_backup(
         event="agreement_signed",
         record=signed_record,
         attachments=attachments,
@@ -1603,6 +1609,8 @@ def _process_intake_payload(
         "status": "ok",
         "stage": "unlocked_filing_dossier",
         "agreement_signed": True,
+        "email_delivery": delivery.get("email"),
+        "backup_delivery": delivery,
         "intake_id": saved.id,
         "prospect_id": saved.prospect_id,
         "ein": saved.ein,
@@ -1747,13 +1755,13 @@ def _unlock_existing_intake(
         "probability_score": primary.score,
     }
 
-    attachments = [
-        ("signed_advisory_agreement.md", signed_agreement_md.encode("utf-8"), "text/markdown"),
-        ("client_submission_packet.md", packet_md.encode("utf-8"), "text/markdown"),
-        ("esignature_audit_record.json", audit_json.encode("utf-8"), "application/json"),
-    ]
+    attachments = {
+        "signed_advisory_agreement.md": signed_agreement_md,
+        "client_submission_packet.md": packet_md,
+        "esignature_audit_record.json": audit_json,
+    }
 
-    dispatch_intake_backup_async(
+    delivery = dispatch_intake_backup(
         event="agreement_signed",
         record=signed_record,
         attachments=attachments,
@@ -1764,6 +1772,8 @@ def _unlock_existing_intake(
         "status": "ok",
         "stage": "unlocked_filing_dossier",
         "agreement_signed": True,
+        "email_delivery": delivery.get("email"),
+        "backup_delivery": delivery,
         "intake_id": saved.id,
         "prospect_id": saved.prospect_id,
         "ein": saved.ein,
@@ -1877,7 +1887,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        if parsed.path in ("/api/health", "/api/test-email"):
+        if parsed.path in ("/api/health", "/api/test-email", "/api/latest-delivery"):
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
@@ -1929,6 +1939,19 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             diagnostic = test_email_notification(cfg)
             status_code = HTTPStatus.OK if diagnostic.get("status") in ("sent", "missing_credentials") else HTTPStatus.INTERNAL_SERVER_ERROR
             self._send_json(status_code, diagnostic)
+            return
+
+        if parsed.path == "/api/latest-delivery":
+            journal_path = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
+            if not journal_path.exists():
+                self._send_json(HTTPStatus.OK, {"count": 0, "latest": None})
+                return
+            lines = [line.strip() for line in journal_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            if not lines:
+                self._send_json(HTTPStatus.OK, {"count": 0, "latest": None})
+                return
+            latest_entry = json.loads(lines[-1])
+            self._send_json(HTTPStatus.OK, {"count": len(lines), "latest": latest_entry})
             return
 
         if parsed.path == "/api/prospects":

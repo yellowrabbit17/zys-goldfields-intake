@@ -1,7 +1,7 @@
 # ZYS GoldFields PRO LLC — Automated Follow-Up Email Sequences (Day 4 & Day 9)
 
 - **Advisory Practice:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Generated:** `2026-11-10 00:29`
+- **Generated:** `2026-11-10 04:03`
 - **Coverage:** `56` qualified Tier-1 candidates
 - **Workflow Cadence:** Day 0 Initial Brief (`outreach_pitches.md`) → Day 4 Staged Packet Reminder → Day 9 Agency Cycle Urgency Notice
 - **Commercial Terms:** 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded) (\$0 upfront, 100% waived if not awarded) · 1-click digital intake magic links
