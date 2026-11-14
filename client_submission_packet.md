@@ -2,7 +2,7 @@
 
 - **Dossier Reference:** `ZYS-ELD-08914002`
 - **Prepared By:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Packet Generated:** `2026-11-10 04:03 UTC`
+- **Packet Generated:** `2026-11-14 05:43 UTC`
 - **Filing Gate Status:** **`UNLOCKED — E-SIGNATURE VERIFIED (agreement_signed = True | SHA-256: 3d7539b1bd3fc4f4...)`**
 - **Workflow Mode:** 100% Zero-Call Digital Intake & Asynchronous Agency Handoff
 
@@ -23,7 +23,7 @@
 | **Target Solicitation Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
 | **Engineered Grant Request** | **\$63,330** (out of \$71,800 total project budget) |
-| **Advisory Fee Authorization** | `[x]` **Executed 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)** (`2026-11-10T04:03:07Z`) — \$4,433 payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement (\$0 upfront, 100% waived if not awarded) |
+| **Advisory Fee Authorization** | `[x]` **Executed 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)** (`2026-11-14T05:43:30Z`) — \$4,433 payable strictly from separate Client operating funds (`2 CFR § 200.459`) within 5 business days of initial tranche disbursement (\$0 upfront, 100% waived if not awarded) |
 | **Cryptographic Contract Hash** | `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b` |
 | **Official Solicitation Link** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
@@ -132,7 +132,7 @@ Dossier Ref: ZYS-ELD-08914002
 - **CLIENT / LANDOWNER:** **Elena & Marcus Vance** (`vance.family@sierraridgeoak.com`) — Signed by **`/s/ Elena Vance`** (*Managing Co-Owner & Steward, Sierra Ridge Oak Woodland*)  
 - **PARCEL IDENTIFICATION:** **APN `089-140-027-000`** · **45 Acres** · **El Dorado County, CA**  
 - **TARGET SOLICITATION:** **California Forest Improvement Program** (`CCI-california-forest-improvement-program` · *Deadline: 2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)*)  
-- **DATE:** `2026-11-10 04:03 UTC`  
+- **DATE:** `2026-11-14 05:43 UTC`  
 
 #### 1. Purpose of Handoff
 This Memorandum transmits a pre-qualified, landowner-authorized conservation project package prepared by **ZYS GoldFields PRO LLC** for **Elena & Marcus Vance** (`APN 089-140-027-000`, 45 acres in El Dorado County). All intake screening, statutory acreage/geographic eligibility checks, narrative drafting, and preliminary cost-share engineering (**\$63,330** grant request / **\$71,800** total project cost) have been completed digitally.
@@ -147,7 +147,7 @@ To complete agency submission prior to **2027-01-02 (Quarterly cycle: Jan 2, Apr
 #### 3. Digital Landowner Authorization & Advisory Terms Attestation
 - **Authorized Landowner & Signatory:** `Elena & Marcus Vance` — `/s/ Elena Vance` (Managing Co-Owner & Steward, Sierra Ridge Oak Woodland, `vance.family@sierraridgeoak.com`)
 - **Parcel Attestation:** Landowner attests ownership/management authority over APN `089-140-027-000` (45 acres, El Dorado County, CA).
-- **Advisory Fee & `2 CFR § 200.459` Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-10T04:03:07Z`, SHA-256 `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b`), with **\$0** upfront fees, separate Client operating-funds payment (`2 CFR § 200.459`), and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
+- **Advisory Fee & `2 CFR § 200.459` Disclosure:** Landowner has digitally executed the **ZYS GoldFields PRO LLC** contingent **7% no-win/no-fee** agreement (`2026-11-14T05:43:30Z`, SHA-256 `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b`), with **\$0** upfront fees, separate Client operating-funds payment (`2 CFR § 200.459`), and zero administrative cost to El Dorado County & Georgetown Divide Resource Conservation Districts or USDA NRCS.
 
 ---
 
@@ -175,7 +175,7 @@ Both Landowner and Advisor certify to **El Dorado County & Georgetown Divide Res
 | :--- | :--- |
 | **Electronic Signatory** | **`/s/ Elena Vance`** — *Managing Co-Owner & Steward, Sierra Ridge Oak Woodland* |
 | **Affirmative Agreement Consent** | `[x]` *"I agree to the ZYS GoldFields PRO LLC Advisory Agreement."* (`agreement_signed = True`) |
-| **UTC Execution Timestamp** | `2026-11-10T04:03:07Z` |
+| **UTC Execution Timestamp** | `2026-11-14T05:43:30Z` |
 | **Client IP Address** | `198.51.100.45` |
 | **Browser User-Agent** | `Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 ZYS-Vance-Verification/2.0` |
 | **SHA-256 Signed Contract Hash** | `3d7539b1bd3fc4f4d4fef1bd57a45e5865aa5fba1c78b26838fdf05e5306980b` |

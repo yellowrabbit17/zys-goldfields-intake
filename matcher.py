@@ -33,6 +33,8 @@ from models import (
     ProbabilityScoreBreakdown,
     ProspectRecord,
     eligibility_tier_label,
+    resolve_base_url,
+    rewrite_portal_urls,
 )
 
 logging.basicConfig(
@@ -335,14 +337,18 @@ DOMAIN_CLUSTERS: dict[str, tuple[str, ...]] = {
 
 
 def load_matcher_config(config_path: Path | str = DEFAULT_CONFIG_PATH) -> MatcherConfig:
-    """Load and validate config.json (falling back to defaults if absent)."""
+    """Load and validate config.json (falling back to defaults if absent), applying BASE_URL env override."""
     cfg_file = Path(config_path)
     if not cfg_file.exists():
         cfg = MatcherConfig()
         cfg_file.write_text(json.dumps(cfg.model_dump(), indent=2) + "\n", encoding="utf-8")
-        return cfg
-    raw = json.loads(cfg_file.read_text(encoding="utf-8"))
-    return MatcherConfig(**raw)
+    else:
+        raw = json.loads(cfg_file.read_text(encoding="utf-8"))
+        cfg = MatcherConfig(**raw)
+    resolved_url = resolve_base_url(cfg)
+    if resolved_url != cfg.public_intake_url:
+        cfg = cfg.model_copy(update={"public_intake_url": resolved_url})
+    return cfg
 
 
 def extract_max_grant_dollars(funding_amount: str) -> int | None:
@@ -1221,7 +1227,9 @@ def generate_pitch_via_llm(
     tier_label = eligibility_tier_label(match.probability_breakdown, match.score)
     segment = match.outreach_segment or ("Channel_Partner" if match.organization_category == "Land Trust" else "Direct_Client")
     fee_name = cfg.fee_name()
-    magic_link = match.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+    active_base = resolve_base_url(cfg)
+    raw_magic = match.personalized_intake_url or f"{active_base}/claim"
+    magic_link = rewrite_portal_urls(raw_magic, active_base, cfg=cfg)
 
     system_prompt = (
         f"You are writing a 1-page cold-outreach brief in Markdown on behalf of {cfg.firm_name} "
@@ -1305,7 +1313,9 @@ def generate_rule_based_pitch(
     tier_label = eligibility_tier_label(match.probability_breakdown, match.score)
     segment = match.outreach_segment or ("Channel_Partner" if match.organization_category == "Land Trust" else "Direct_Client")
     fee_name = cfg.fee_name()
-    magic_link = match.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+    active_base = resolve_base_url(cfg)
+    raw_magic = match.personalized_intake_url or f"{active_base}/claim"
+    magic_link = rewrite_portal_urls(raw_magic, active_base, cfg=cfg)
 
     contact_row = (
         f"| **Verified Contact & EIN** | `{match.contact_email}` · `{match.ein or 'Verified Entity'}` |\n"
@@ -1456,6 +1466,7 @@ def build_outreach_markdown(
                 f"- **Tier-1 Qualification Funnel:** `{len(matches)}` qualified Tier-1 candidates retained (`score >= {cfg.min_probability_score}/100`) out of `{evaluated_candidates_count}` evaluated leads (all `< {cfg.min_probability_score}/100` and statutory non-compliant leads excluded)",
                 f"- **Underwriting & Pitch Engine:** {engine_desc}",
                 f"- **Commercial Terms:** {fee_name} ($0 upfront) · 1-click digital magic link onboarding (zero phone calls)",
+                f"- **Active Portal Base URL (`BASE_URL`):** `{resolve_base_url(cfg)}`",
                 f"- **Compliance:** Governed by California UETA, Federal ESIGN Act, and 2 CFR § 200.459 · Full CAN-SPAM opt-out disclosures included",
                 "",
                 "## Internal Underwriting & Candidate Ranking (Not Client-Facing)",
@@ -1488,6 +1499,7 @@ def build_followup_markdown(
     """Generate followup_templates.md with Day 4 and Day 9 follow-up email templates for every candidate."""
     cfg = config or load_matcher_config()
     fee_name = cfg.fee_name()
+    active_base = resolve_base_url(cfg)
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M %Z").strip()
 
     header = _escape_md_dollars(
@@ -1495,6 +1507,7 @@ def build_followup_markdown(
         f"- **Advisory Practice:** **{cfg.firm_name}** — *{cfg.firm_subtitle}*\n"
         f"- **Generated:** `{timestamp_str}`\n"
         f"- **Coverage:** `{len(matches)}` qualified Tier-1 candidates\n"
+        f"- **Active Portal Base URL (`BASE_URL`):** `{active_base}`\n"
         f"- **Workflow Cadence:** Day 0 Initial Brief (`outreach_pitches.md`) → Day 4 Staged Packet Reminder → Day 9 Agency Cycle Urgency Notice\n"
         f"- **Commercial Terms:** {fee_name} ($0 upfront, 100% waived if not awarded) · 1-click digital intake magic links\n\n"
         f"---\n"
@@ -1508,7 +1521,8 @@ def build_followup_markdown(
         owner_name, property_label = _extract_recipient_salutation(p.name)
         tier_label = eligibility_tier_label(m.probability_breakdown, m.score)
         segment = m.outreach_segment or ("Channel_Partner" if m.organization_category == "Land Trust" else "Direct_Client")
-        magic_link = m.personalized_intake_url or f"{cfg.public_intake_url}/claim"
+        raw_magic = m.personalized_intake_url or f"{active_base}/claim"
+        magic_link = rewrite_portal_urls(raw_magic, active_base, cfg=cfg)
         can_spam_footer = render_can_spam_footer(cfg, recipient_email=m.contact_email, segment=segment)
 
         if segment == "Channel_Partner":

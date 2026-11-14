@@ -20,10 +20,11 @@ Grant Advisory) incorporating:
 from __future__ import annotations
 
 import argparse
+import csv
+import hmac
 import html
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import csv
 import io
 import json
 import logging
@@ -47,12 +48,18 @@ from admin_packager import (
 )
 from db import (
     DEFAULT_DB_PATH,
+    database_backend_info,
     fetch_all_esignature_audits,
     fetch_all_grants,
     fetch_all_intakes,
+    fetch_all_profiles,
     fetch_all_prospects,
     fetch_client_intake_by_id,
+    fetch_prospect_by_id,
     init_db,
+    mark_prospect_outreach_state,
+    sync_outreach_status_from_prospects,
+    upsert_prospects,
 )
 from legal_agreement import (
     AGREEMENT_VERSION,
@@ -61,13 +68,43 @@ from legal_agreement import (
     render_canonical_contract_text,
 )
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
-from models import ClientIntake, eligibility_tier_label
+from models import (
+    ClientIntake,
+    ProspectRecord,
+    build_claim_url,
+    eligibility_tier_label,
+    resolve_base_url,
+    resolve_daily_send_limit,
+)
 from notifier import (
     dispatch_intake_backup,
     dispatch_intake_backup_async,
     notification_status,
     test_email_notification,
 )
+from outreach_scheduler import get_outreach_dashboard_summary, run_outreach_batch
+
+
+def _load_dotenv_if_present(dotenv_path: Path | None = None) -> None:
+    """Populate os.environ from local .env file without overriding process environment variables."""
+    target = dotenv_path or (Path(__file__).resolve().parent / ".env")
+    if not target.exists():
+        return
+    try:
+        for raw_line in target.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            k = key.strip()
+            v = val.strip().strip('"').strip("'")
+            if k and k not in os.environ:
+                os.environ[k] = v
+    except OSError:
+        pass
+
+
+_load_dotenv_if_present()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -95,10 +132,22 @@ ALL_CA_COUNTIES = (
 
 
 def lookup_prospect_by_id(prospect_id: str, csv_path: Path | str = DEFAULT_CSV_PATH) -> dict[str, Any] | None:
-    """Look up a California prospect by ID (e.g. CA-T1-001 or CA-PROS-070) from CSV or SQLite fallback."""
+    """Look up a California prospect by ID (e.g. CA-T1-001) from active DB or CSV fallback."""
     pid = str(prospect_id or "").strip()
     if not pid:
         return None
+    cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    active_base = resolve_base_url(cfg)
+
+    try:
+        db_rec = fetch_prospect_by_id(pid, DEFAULT_DB_PATH)
+        if db_rec is not None:
+            data = db_rec.model_dump()
+            data["personalized_intake_url"] = build_claim_url(db_rec.prospect_id, cfg, base_url=active_base)
+            return data
+    except Exception as exc:
+        logger.warning("Error querying prospect_id=%s from database: %s", pid, exc)
+
     target_csv = Path(csv_path)
     if target_csv.exists():
         try:
@@ -107,33 +156,84 @@ def lookup_prospect_by_id(prospect_id: str, csv_path: Path | str = DEFAULT_CSV_P
                 for row in reader:
                     r_id = row.get("prospect_id", "").strip()
                     if r_id.lower() == pid.lower():
+                        row["personalized_intake_url"] = build_claim_url(r_id, cfg, base_url=active_base)
                         return row
         except Exception as exc:
             logger.warning("Error reading prospects CSV for prospect_id=%s: %s", pid, exc)
-    try:
-        all_prospects = fetch_all_prospects(DEFAULT_DB_PATH)
-        for p in all_prospects:
-            if p.prospect_id.lower() == pid.lower():
-                return p.model_dump()
-    except Exception as exc:
-        logger.warning("Error searching prospects in DB for prospect_id=%s: %s", pid, exc)
     return None
 
 
+def _bootstrap_prospects_from_csv(
+    db_path: Path | str = DEFAULT_DB_PATH,
+    csv_path: Path | str = DEFAULT_CSV_PATH,
+) -> list[ProspectRecord]:
+    """Load validated california_prospects.csv rows into database when starting on a fresh DB."""
+    target_csv = Path(csv_path)
+    if not target_csv.exists():
+        return []
+    cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    active_base = resolve_base_url(cfg)
+    records: list[ProspectRecord] = []
+    with target_csv.open("r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            try:
+                pid = str(row.get("prospect_id") or "").strip()
+                row_clean = {
+                    **row,
+                    "estimated_acreage": float(row.get("estimated_acreage") or 100.0),
+                    "probability_score": int(row.get("probability_score") or 0),
+                    "acreage_score": int(row.get("acreage_score") or 0),
+                    "entity_score": int(row.get("entity_score") or 0),
+                    "ecological_score": int(row.get("ecological_score") or 0),
+                    "comatch_score": int(row.get("comatch_score") or 0),
+                    "personalized_intake_url": build_claim_url(pid, cfg, base_url=active_base),
+                }
+                records.append(ProspectRecord(**row_clean))
+            except Exception as exc:
+                logger.warning("Skipping invalid CSV prospect row %s: %s", row.get("prospect_id"), exc)
+    if records:
+        upsert_prospects(records, db_path=db_path, reset_existing=False)
+    return records
+
+
 def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
-    """Ensure SQLite tables exist and bootstrap live grants if running on a cold cloud container."""
-    init_db(db_path)
+    """Run startup schema migrations and bootstrap grants/prospects/statuses on cold databases."""
+    init_db(db_path, force=True)
+    backend = database_backend_info(db_path)
+    logger.info("Database ready: backend=%s persistent=%s", backend["backend"], backend["persistent"])
+
     grants = fetch_all_grants(db_path)
     if not grants:
-        logger.info("Cold container detected (0 grants in grants.db); running live grant ingestion...")
-        from scraper import ingest_all_grants
+        logger.info("Cold database detected (0 grants); running live grant ingestion...")
+        try:
+            from scraper import ingest_all_grants
 
-        ingest_all_grants(db_path=db_path)
+            ingest_all_grants(db_path=db_path)
+        except Exception as exc:
+            logger.warning("Grant ingestion on cold startup encountered an error: %s", exc)
+
+    profiles = fetch_all_profiles(db_path)
+    if not profiles:
+        try:
+            from seed_profiles import run_seed
+
+            run_seed(db_path=db_path)
+        except Exception as exc:
+            logger.warning("Could not seed landowner profiles on cold startup: %s", exc)
+
+    prospects = fetch_all_prospects(db_path)
+    if not prospects:
+        logger.info("Cold database detected (0 prospects); bootstrapping from california_prospects.csv...")
+        prospects = _bootstrap_prospects_from_csv(db_path=db_path)
+    if prospects:
+        sync_outreach_status_from_prospects(prospects, db_path=db_path)
 
 
 def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     """Render the single-page HTML/CSS/JS Zero-Call Digital Client Intake & California E-Signature Portal."""
     cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    active_base_url = resolve_base_url(cfg)
     fee_str = cfg.fee_label()
     fee_name = cfg.fee_name()
     public_mode_js = "true" if os.environ.get("PUBLIC_MODE", "0") == "1" else "false"
@@ -148,6 +248,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     prefill_matched_grant = str((prospect or {}).get("top_matched_grant") or "")
     prefill_focus = str((prospect or {}).get("conservation_focus") or "")
     prefill_json = json.dumps(prospect) if prospect else "null"
+    canonical_url = build_claim_url(prefill_prospect_id, cfg, base_url=active_base_url) if prefill_prospect_id else active_base_url + "/"
 
     if prospect and prefill_matched_grant:
         magic_banner = f"""<div class="magic-link-banner" style="background:var(--success-bg); border:1px solid hsla(152, 48%, 20%, 0.25); border-radius:var(--radius-sm); padding:16px 20px; margin-bottom:20px;">
@@ -191,6 +292,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{cfg.firm_name} — Digital Property Grant Intake &amp; California UETA E-Signature Portal</title>
   <meta name="description" content="2-minute zero-call digital property intake and California UETA / federal ESIGN e-signature portal for {cfg.firm_name} ({cfg.firm_subtitle})." />
+  <link rel="canonical" href="{html.escape(canonical_url, quote=True)}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -1053,6 +1155,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
 
   <script>
     const PUBLIC_MODE = {public_mode_js};
+    const PORTAL_BASE_URL = {json.dumps(active_base_url)};
     const PROSPECT_PREFILL = {prefill_json};
     const form = document.getElementById('intake-form');
     const errorEl = document.getElementById('form-error');
@@ -1823,18 +1926,97 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
     def _extract_user_agent(self) -> str:
         return self.headers.get("User-Agent", "ZYS-GoldFields-Client-Browser/1.0").strip()
 
+    def _extract_presented_token(self) -> str:
+        auth_header = self.headers.get("Authorization", "").strip()
+        if auth_header.startswith("Bearer "):
+            return auth_header[7:].strip()
+        admin_header = self.headers.get("X-Admin-Token", "").strip()
+        if admin_header:
+            return admin_header
+        qs = parse_qs(urlparse(self.path).query)
+        return qs.get("token", [""])[0].strip()
+
     def _check_admin_auth(self) -> bool:
         token = os.environ.get("ADMIN_API_TOKEN", "").strip()
         is_public = os.environ.get("PUBLIC_MODE", "0") == "1" or bool(os.environ.get("RENDER"))
         if not is_public and not token:
             return True
-        auth_header = self.headers.get("Authorization", "").strip()
-        if token and auth_header.startswith("Bearer ") and auth_header[7:].strip() == token:
-            return True
-        qs = parse_qs(urlparse(self.path).query)
-        if token and qs.get("token", [""])[0] == token:
-            return True
-        return False
+        presented = self._extract_presented_token()
+        return bool(token and presented and hmac.compare_digest(presented, token))
+
+    def _check_cron_auth(self) -> bool:
+        """Strictly require valid ADMIN_API_TOKEN (fails closed even when PUBLIC_MODE=0)."""
+        token = os.environ.get("ADMIN_API_TOKEN", "").strip()
+        if not token:
+            return False
+        presented = self._extract_presented_token()
+        return bool(presented and hmac.compare_digest(presented, token))
+
+    def _regenerate_missing_archive(self, intake_id: int, kind: str) -> Path | None:
+        """Rebuild packet/preview/agreement Markdown on ephemeral filesystems from persisted PostgreSQL row."""
+        intake_rec = fetch_client_intake_by_id(intake_id, DEFAULT_DB_PATH)
+        if intake_rec is None:
+            return None
+        if kind in ("packet", "agreement") and not intake_rec.agreement_signed:
+            return None
+        PACKETS_ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+        if kind == "preview":
+            target = PACKETS_ARCHIVE_DIR / f"client_preview_summary_{intake_id}.md"
+            preview_model = intake_rec.model_copy(update={"agreement_signed": False, "agreed_to_terms": False})
+            generate_submission_packet(
+                intake=preview_model,
+                db_path=DEFAULT_DB_PATH,
+                config_path=DEFAULT_CONFIG_PATH,
+                output_path=target,
+                persist_intake=False,
+            )
+            return target if target.exists() else None
+
+        pkt_target = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{intake_id}.md"
+        agr_target = PACKETS_ARCHIVE_DIR / f"signed_advisory_agreement_{intake_id}.md"
+        generate_submission_packet(
+            intake=intake_rec,
+            db_path=DEFAULT_DB_PATH,
+            config_path=DEFAULT_CONFIG_PATH,
+            output_path=pkt_target,
+            signed_agreement_output_path=agr_target,
+            persist_intake=False,
+        )
+        selected = pkt_target if kind == "packet" else agr_target
+        return selected if selected.exists() else None
+
+    @staticmethod
+    def _parse_bool_flag(raw: Any, default: bool = False) -> bool:
+        if isinstance(raw, bool):
+            return raw
+        if raw is None:
+            return default
+        if isinstance(raw, (int, float)):
+            return bool(raw)
+        return str(raw).strip().lower() in ("1", "true", "yes", "on")
+
+    def _execute_outreach_cron(self, params: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        if not fetch_all_prospects(DEFAULT_DB_PATH) or not fetch_all_grants(DEFAULT_DB_PATH):
+            ensure_database_ready(DEFAULT_DB_PATH)
+        dry_run = self._parse_bool_flag(params.get("dry_run"), default=False)
+        daily_limit = None
+        if params.get("daily_limit") not in (None, ""):
+            daily_limit = int(params["daily_limit"])
+        max_sends = None
+        if params.get("max_sends") not in (None, ""):
+            max_sends = int(params["max_sends"])
+        base_url_override = str(params.get("base_url") or "").strip() or None
+        report = run_outreach_batch(
+            db_path=DEFAULT_DB_PATH,
+            config_path=DEFAULT_CONFIG_PATH,
+            daily_limit=daily_limit,
+            max_sends=max_sends,
+            dry_run=dry_run,
+            base_url_override=base_url_override,
+        )
+        if report.get("status") == "missing_email_credentials" and not dry_run:
+            return HTTPStatus.SERVICE_UNAVAILABLE, report
+        return HTTPStatus.OK, report
 
     def _send_json(self, status: int, payload: dict[str, Any], no_cache: bool = True) -> None:
         body = json.dumps(payload).encode("utf-8")
@@ -1874,7 +2056,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/healthz", "/claim", "/intake_portal.html"):
+        if parsed.path in ("/", "/index.html", "/healthz", "/claim", "/claim/", "/intake_portal.html", "/submit"):
             self.send_response(HTTPStatus.OK)
             if parsed.path == "/healthz":
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
@@ -1887,7 +2069,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        if parsed.path in ("/api/health", "/api/test-email", "/api/latest-delivery"):
+        if parsed.path in (
+            "/api/health",
+            "/api/test-email",
+            "/api/latest-delivery",
+            "/api/cron/run-outreach",
+            "/api/outreach-status",
+        ):
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
@@ -1901,8 +2089,11 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/intake_portal.html"):
-            self._send_html(HTTPStatus.OK, render_portal_html())
+        if parsed.path in ("/", "/index.html", "/intake_portal.html", "/claim", "/claim/"):
+            qs = parse_qs(parsed.query)
+            prospect_id = qs.get("prospect_id", [""])[0].strip()
+            prospect = lookup_prospect_by_id(prospect_id) if prospect_id else None
+            self._send_html(HTTPStatus.OK, render_portal_html(prospect=prospect))
             return
 
         if parsed.path == "/healthz":
@@ -1911,13 +2102,6 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", "3")
             self.end_headers()
             self.wfile.write(b"ok\n")
-            return
-
-        if parsed.path == "/claim":
-            qs = parse_qs(parsed.query)
-            prospect_id = qs.get("prospect_id", [""])[0].strip()
-            prospect = lookup_prospect_by_id(prospect_id) if prospect_id else None
-            self._send_html(HTTPStatus.OK, render_portal_html(prospect=prospect))
             return
 
         if parsed.path == "/api/health":
@@ -1929,7 +2113,11 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     "service": "ZYS GoldFields PRO Intake & E-Signature Portal",
                     "agreement_version": AGREEMENT_VERSION,
                     "public_mode": os.environ.get("PUBLIC_MODE", "0") == "1",
+                    "base_url": resolve_base_url(cfg),
+                    "daily_send_limit": resolve_daily_send_limit(cfg),
+                    "database": database_backend_info(DEFAULT_DB_PATH),
                     "notifications": notification_status(cfg),
+                    "render_git_commit": os.environ.get("RENDER_GIT_COMMIT", ""),
                 },
             )
             return
@@ -1937,7 +2125,11 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/test-email":
             cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
             diagnostic = test_email_notification(cfg)
-            status_code = HTTPStatus.OK if diagnostic.get("status") in ("sent", "missing_credentials") else HTTPStatus.INTERNAL_SERVER_ERROR
+            status_code = (
+                HTTPStatus.OK
+                if diagnostic.get("status") in ("success", "sent", "missing_credentials")
+                else HTTPStatus.INTERNAL_SERVER_ERROR
+            )
             self._send_json(status_code, diagnostic)
             return
 
@@ -1952,6 +2144,45 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 return
             latest_entry = json.loads(lines[-1])
             self._send_json(HTTPStatus.OK, {"count": len(lines), "latest": latest_entry})
+            return
+
+        if parsed.path == "/api/outreach-status":
+            if not self._check_cron_auth():
+                self._send_json(
+                    HTTPStatus.FORBIDDEN,
+                    {"error": "Valid ADMIN_API_TOKEN required for outreach status."},
+                )
+                return
+            if not fetch_all_prospects(DEFAULT_DB_PATH):
+                ensure_database_ready(DEFAULT_DB_PATH)
+            qs = parse_qs(parsed.query)
+            raw_limit = qs.get("limit", ["50"])[0]
+            log_limit = int(raw_limit) if raw_limit.isdigit() else 50
+            self._send_json(HTTPStatus.OK, get_outreach_dashboard_summary(DEFAULT_DB_PATH, log_limit=log_limit))
+            return
+
+        if parsed.path == "/api/cron/run-outreach":
+            if not self._check_cron_auth():
+                self._send_json(
+                    HTTPStatus.FORBIDDEN,
+                    {"error": "Valid ADMIN_API_TOKEN required to run outreach cron."},
+                )
+                return
+            qs = parse_qs(parsed.query)
+            if self._parse_bool_flag(qs.get("dry_run", ["false"])[0], default=False):
+                params = {
+                    "dry_run": True,
+                    "daily_limit": qs.get("daily_limit", [None])[0],
+                    "max_sends": qs.get("max_sends", [None])[0],
+                    "base_url": qs.get("base_url", [None])[0],
+                }
+                code, report = self._execute_outreach_cron(params)
+                self._send_json(code, report)
+                return
+            self._send_json(
+                HTTPStatus.METHOD_NOT_ALLOWED,
+                {"error": "Use POST /api/cron/run-outreach (or GET ?dry_run=true for dry-run inspection)."},
+            )
             return
 
         if parsed.path == "/api/prospects":
@@ -1976,6 +2207,8 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 return
             repo_root = Path(__file__).resolve().parent
             export_names = (
+                ".env.example",
+                ".github/workflows/outreach_cron.yml",
                 ".gitignore",
                 "Procfile",
                 "README.md",
@@ -1994,6 +2227,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "models.py",
                 "notifier.py",
                 "outreach_pitches.md",
+                "outreach_scheduler.py",
                 "prospect_hunter.py",
                 "render.yaml",
                 "requirements.txt",
@@ -2063,6 +2297,10 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     )
                     return
                 target = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{intake_id}.md"
+                if not target.exists():
+                    rebuilt = self._regenerate_missing_archive(intake_id, "packet")
+                    if rebuilt is not None:
+                        target = rebuilt
                 if target.exists():
                     self._send_markdown_file(target, f"client_submission_packet_{intake_id}.md")
                     return
@@ -2080,9 +2318,14 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path.startswith("/api/preview/"):
             tail = parsed.path.removeprefix("/api/preview/").strip("/")
             if tail.isdigit():
-                target = PACKETS_ARCHIVE_DIR / f"client_preview_summary_{int(tail)}.md"
+                intake_id = int(tail)
+                target = PACKETS_ARCHIVE_DIR / f"client_preview_summary_{intake_id}.md"
+                if not target.exists():
+                    rebuilt = self._regenerate_missing_archive(intake_id, "preview")
+                    if rebuilt is not None:
+                        target = rebuilt
                 if target.exists():
-                    self._send_markdown_file(target, f"client_preview_summary_{int(tail)}.md")
+                    self._send_markdown_file(target, f"client_preview_summary_{intake_id}.md")
                     return
 
         if parsed.path == "/api/agreement/latest":
@@ -2098,9 +2341,21 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path.startswith("/api/agreement/"):
             tail = parsed.path.removeprefix("/api/agreement/").strip("/")
             if tail.isdigit():
-                target = PACKETS_ARCHIVE_DIR / f"signed_advisory_agreement_{int(tail)}.md"
+                intake_id = int(tail)
+                intake_rec = fetch_client_intake_by_id(intake_id, DEFAULT_DB_PATH)
+                if intake_rec is not None and not intake_rec.agreement_signed:
+                    self._send_json(
+                        HTTPStatus.FORBIDDEN,
+                        {"error": f"Intake #{intake_id} has not completed electronic signature."},
+                    )
+                    return
+                target = PACKETS_ARCHIVE_DIR / f"signed_advisory_agreement_{intake_id}.md"
+                if not target.exists():
+                    rebuilt = self._regenerate_missing_archive(intake_id, "agreement")
+                    if rebuilt is not None:
+                        target = rebuilt
                 if target.exists():
-                    self._send_markdown_file(target, f"signed_advisory_agreement_{int(tail)}.md")
+                    self._send_markdown_file(target, f"signed_advisory_agreement_{intake_id}.md")
                     return
 
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
@@ -2142,8 +2397,66 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/test-email":
             cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
             diagnostic = test_email_notification(cfg)
-            status_code = HTTPStatus.OK if diagnostic.get("status") in ("sent", "missing_credentials") else HTTPStatus.INTERNAL_SERVER_ERROR
+            status_code = (
+                HTTPStatus.OK
+                if diagnostic.get("status") in ("success", "sent", "missing_credentials")
+                else HTTPStatus.INTERNAL_SERVER_ERROR
+            )
             self._send_json(status_code, diagnostic)
+            return
+
+        if parsed.path == "/api/cron/run-outreach":
+            if not self._check_cron_auth():
+                self._send_json(
+                    HTTPStatus.FORBIDDEN,
+                    {"error": "Valid ADMIN_API_TOKEN required to run outreach cron."},
+                )
+                return
+            try:
+                body = json.loads(raw_bytes.decode("utf-8") or "{}")
+                qs = parse_qs(parsed.query)
+                if "dry_run" not in body and "dry_run" in qs:
+                    body["dry_run"] = qs["dry_run"][0]
+                code, report = self._execute_outreach_cron(body)
+                self._send_json(code, report)
+            except json.JSONDecodeError:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload."})
+            except ValueError as val_err:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(val_err)})
+            except Exception as exc:
+                logger.exception("Error processing /api/cron/run-outreach")
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+            return
+
+        if parsed.path == "/api/outreach/mark":
+            if not self._check_cron_auth():
+                self._send_json(
+                    HTTPStatus.FORBIDDEN,
+                    {"error": "Valid ADMIN_API_TOKEN required to update outreach status."},
+                )
+                return
+            try:
+                body = json.loads(raw_bytes.decode("utf-8") or "{}")
+                pid = str(body.get("prospect_id") or "").strip()
+                new_status = str(body.get("status") or "").strip()
+                if not pid or not new_status:
+                    raise ValueError("Both 'prospect_id' and 'status' are required.")
+                updated = mark_prospect_outreach_state(
+                    prospect_id=pid,
+                    status=new_status,
+                    db_path=DEFAULT_DB_PATH,
+                )
+                if not updated:
+                    self._send_json(HTTPStatus.NOT_FOUND, {"error": f"Prospect '{pid}' not found."})
+                    return
+                self._send_json(HTTPStatus.OK, {"status": "ok", "prospect_id": pid, "outreach_status": new_status.lower()})
+            except json.JSONDecodeError:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload."})
+            except ValueError as val_err:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(val_err)})
+            except Exception as exc:
+                logger.exception("Error processing /api/outreach/mark")
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
             return
 
         if parsed.path == "/submit":

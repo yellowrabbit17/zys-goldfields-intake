@@ -26,7 +26,7 @@ import requests
 
 from db import DEFAULT_DB_PATH, fetch_all_grants, upsert_prospects
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config, match_single_profile
-from models import LandownerProfile, ProspectRecord
+from models import LandownerProfile, ProspectRecord, build_claim_url, resolve_base_url
 
 logging.basicConfig(
     level=logging.INFO,
@@ -836,7 +836,7 @@ def build_california_prospects_dataset(
 ) -> list[ProspectRecord]:
     """Build, verify, grant-match, and save the California prospects CSV and SQLite table."""
     cfg = load_matcher_config(config_path)
-    public_base = os.environ.get("PUBLIC_INTAKE_URL", cfg.public_intake_url).rstrip("/")
+    public_base = resolve_base_url(cfg)
     grants = fetch_all_grants(db_path)
 
     sanctuary_ranch_rows = crawl_california_sanctuaries_and_ranches()
@@ -950,8 +950,8 @@ def build_california_prospects_dataset(
         bd = best_match.probability_breakdown
         prospect_id = f"CA-T1-{idx:03d}"
         # 1-click pre-filled magic link: /claim resolves Organization, County, EIN,
-        # acreage and Matched Grant server-side from california_prospects.csv.
-        intake_link = f"{public_base}/claim?{urlencode({'prospect_id': prospect_id})}"
+        # acreage and Matched Grant server-side from database/california_prospects.csv.
+        intake_link = build_claim_url(prospect_id, cfg, base_url=public_base)
         outreach_segment = "Channel_Partner" if row["category"] == "Land Trust" else "Direct_Client"
 
         prospect = ProspectRecord(

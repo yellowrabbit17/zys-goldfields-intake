@@ -16,3 +16,8 @@ bin/
 yellowrabbit17/
 zys-goldfields-intake.zip
 backups/
+.env
+.env.*
+!.env.example
+*.db-journal
+*.db-wal

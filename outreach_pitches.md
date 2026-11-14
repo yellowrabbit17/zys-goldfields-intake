@@ -1,12 +1,13 @@
 # ZYS GoldFields PRO LLC — Tier-1 Conservation Grant Outreach Briefs
 
 - **Advisory Practice:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Generated:** `2026-11-10 04:03`
+- **Generated:** `2026-11-14 05:43`
 - **Active Filter & Cutoff Config (`config.json`):** State=`CA`, Counties=`All Eligible California Counties`, Acreage=`5–5000 ac`, Min Grant=`$25,000`, **Internal Score Cutoff=`75/100`**
 - **Active Grants Indexed in `grants.db`:** `50` live federal & California Climate Investments opportunities
 - **Tier-1 Qualification Funnel:** `56` qualified Tier-1 candidates retained (`score >= 75/100`) out of `70` evaluated leads (all `< 75/100` and statutory non-compliant leads excluded)
 - **Underwriting & Pitch Engine:** 4-Pillar Statutory Eligibility & Scoring Engine (`min_probability_score >= 75/100`)
 - **Commercial Terms:** 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded) (\$0 upfront) · 1-click digital magic link onboarding (zero phone calls)
+- **Active Portal Base URL (`BASE_URL`):** `https://zys-goldfields-intake.onrender.com`
 - **Compliance:** Governed by California UETA, Federal ESIGN Act, and 2 CFR § 200.459 · Full CAN-SPAM opt-out disclosures included
 
 ## Internal Underwriting & Candidate Ranking (Not Client-Facing)

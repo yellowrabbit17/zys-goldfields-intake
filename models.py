@@ -3,15 +3,97 @@
 from __future__ import annotations
 
 import html
+import os
 import re
 from typing import Optional
+from urllib.parse import urlencode
 from pydantic import BaseModel, Field, field_validator
+
+DEFAULT_FALLBACK_BASE_URL = "https://zys-goldfields-intake.onrender.com"
+DEFAULT_CUSTOM_DOMAIN_URL = "https://portal.zysgoldfields.pro"
 
 
 def _clean_text(value: str) -> str:
     """Unescape HTML entities and collapse redundant whitespace."""
     unescaped = html.unescape(value or "")
     return re.sub(r"\s+", " ", unescaped).strip()
+
+
+def normalize_base_url(url: str | None) -> str:
+    """Ensure a canonical base URL without trailing slash."""
+    cleaned = (url or "").strip().rstrip("/")
+    if not cleaned:
+        return DEFAULT_FALLBACK_BASE_URL
+    if not (cleaned.startswith("http://") or cleaned.startswith("https://")):
+        cleaned = f"https://{cleaned}"
+    return cleaned.rstrip("/")
+
+
+def resolve_base_url(
+    cfg: "MatcherConfig | None" = None,
+    override_base_url: str | None = None,
+) -> str:
+    """Resolve active public portal BASE_URL from env override -> config.json -> Render fallback."""
+    if override_base_url and override_base_url.strip():
+        return normalize_base_url(override_base_url)
+    env_url = (
+        os.environ.get("BASE_URL", "").strip()
+        or os.environ.get("PUBLIC_INTAKE_URL", "").strip()
+    )
+    if env_url:
+        return normalize_base_url(env_url)
+    if cfg is not None and getattr(cfg, "public_intake_url", "").strip():
+        return normalize_base_url(cfg.public_intake_url)
+    return DEFAULT_FALLBACK_BASE_URL
+
+
+def build_claim_url(
+    prospect_id: str,
+    cfg: "MatcherConfig | None" = None,
+    base_url: str | None = None,
+) -> str:
+    """Construct a 1-click pre-filled /claim?prospect_id=... URL using the active BASE_URL."""
+    resolved = resolve_base_url(cfg, override_base_url=base_url)
+    pid = (prospect_id or "").strip()
+    if not pid:
+        return f"{resolved}/claim"
+    return f"{resolved}/claim?{urlencode({'prospect_id': pid})}"
+
+
+def rewrite_portal_urls(text: str, active_base_url: str, cfg: "MatcherConfig | None" = None) -> str:
+    """Rewrite stored portal/magic-link hosts in templates or CSV strings to active_base_url."""
+    target = normalize_base_url(active_base_url)
+    known_hosts = [
+        DEFAULT_FALLBACK_BASE_URL,
+        DEFAULT_FALLBACK_BASE_URL.replace("https://", "http://"),
+        DEFAULT_CUSTOM_DOMAIN_URL,
+        DEFAULT_CUSTOM_DOMAIN_URL.replace("https://", "http://"),
+    ]
+    if cfg is not None:
+        for attr in ("public_intake_url", "custom_domain_url"):
+            val = getattr(cfg, attr, "").strip()
+            if val:
+                known_hosts.append(normalize_base_url(val))
+    out = text
+    for host in dict.fromkeys(known_hosts):
+        if host and host != target:
+            out = out.replace(host, target)
+    return out
+
+
+def resolve_daily_send_limit(cfg: "MatcherConfig | None" = None) -> int:
+    """Resolve safe warm-up daily email batch limit from DAILY_SEND_LIMIT env var or config.json."""
+    raw = os.environ.get("DAILY_SEND_LIMIT", "").strip()
+    if raw:
+        try:
+            val = int(raw)
+            if val >= 1:
+                return min(val, 500)
+        except ValueError:
+            pass
+    if cfg is not None:
+        return max(1, int(getattr(cfg, "daily_send_limit", 8)))
+    return 8
 
 
 class NotificationSettings(BaseModel):
@@ -56,8 +138,18 @@ class MatcherConfig(BaseModel):
     firm_name: str = Field(default="ZYS GoldFields PRO LLC")
     firm_subtitle: str = Field(default="Conservation & Agricultural Grant Advisory")
     public_intake_url: str = Field(
-        default="https://zys-goldfields-intake.onrender.com",
-        description="Public HTTPS URL for the Zero-Call Digital Client Intake Portal",
+        default=DEFAULT_FALLBACK_BASE_URL,
+        description="Public HTTPS URL for the Zero-Call Digital Client Intake Portal (overridden by BASE_URL env var)",
+    )
+    custom_domain_url: str = Field(
+        default=DEFAULT_CUSTOM_DOMAIN_URL,
+        description="Target custom domain HTTPS URL once Porkbun DNS CNAME is pointed to Render",
+    )
+    daily_send_limit: int = Field(
+        default=8,
+        ge=1,
+        le=500,
+        description="Default daily domain warm-up cap for automated outreach batches",
     )
     firm_postal_address: str = Field(
         default="",

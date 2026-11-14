@@ -226,6 +226,90 @@ def _normalize_attachments(attachments: Any) -> list[tuple[str, bytes]]:
     return result
 
 
+def send_transactional_email(
+    cfg: MatcherConfig,
+    *,
+    to_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str = "",
+    attachments: Any = None,
+    reply_to: str = "",
+    headers: dict[str, str] | None = None,
+) -> tuple[str, str]:
+    """Send a single email via configured Resend API or SMTP provider.
+
+    Returns `(provider_name, provider_message_id)` or raises an exception on delivery error.
+    """
+    s = resolve_settings(cfg)
+    provider = s["provider"]
+    if provider not in ("resend", "smtp"):
+        raise RuntimeError("No email provider configured (set RESEND_API_KEY or SMTP credentials).")
+    if not s["from_email"]:
+        raise RuntimeError("Sender address NOTIFICATION_FROM_EMAIL is empty.")
+    if not to_email or "@" not in to_email:
+        raise ValueError(f"Invalid recipient email address: {to_email}")
+
+    norm_attachments = _normalize_attachments(attachments) if attachments else []
+
+    if provider == "resend":
+        payload: dict[str, Any] = {
+            "from": s["from_email"],
+            "to": [to_email.strip()],
+            "subject": subject,
+            "text": text_body,
+        }
+        if html_body.strip():
+            payload["html"] = html_body
+        if reply_to.strip():
+            payload["reply_to"] = reply_to.strip()
+        if headers:
+            payload["headers"] = headers
+        if norm_attachments:
+            payload["attachments"] = [
+                {"filename": name, "content": base64.b64encode(b_content).decode("ascii")}
+                for name, b_content in norm_attachments
+            ]
+        resp = requests.post(
+            RESEND_API_URL,
+            headers={"Authorization": f"Bearer {s['resend_api_key']}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=s["timeout"],
+        )
+        resp.raise_for_status()
+        msg_id = str(resp.json().get("id", "sent"))
+        return ("resend", msg_id)
+
+    msg = EmailMessage()
+    msg["From"] = s["from_email"]
+    msg["To"] = to_email.strip()
+    msg["Subject"] = subject
+    if reply_to.strip():
+        msg["Reply-To"] = reply_to.strip()
+    if headers:
+        for hk, hv in headers.items():
+            msg[hk] = hv
+    msg.set_content(text_body)
+    if html_body.strip():
+        msg.add_alternative(html_body, subtype="html")
+    for name, b_content in norm_attachments:
+        subtype = "json" if name.endswith(".json") else "markdown"
+        maintype = "application" if subtype == "json" else "text"
+        msg.add_attachment(b_content, maintype=maintype, subtype=subtype, filename=name)
+
+    if s["smtp_port"] == 465:
+        server: smtplib.SMTP = smtplib.SMTP_SSL(s["smtp_host"], s["smtp_port"], timeout=s["timeout"])
+    else:
+        server = smtplib.SMTP(s["smtp_host"], s["smtp_port"], timeout=s["timeout"])
+    with server:
+        if s["smtp_port"] != 465 and s["smtp_use_tls"]:
+            server.starttls()
+        if s["smtp_username"]:
+            server.login(s["smtp_username"], s["smtp_password"])
+        server.send_message(msg)
+    return ("smtp", f"smtp:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}")
+
+
 def _send_via_resend(s: dict[str, Any], subject: str, body: str, attachments: Any) -> str:
     norm_attachments = _normalize_attachments(attachments)
     payload = {

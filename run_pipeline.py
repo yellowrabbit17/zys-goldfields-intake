@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime, timedelta, timezone
 from http.server import ThreadingHTTPServer
 import json
+import os
 import sqlite3
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -13,16 +16,31 @@ from pathlib import Path
 import requests
 
 from admin_packager import DEFAULT_PACKET_PATH, DEFAULT_PREVIEW_PATH
-from db import DEFAULT_DB_PATH
-from intake_app import IntakePortalHandler
+from db import (
+    DEFAULT_DB_PATH,
+    _adapt_sql,
+    database_backend_info,
+    fetch_all_prospects,
+    fetch_outreach_statuses,
+    get_database_url,
+    init_db,
+    insert_client_intake,
+    mark_prospect_outreach_state,
+    sync_outreach_status_from_prospects,
+    upsert_prospects,
+)
+from intake_app import PACKETS_ARCHIVE_DIR, IntakePortalHandler
 from legal_agreement import DEFAULT_SIGNED_AGREEMENT_PATH
 from matcher import (
     DEFAULT_CONFIG_PATH,
+    DEFAULT_FOLLOWUP_PATH,
     DEFAULT_OUTPUT_PATH,
     NO_CALL_NEXT_STEP,
     load_matcher_config,
     run_matcher,
 )
+from models import ClientIntake, build_claim_url, resolve_base_url, rewrite_portal_urls
+from outreach_scheduler import get_outreach_dashboard_summary, run_outreach_batch
 from prospect_hunter import (
     CA_COUNTIES,
     DEFAULT_CSV_PATH,
@@ -32,6 +50,210 @@ from scraper import ingest_all_grants
 from seed_profiles import run_seed
 
 
+def verify_persistence_domain_and_outreach_scheduler() -> None:
+    """Verify PostgreSQL SQL adapter/backend resolution, dynamic BASE_URL magic links, and outreach cadence."""
+    # 1. PostgreSQL SQL placeholder & DSN adapter tests
+    sample_sql = "SELECT '?' AS literal_q, status FROM grants WHERE id = ? AND note = 'it''s ?'"
+    pg_sql = _adapt_sql(sample_sql, is_postgres=True)
+    assert pg_sql == "SELECT '?' AS literal_q, status FROM grants WHERE id = %s AND note = 'it''s ?'", pg_sql
+
+    old_db_url = os.environ.get("DATABASE_URL")
+    old_base_url = os.environ.get("BASE_URL")
+    try:
+        os.environ.pop("DATABASE_URL", None)
+        assert get_database_url(DEFAULT_DB_PATH) is None
+        assert database_backend_info(DEFAULT_DB_PATH)["backend"] == "sqlite"
+
+        os.environ["DATABASE_URL"] = "postgres://zys_user:secret@ep-cool-oak.us-west-2.aws.neon.tech/neondb?sslmode=require"
+        norm_dsn = get_database_url(DEFAULT_DB_PATH)
+        assert norm_dsn is not None and norm_dsn.startswith("postgresql://"), norm_dsn
+        pg_info = database_backend_info(DEFAULT_DB_PATH)
+        assert pg_info["backend"] == "postgresql"
+        assert pg_info["persistent"] is True
+        assert pg_info["host"] == "ep-cool-oak.us-west-2.aws.neon.tech"
+        os.environ.pop("DATABASE_URL", None)
+
+        # 2. Custom domain BASE_URL resolution & URL rewriting
+        os.environ.pop("BASE_URL", None)
+        cfg_default = load_matcher_config(DEFAULT_CONFIG_PATH)
+        assert resolve_base_url(cfg_default) == "https://zys-goldfields-intake.onrender.com"
+        assert build_claim_url("CA-T1-001", cfg_default) == "https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001"
+
+        os.environ["BASE_URL"] = "https://portal.zysgoldfields.pro/"
+        cfg_custom = load_matcher_config(DEFAULT_CONFIG_PATH)
+        assert cfg_custom.public_intake_url == "https://portal.zysgoldfields.pro"
+        assert resolve_base_url(cfg_custom) == "https://portal.zysgoldfields.pro"
+        assert build_claim_url("CA-T1-001", cfg_custom) == "https://portal.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+        rewritten = rewrite_portal_urls(
+            "Verify parcel: https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001",
+            "https://portal.zysgoldfields.pro",
+            cfg=cfg_custom,
+        )
+        assert rewritten == "Verify parcel: https://portal.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+
+        # 3. Isolated outreach scheduler cadence, warm-up rate limit, idempotency & claim suppression
+        sample_prospects = fetch_all_prospects(DEFAULT_DB_PATH)[:10]
+        assert len(sample_prospects) == 10
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_db = Path(tmp_dir) / "test_outreach.db"
+            # Verify isolated temp file ignores global DATABASE_URL so tests never mutate remote PG
+            os.environ["DATABASE_URL"] = "postgres://should:ignore@example.com/db"
+            assert get_database_url(tmp_db) is None
+            os.environ.pop("DATABASE_URL", None)
+            init_db(tmp_db, force=True)
+            upsert_prospects(sample_prospects, db_path=tmp_db, reset_existing=True)
+            sync_outreach_status_from_prospects(sample_prospects, db_path=tmp_db)
+
+            sent_log: list[dict[str, str]] = []
+
+            def fake_sender(
+                *,
+                to_email: str,
+                subject: str,
+                text_body: str,
+                html_body: str = "",
+                reply_to: str = "",
+                headers: dict[str, str] | None = None,
+            ) -> tuple[str, str]:
+                assert r"\$" not in text_body, f"Found unescaped '\\$' in plain-text outreach email to {to_email}"
+                assert r"\$" not in html_body, f"Found unescaped '\\$' in HTML outreach email to {to_email}"
+                assert "https://portal.zysgoldfields.pro/claim?prospect_id=" in text_body
+                assert headers and "List-Unsubscribe" in headers
+                msg_id = f"mock_msg_{len(sent_log) + 1:03d}"
+                sent_log.append({"to": to_email, "subject": subject, "id": msg_id})
+                return ("mock-resend", msg_id)
+
+            t0 = datetime(2026, 11, 1, 16, 0, 0, tzinfo=timezone.utc)
+            # Day 0 Batch 1: warm-up cap 3 emails/day -> sends Day 0 to CA-T1-001, 002, 003
+            r1 = run_outreach_batch(
+                db_path=tmp_db,
+                config_path=DEFAULT_CONFIG_PATH,
+                pitches_path=DEFAULT_OUTPUT_PATH,
+                followup_path=DEFAULT_FOLLOWUP_PATH,
+                daily_limit=3,
+                now_utc=t0,
+                base_url_override="https://portal.zysgoldfields.pro",
+                email_sender=fake_sender,
+            )
+            assert r1["status"] == "ok"
+            assert r1["sent_this_run"] == 3
+            assert r1["sent_today_after"] == 3
+            assert [x["prospect_id"] for x in r1["sent"]] == [
+                sample_prospects[0].prospect_id,
+                sample_prospects[1].prospect_id,
+                sample_prospects[2].prospect_id,
+            ]
+            assert all(x["sequence_step"] == "day0_initial" for x in r1["sent"])
+
+            # Same-day re-run must hit daily warm-up quota and send 0
+            r1_dup = run_outreach_batch(
+                db_path=tmp_db,
+                config_path=DEFAULT_CONFIG_PATH,
+                pitches_path=DEFAULT_OUTPUT_PATH,
+                followup_path=DEFAULT_FOLLOWUP_PATH,
+                daily_limit=3,
+                now_utc=t0 + timedelta(hours=2),
+                base_url_override="https://portal.zysgoldfields.pro",
+                email_sender=fake_sender,
+            )
+            assert r1_dup["status"] == "quota_exhausted"
+            assert r1_dup["sent_this_run"] == 0
+
+            # Suppress prospect #1 via portal intake signature & prospect #2 via unsubscribe
+            p0 = sample_prospects[0]
+            p1 = sample_prospects[1]
+            insert_client_intake(
+                ClientIntake(
+                    name=p0.organization_name,
+                    email=p0.contact_email,
+                    county=p0.county,
+                    state="CA",
+                    apn="019-140-001-000",
+                    acreage=p0.estimated_acreage,
+                    land_condition="Restoring riparian corridor and working rangeland.",
+                    project_goals="NRCS & CCI carbon farming and rangeland soil health.",
+                    agreed_to_terms=True,
+                    agreement_signed=True,
+                    signer_full_name="Test Signer",
+                    signer_title="Managing Director",
+                    prospect_id=p0.prospect_id,
+                    ein=p0.ein,
+                ),
+                db_path=tmp_db,
+            )
+            assert mark_prospect_outreach_state(p1.prospect_id, "unsubscribed", db_path=tmp_db) is True
+
+            # Before 92 hours (T0 + 80h): Day 4 must NOT be queued yet -> only Day 0 fires for #4
+            r_early = run_outreach_batch(
+                db_path=tmp_db,
+                config_path=DEFAULT_CONFIG_PATH,
+                pitches_path=DEFAULT_OUTPUT_PATH,
+                followup_path=DEFAULT_FOLLOWUP_PATH,
+                daily_limit=3,
+                max_sends=1,
+                now_utc=t0 + timedelta(hours=80),
+                base_url_override="https://portal.zysgoldfields.pro",
+                email_sender=fake_sender,
+            )
+            assert r_early["sent_this_run"] == 1
+            assert r_early["sent"][0]["prospect_id"] == sample_prospects[3].prospect_id
+            assert r_early["sent"][0]["sequence_step"] == "day0_initial"
+
+            # At Day 4 (T0 + 96h >= 92h): prospect #3 MUST get Day 4 follow-up first,
+            # while #1 (signed) and #2 (unsubscribed) remain suppressed!
+            r_day4 = run_outreach_batch(
+                db_path=tmp_db,
+                config_path=DEFAULT_CONFIG_PATH,
+                pitches_path=DEFAULT_OUTPUT_PATH,
+                followup_path=DEFAULT_FOLLOWUP_PATH,
+                daily_limit=3,
+                max_sends=2,
+                now_utc=t0 + timedelta(hours=96),
+                base_url_override="https://portal.zysgoldfields.pro",
+                email_sender=fake_sender,
+            )
+            assert r_day4["sent_this_run"] == 2
+            assert r_day4["sent"][0]["prospect_id"] == sample_prospects[2].prospect_id
+            assert r_day4["sent"][0]["sequence_step"] == "day4_followup"
+            assert r_day4["sent"][1]["prospect_id"] == sample_prospects[4].prospect_id
+            assert r_day4["sent"][1]["sequence_step"] == "day0_initial"
+
+            # At Day 9 (T0 + 216h >= 212h and >= 72h post Day 4): prospect #3 MUST get Day 9 first!
+            r_day9 = run_outreach_batch(
+                db_path=tmp_db,
+                config_path=DEFAULT_CONFIG_PATH,
+                pitches_path=DEFAULT_OUTPUT_PATH,
+                followup_path=DEFAULT_FOLLOWUP_PATH,
+                daily_limit=2,
+                now_utc=t0 + timedelta(hours=216),
+                base_url_override="https://portal.zysgoldfields.pro",
+                email_sender=fake_sender,
+            )
+            assert r_day9["sent_this_run"] == 2
+            assert r_day9["sent"][0]["prospect_id"] == sample_prospects[2].prospect_id
+            assert r_day9["sent"][0]["sequence_step"] == "day9_followup"
+
+            # Ensure neither signed p0 nor unsubscribed p1 ever received a follow-up after Day 0
+            p0_emails = [m for m in sent_log if m["to"] == p0.contact_email.lower()]
+            p1_emails = [m for m in sent_log if m["to"] == p1.contact_email.lower()]
+            assert len(p0_emails) == 1 and len(p1_emails) == 1
+
+            summary = get_outreach_dashboard_summary(tmp_db)
+            assert summary["status_counts"].get("signed", 0) >= 1
+            assert summary["status_counts"].get("unsubscribed", 0) >= 1
+            assert summary["status_counts"].get("completed", 0) >= 1
+    finally:
+        if old_db_url is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            os.environ["DATABASE_URL"] = old_db_url
+        if old_base_url is None:
+            os.environ.pop("BASE_URL", None)
+        else:
+            os.environ["BASE_URL"] = old_base_url
+
+
 def verify_intake_portal_and_packager() -> None:
     """Spin up intake_app HTTP server on an ephemeral port and verify Stage A Gate + Stage B E-Signature flow."""
     server = ThreadingHTTPServer(("127.0.0.1", 0), IntakePortalHandler)
@@ -39,6 +261,7 @@ def verify_intake_portal_and_packager() -> None:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base_url = f"http://127.0.0.1:{port}"
+    old_admin_token = os.environ.get("ADMIN_API_TOKEN")
 
     try:
         # 1. Verify GET / renders the single-page intake form with scrollable UETA/ESIGN agreement & 2 CFR 200.459 clause
@@ -71,6 +294,7 @@ def verify_intake_portal_and_packager() -> None:
             "Sacramento County, California",
             "I agree to the ZYS GoldFields PRO LLC Advisory Agreement.",
             "URLSearchParams",
+            "PORTAL_BASE_URL",
         ):
             assert expected_token in home_resp.text, f"Missing expected token '{expected_token}' in portal HTML"
 
@@ -81,13 +305,14 @@ def verify_intake_portal_and_packager() -> None:
         assert healthz_get.status_code == 200, f"Expected 200 on GET /healthz, got {healthz_get.status_code}"
         assert healthz_get.text == "ok\n", f"Unexpected /healthz body: {healthz_get.text}"
 
-        # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001
-        claim_resp = requests.get(f"{base_url}/claim?prospect_id=CA-T1-001", timeout=5)
-        assert claim_resp.status_code == 200, f"Expected 200 on /claim, got {claim_resp.status_code}"
-        assert "no-cache" in claim_resp.headers.get("Cache-Control", "")
-        assert "no-store" in claim_resp.headers.get("Cache-Control", "")
-        for token in ("Paicines Ranch", "Pre-Screened Grant Allocation", "CA-T1-001", "83-3255248", "San Benito"):
-            assert token in claim_resp.text, f"Missing token '{token}' in /claim?prospect_id=CA-T1-001 HTML"
+        # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001 (and /claim/ + /?prospect_id=)
+        for claim_path in ("/claim?prospect_id=CA-T1-001", "/claim/?prospect_id=CA-T1-001", "/?prospect_id=CA-T1-001"):
+            claim_resp = requests.get(f"{base_url}{claim_path}", timeout=5)
+            assert claim_resp.status_code == 200, f"Expected 200 on {claim_path}, got {claim_resp.status_code}"
+            assert "no-cache" in claim_resp.headers.get("Cache-Control", "")
+            assert "no-store" in claim_resp.headers.get("Cache-Control", "")
+            for token in ("Paicines Ranch", "Pre-Screened Grant Allocation", "CA-T1-001", "83-3255248", "San Benito"):
+                assert token in claim_resp.text, f"Missing token '{token}' in {claim_path} HTML"
 
         # 1c. Verify /intake_portal.html direct routing and no-cache headers
         portal_resp = requests.get(f"{base_url}/intake_portal.html", timeout=5)
@@ -96,8 +321,8 @@ def verify_intake_portal_and_packager() -> None:
         assert "input-signer-name" in portal_resp.text
         assert "input-signer-title" in portal_resp.text
 
-        # 1d. Verify HEAD requests on /, /claim, and /intake_portal.html emit no-cache headers
-        for path in ("/", "/claim", "/intake_portal.html"):
+        # 1d. Verify HEAD requests on /, /claim, /claim/, and /intake_portal.html emit no-cache headers
+        for path in ("/", "/claim", "/claim/", "/intake_portal.html"):
             h_resp = requests.head(f"{base_url}{path}", timeout=5)
             assert h_resp.status_code == 200, f"Expected 200 on HEAD {path}, got {h_resp.status_code}"
             assert "no-cache" in h_resp.headers.get("Cache-Control", ""), f"Missing no-cache header on HEAD {path}"
@@ -110,11 +335,15 @@ def verify_intake_portal_and_packager() -> None:
         assert "input-signer-title" in static_html_text
 
         # 1c. Verify GET /api/health and GET /api/prospects
+        os.environ.pop("ADMIN_API_TOKEN", None)
         health_resp = requests.get(f"{base_url}/api/health", timeout=5)
         assert health_resp.status_code == 200
         health_json = health_resp.json()
         assert health_json["status"] == "healthy"
         assert "notifications" in health_json
+        assert health_json["database"]["backend"] in ("sqlite", "postgresql")
+        assert health_json["base_url"].startswith("https://")
+        assert health_json["daily_send_limit"] >= 1
 
         prospects_resp = requests.get(f"{base_url}/api/prospects", timeout=5)
         assert prospects_resp.status_code == 200
@@ -195,9 +424,7 @@ def verify_intake_portal_and_packager() -> None:
             assert resp.status_code == 400, f"Expected 400 for nonsense payload #{idx}, got {resp.status_code}: {resp.text}"
             assert "error" in resp.json()
 
-        # 3. Verify Stage A ("Sign-to-Unlock" Gate when agreement_signed == False):
-        #    Shows matched grant, engineered budget total, and probability score, but masks
-        #    RCD Co-Sponsor Memorandum, grant solicitation ID, and copy-paste narrative.
+        # 3. Verify Stage A ("Sign-to-Unlock" Gate when agreement_signed == False)
         stage_a_payload = {
             "name": "Elena & Marcus Vance",
             "email": "vance.family@sierraridgeoak.com",
@@ -238,13 +465,11 @@ def verify_intake_portal_and_packager() -> None:
 
         preview_md = preview_body["packet_markdown"]
         assert "Stage A: Client Grant Eligibility & Budget Preview Summary (LOCKED DOSSIER)" in preview_md
-        # Ensure solicitation ID, copy-paste narrative, and RCD co-sponsor memo are masked in Stage A
         assert "CCI-california-forest-improvement-program" not in preview_md
         assert "Part B: Ready-to-Send County RCD & USDA NRCS Handoff Package" not in preview_md
         assert "MASKED — COMPLETE E-SIGNATURE TO UNLOCK" in preview_md
 
         preview_intake_id = preview_body["intake_id"]
-        # Attempting to download unlocked packet for unsigned intake must return HTTP 403 Forbidden
         forbidden_pkt = requests.get(f"{base_url}/api/packet/{preview_intake_id}", timeout=5)
         assert forbidden_pkt.status_code == 403, f"Expected 403 on unsigned intake packet, got {forbidden_pkt.status_code}"
 
@@ -324,6 +549,14 @@ def verify_intake_portal_and_packager() -> None:
         assert arch_resp.status_code == 200
         assert "089-140-027-000" in arch_resp.text
 
+        # Verify ephemeral archive reconstruction (if container disk wiped while DB row persists)
+        cached_pkt = PACKETS_ARCHIVE_DIR / f"client_submission_packet_{intake_id}.md"
+        if cached_pkt.exists():
+            cached_pkt.unlink()
+        rebuilt_pkt = requests.get(f"{base_url}/api/packet/{intake_id}", timeout=5)
+        assert rebuilt_pkt.status_code == 200, f"Expected on-the-fly reconstruction HTTP 200, got {rebuilt_pkt.status_code}"
+        assert "089-140-027-000" in rebuilt_pkt.text
+
         agr_latest = requests.get(f"{base_url}/api/agreement/latest", timeout=5)
         assert agr_latest.status_code == 200
         assert "2 CFR § 200.459" in agr_latest.text
@@ -345,7 +578,49 @@ def verify_intake_portal_and_packager() -> None:
         intakes_resp = requests.get(f"{base_url}/api/intakes", timeout=5)
         assert intakes_resp.status_code == 200
         assert intakes_resp.json()["count"] >= 2
+
+        # 6. Verify strict ADMIN_API_TOKEN protection on /api/cron/run-outreach & /api/outreach-status
+        # Even without PUBLIC_MODE=1, cron endpoints MUST fail closed when ADMIN_API_TOKEN is unset!
+        unauth_cron = requests.post(f"{base_url}/api/cron/run-outreach", json={"dry_run": True}, timeout=5)
+        assert unauth_cron.status_code == 403, f"Expected 403 when ADMIN_API_TOKEN unset, got {unauth_cron.status_code}"
+
+        os.environ["ADMIN_API_TOKEN"] = "zys_test_cron_token_987"
+        bad_cron = requests.post(
+            f"{base_url}/api/cron/run-outreach",
+            headers={"Authorization": "Bearer wrong-token"},
+            json={"dry_run": True},
+            timeout=5,
+        )
+        assert bad_cron.status_code == 403, f"Expected 403 for wrong token, got {bad_cron.status_code}"
+
+        dry_cron = requests.post(
+            f"{base_url}/api/cron/run-outreach",
+            headers={"Authorization": "Bearer zys_test_cron_token_987"},
+            json={"dry_run": True, "daily_limit": 5},
+            timeout=10,
+        )
+        assert dry_cron.status_code == 200, f"Expected 200 for authorized dry_run cron, got {dry_cron.status_code}: {dry_cron.text}"
+        dry_json = dry_cron.json()
+        assert dry_json["dry_run"] is True
+        assert dry_json["status"] == "dry_run"
+        assert dry_json["daily_send_limit"] == 5
+        assert len(dry_json["planned"]) == 5
+        # Verify claimed CA-T1-002 (signed above) is suppressed in the dry-run queue!
+        planned_ids = {item["prospect_id"] for item in dry_json["planned"]}
+        assert "CA-T1-002" not in planned_ids, "Expected signed prospect CA-T1-002 to be suppressed from outreach queue"
+
+        status_resp = requests.get(
+            f"{base_url}/api/outreach-status",
+            headers={"Authorization": "Bearer zys_test_cron_token_987"},
+            timeout=5,
+        )
+        assert status_resp.status_code == 200
+        assert status_resp.json()["total_prospects"] >= 50
     finally:
+        if old_admin_token is None:
+            os.environ.pop("ADMIN_API_TOKEN", None)
+        else:
+            os.environ["ADMIN_API_TOKEN"] = old_admin_token
         server.shutdown()
         server.server_close()
 
@@ -376,12 +651,22 @@ def verify_outputs(
     assert (root_dir / "start_public_tunnel.sh").exists(), "Missing Cloudflare tunnel script start_public_tunnel.sh"
     assert (root_dir / "legal_agreement.py").exists(), "Missing legal_agreement.py"
     assert (root_dir / "notifier.py").exists(), "Missing notifier.py"
+    assert (root_dir / "outreach_scheduler.py").exists(), "Missing outreach_scheduler.py"
+    assert (root_dir / ".env.example").exists(), "Missing .env.example"
+    assert (root_dir / ".github" / "workflows" / "outreach_cron.yml").exists(), "Missing outreach_cron.yml"
     assert (root_dir / "followup_templates.md").exists(), "Missing followup_templates.md"
 
     with sqlite3.connect(str(db_path)) as conn:
         grant_cols = [r[1] for r in conn.execute("PRAGMA table_info(grants)").fetchall()]
         profile_cols = [r[1] for r in conn.execute("PRAGMA table_info(landowner_profiles)").fetchall()]
         audit_cols = [r[1] for r in conn.execute("PRAGMA table_info(esignature_audit_log)").fetchall()]
+        outreach_tables = {
+            r[0]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('prospect_outreach_status', 'outreach_send_log')"
+            ).fetchall()
+        }
+        assert outreach_tables == {"prospect_outreach_status", "outreach_send_log"}, outreach_tables
 
         assert grant_cols == ["id", "title", "agency", "funding_amount", "deadline", "eligibility_text", "url"]
         assert profile_cols == ["id", "name", "state", "county", "acreage", "land_type", "features"]
@@ -487,10 +772,10 @@ def verify_outputs(
     assert "2 CFR § 200.459" in packet_md
     assert "ZYS GoldFields PRO LLC" in packet_md
 
-    print("\n=== California UETA / ESIGN, 2 CFR § 200.459 & Sign-to-Unlock Verification Passed ===")
+    print("\n=== California UETA / ESIGN, PostgreSQL/Domain/Scheduler & Sign-to-Unlock Verification Passed ===")
     print(f"  Config File:         {config_path} ({json.dumps(cfg.model_dump())})")
     print(
-        f"  SQLite DB:           {db_path} "
+        f"  Database Layer:      {db_path} "
         f"({grant_count} grants, {profile_count} profiles, {prospect_db_count} Tier-1 CA prospects, "
         f"{intake_count} intakes, {audit_count} cryptographic e-signature audit records)"
     )
@@ -509,10 +794,12 @@ def main() -> None:
     run_seed()
     build_california_prospects_dataset()
     run_matcher()
-    # Reset client_intakes, esignature_audit_log, and stale packet archives before clean verification run
+    # Reset client_intakes, esignature_audit_log, outreach tracking, and stale packet archives before clean verification run
     with sqlite3.connect(str(DEFAULT_DB_PATH)) as conn:
         conn.execute("DELETE FROM client_intakes")
         conn.execute("DELETE FROM esignature_audit_log")
+        conn.execute("DELETE FROM prospect_outreach_status")
+        conn.execute("DELETE FROM outreach_send_log")
         conn.commit()
     packets_dir = DEFAULT_DB_PATH.parent / "packets"
     if packets_dir.exists():
@@ -521,6 +808,7 @@ def main() -> None:
     backup_file = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
     if backup_file.exists():
         backup_file.unlink()
+    verify_persistence_domain_and_outreach_scheduler()
     verify_intake_portal_and_packager()
     verify_outputs()
 

@@ -10,6 +10,8 @@
   "firm_name": "ZYS GoldFields PRO LLC",
   "firm_subtitle": "Conservation & Agricultural Grant Advisory",
   "public_intake_url": "https://zys-goldfields-intake.onrender.com",
+  "custom_domain_url": "https://portal.zysgoldfields.pro",
+  "daily_send_limit": 8,
   "firm_postal_address": "8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624",
   "unsubscribe_email": "",
   "notifications": {
