@@ -21,9 +21,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import hmac
 import html
 from http import HTTPStatus
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
 import json
@@ -31,6 +33,7 @@ import logging
 import os
 from pathlib import Path
 import re
+import secrets
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 import zipfile
@@ -70,6 +73,7 @@ from legal_agreement import (
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
 from models import (
     ClientIntake,
+    MatcherConfig,
     ProspectRecord,
     build_claim_url,
     eligibility_tier_label,
@@ -1323,6 +1327,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
       try {{
         const resp = await fetch('/api/intake', {{
           method: 'POST',
+          credentials: 'same-origin',
           headers: {{ 'Content-Type': 'application/json' }},
           body: JSON.stringify(payload)
         }});
@@ -1911,6 +1916,43 @@ def _unlock_existing_intake(
     }
 
 
+def _extract_origin(header_val: str) -> str:
+    """Normalize an Origin or URL string into 'scheme://netloc' or empty string."""
+    raw = (header_val or "").strip()
+    if not raw or raw.lower() == "null":
+        return ""
+    parsed = urlparse(raw)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+
+
+def _allowed_cors_origins(cfg: MatcherConfig | None = None) -> set[str]:
+    """Return allowed browser origins for grants.zysgoldfields.pro, Render fallback, and configured extras."""
+    origins = {
+        "https://grants.zysgoldfields.pro",
+        "https://www.grants.zysgoldfields.pro",
+        "https://zys-goldfields-intake.onrender.com",
+        "https://portal.zysgoldfields.pro",
+    }
+    if cfg is not None:
+        for candidate in (
+            resolve_base_url(cfg),
+            getattr(cfg, "public_intake_url", ""),
+            getattr(cfg, "custom_domain_url", ""),
+        ):
+            ext = _extract_origin(str(candidate or ""))
+            if ext:
+                origins.add(ext)
+    extra = os.environ.get("CORS_ALLOWED_ORIGINS", "").strip()
+    if extra:
+        for item in extra.split(","):
+            ext = _extract_origin(item)
+            if ext:
+                origins.add(ext)
+    return origins
+
+
 class IntakePortalHandler(BaseHTTPRequestHandler):
     """Lightweight HTTP request handler for the Zero-Call Digital Client Intake & E-Signature Portal."""
 
@@ -1918,6 +1960,10 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         logger.info("%s - %s", self.address_string(), fmt % args)
 
     def _extract_client_ip(self) -> str:
+        for header_name in ("CF-Connecting-IP", "True-Client-IP"):
+            val = self.headers.get(header_name, "").strip()
+            if val:
+                return val.split(",")[0].strip()
         forwarded = self.headers.get("X-Forwarded-For", "").strip()
         if forwarded:
             return forwarded.split(",")[0].strip()
@@ -1925,6 +1971,120 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def _extract_user_agent(self) -> str:
         return self.headers.get("User-Agent", "ZYS-GoldFields-Client-Browser/1.0").strip()
+
+    def _is_https_request(self) -> bool:
+        """Detect TLS termination behind Cloudflare / Render reverse proxies."""
+        proto = self.headers.get("X-Forwarded-Proto", "").split(",")[0].strip().lower()
+        if proto == "https":
+            return True
+        if proto == "http":
+            return False
+        cf_visitor = self.headers.get("CF-Visitor", "").lower()
+        if '"https"' in cf_visitor:
+            return True
+        host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").split(",")[0].strip().lower()
+        hostname = host.split(":", 1)[0]
+        return hostname in ("grants.zysgoldfields.pro", "www.grants.zysgoldfields.pro", "portal.zysgoldfields.pro") or hostname.endswith(".onrender.com")
+
+    @staticmethod
+    def _is_origin_allowed(origin: str, cfg: MatcherConfig | None = None) -> bool:
+        ext = _extract_origin(origin)
+        if not ext:
+            return False
+        if ext in _allowed_cors_origins(cfg):
+            return True
+        hostname = (urlparse(ext).hostname or "").lower()
+        return hostname in ("localhost", "127.0.0.1")
+
+    def _cookie_signing_secret(self) -> bytes:
+        secret = (
+            os.environ.get("SESSION_SECRET", "").strip()
+            or os.environ.get("ADMIN_API_TOKEN", "").strip()
+            or "zys-goldfields-pro-session-key"
+        )
+        return secret.encode("utf-8")
+
+    def _read_request_cookies(self) -> dict[str, str]:
+        raw_cookie = self.headers.get("Cookie", "").strip()
+        if not raw_cookie:
+            return {}
+        jar = SimpleCookie()
+        try:
+            jar.load(raw_cookie)
+        except Exception:
+            return {}
+        return {k: m.value for k, m in jar.items()}
+
+    def _valid_or_new_session_id(self) -> str:
+        cookies = self._read_request_cookies()
+        existing = cookies.get("zys_portal_session", "").strip()
+        secret = self._cookie_signing_secret()
+        if "." in existing:
+            sid_part, sig_part = existing.split(".", 1)
+            if re.match(r"^[A-Za-z0-9_-]{12,64}$", sid_part):
+                expected_sig = hmac.new(secret, sid_part.encode("utf-8"), hashlib.sha256).hexdigest()[:24]
+                if hmac.compare_digest(sig_part, expected_sig):
+                    return existing
+        sid_part = secrets.token_urlsafe(16)
+        sig_part = hmac.new(secret, sid_part.encode("utf-8"), hashlib.sha256).hexdigest()[:24]
+        return f"{sid_part}.{sig_part}"
+
+    def _send_session_cookies(self, prospect_id: str = "") -> None:
+        session_val = self._valid_or_new_session_id()
+        secure_attr = "; Secure" if self._is_https_request() else ""
+        self.send_header(
+            "Set-Cookie",
+            f"zys_portal_session={session_val}; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax{secure_attr}",
+        )
+        clean_pid = re.sub(r"[^A-Za-z0-9_-]", "", (prospect_id or "").strip())
+        if clean_pid:
+            self.send_header(
+                "Set-Cookie",
+                f"zys_claim_prospect={clean_pid}; Path=/; Max-Age=3600; HttpOnly; SameSite=Lax{secure_attr}",
+            )
+
+    def _write_no_cache_headers(self) -> None:
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+        self.send_header("CDN-Cache-Control", "no-store")
+        self.send_header("Cloudflare-CDN-Cache-Control", "no-store")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+
+    def _write_cors_and_security_headers(
+        self,
+        *,
+        is_api: bool = True,
+        is_preflight: bool = False,
+        cfg: MatcherConfig | None = None,
+    ) -> None:
+        active_cfg = cfg or load_matcher_config(DEFAULT_CONFIG_PATH)
+        active_base = resolve_base_url(active_cfg)
+        self.send_header("Vary", "Origin")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        if not is_api:
+            self.send_header("X-Frame-Options", "SAMEORIGIN")
+        if self._is_https_request():
+            self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+
+        req_origin = _extract_origin(self.headers.get("Origin", ""))
+        allowed_origin: str | None = None
+        if req_origin:
+            if self._is_origin_allowed(req_origin, active_cfg):
+                allowed_origin = req_origin
+        elif is_api or is_preflight:
+            allowed_origin = _extract_origin(active_base)
+
+        if allowed_origin:
+            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
+            self.send_header(
+                "Access-Control-Allow-Headers",
+                "Content-Type, Authorization, X-Admin-Token, X-Requested-With, Accept, Origin",
+            )
+            self.send_header("Access-Control-Expose-Headers", "Content-Disposition")
+            self.send_header("Access-Control-Max-Age", "86400")
 
     def _extract_presented_token(self) -> str:
         auth_header = self.headers.get("Authorization", "").strip()
@@ -2018,27 +2178,43 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             return HTTPStatus.SERVICE_UNAVAILABLE, report
         return HTTPStatus.OK, report
 
-    def _send_json(self, status: int, payload: dict[str, Any], no_cache: bool = True) -> None:
+    def _send_json(
+        self,
+        status: int,
+        payload: dict[str, Any],
+        no_cache: bool = True,
+        prospect_id: str = "",
+        set_cookies: bool = False,
+    ) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self._write_cors_and_security_headers(is_api=True)
+        if set_cookies:
+            self._send_session_cookies(prospect_id=prospect_id)
         if no_cache:
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Expires", "0")
+            self._write_no_cache_headers()
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_html(self, status: int, html_body: str, no_cache: bool = True) -> None:
+    def _send_html(
+        self,
+        status: int,
+        html_body: str,
+        no_cache: bool = True,
+        prospect_id: str = "",
+        set_cookies: bool = True,
+    ) -> None:
         body = html_body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self._write_cors_and_security_headers(is_api=False)
+        if set_cookies:
+            self._send_session_cookies(prospect_id=prospect_id)
         if no_cache:
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Expires", "0")
+            self._write_no_cache_headers()
         self.end_headers()
         self.wfile.write(body)
 
@@ -2048,11 +2224,25 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/markdown; charset=utf-8")
         self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
+        self._write_cors_and_security_headers(is_api=True)
+        self._write_no_cache_headers()
         self.end_headers()
         self.wfile.write(data)
+
+    def do_OPTIONS(self) -> None:
+        cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+        req_origin = _extract_origin(self.headers.get("Origin", ""))
+        if req_origin and not self._is_origin_allowed(req_origin, cfg):
+            self.send_response(HTTPStatus.FORBIDDEN)
+            self.send_header("Vary", "Origin")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self._write_cors_and_security_headers(is_api=True, is_preflight=True, cfg=cfg)
+        self._write_no_cache_headers()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def do_HEAD(self) -> None:
         parsed = urlparse(self.path)
@@ -2061,11 +2251,12 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             if parsed.path == "/healthz":
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.send_header("Content-Length", "3")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+                self.send_header("X-Content-Type-Options", "nosniff")
             else:
                 self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-                self.send_header("Pragma", "no-cache")
-                self.send_header("Expires", "0")
+                self._write_cors_and_security_headers(is_api=False)
+                self._write_no_cache_headers()
             self.end_headers()
             return
 
@@ -2078,13 +2269,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         ):
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Expires", "0")
+            self._write_cors_and_security_headers(is_api=True)
+            self._write_no_cache_headers()
             self.end_headers()
             return
 
         self.send_response(HTTPStatus.NOT_FOUND)
+        self.send_header("Vary", "Origin")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -2093,13 +2284,20 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             qs = parse_qs(parsed.query)
             prospect_id = qs.get("prospect_id", [""])[0].strip()
             prospect = lookup_prospect_by_id(prospect_id) if prospect_id else None
-            self._send_html(HTTPStatus.OK, render_portal_html(prospect=prospect))
+            self._send_html(
+                HTTPStatus.OK,
+                render_portal_html(prospect=prospect),
+                prospect_id=prospect_id,
+                set_cookies=True,
+            )
             return
 
         if parsed.path == "/healthz":
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.send_header("Content-Length", "3")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
             self.wfile.write(b"ok\n")
             return
@@ -2114,6 +2312,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     "agreement_version": AGREEMENT_VERSION,
                     "public_mode": os.environ.get("PUBLIC_MODE", "0") == "1",
                     "base_url": resolve_base_url(cfg),
+                    "cors_allowed_origins": sorted(_allowed_cors_origins(cfg)),
                     "daily_send_limit": resolve_daily_send_limit(cfg),
                     "database": database_backend_info(DEFAULT_DB_PATH),
                     "notifications": notification_status(cfg),
@@ -2251,6 +2450,8 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/zip")
             self.send_header("Content-Disposition", 'attachment; filename="zys-goldfields-intake.zip"')
             self.send_header("Content-Length", str(len(zip_bytes)))
+            self._write_cors_and_security_headers(is_api=True)
+            self._write_no_cache_headers()
             self.end_headers()
             self.wfile.write(zip_bytes)
             return
@@ -2371,7 +2572,12 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             try:
                 body = json.loads(raw_bytes.decode("utf-8") or "{}")
                 result = _process_intake_payload(body, client_ip=client_ip, user_agent=user_agent)
-                self._send_json(HTTPStatus.OK, result)
+                self._send_json(
+                    HTTPStatus.OK,
+                    result,
+                    prospect_id=str(result.get("prospect_id") or ""),
+                    set_cookies=True,
+                )
             except ValidationError as verr:
                 first_msg = verr.errors()[0].get("msg", "Invalid intake input.")
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": first_msg})
@@ -2386,7 +2592,12 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             try:
                 body = json.loads(raw_bytes.decode("utf-8") or "{}")
                 result = _unlock_existing_intake(body, client_ip=client_ip, user_agent=user_agent)
-                self._send_json(HTTPStatus.OK, result)
+                self._send_json(
+                    HTTPStatus.OK,
+                    result,
+                    prospect_id=str(result.get("prospect_id") or ""),
+                    set_cookies=True,
+                )
             except ValueError as val_err:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(val_err)})
             except Exception as exc:
@@ -2479,7 +2690,12 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     f"<pre style='background:#f6f5f0;padding:16px;overflow:auto;'>{result['packet_markdown']}</pre>"
                     f"</body></html>"
                 )
-                self._send_html(HTTPStatus.OK, confirmation_html)
+                self._send_html(
+                    HTTPStatus.OK,
+                    confirmation_html,
+                    prospect_id=str(result.get("prospect_id") or ""),
+                    set_cookies=True,
+                )
             except Exception as exc:
                 self._send_html(HTTPStatus.BAD_REQUEST, f"<h1>Validation Error</h1><p>{exc}</p><p><a href='/'>Go Back</a></p>")
             return

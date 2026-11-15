@@ -2,7 +2,7 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/yellowrabbit17/zys-goldfields-intake)
 
-End-to-end automated California conservation grant underwriting, Tier-1 prospect qualification, 1-page cold-outreach pitch generation, California UETA / ESIGN e-signature execution (`2 CFR § 200.459` compliant), "Sign-to-Unlock" County Resource Conservation District (RCD) / USDA NRCS submission packaging, persistent PostgreSQL storage, custom domain routing (`portal.zysgoldfields.pro`), and warm-up rate-limited Day 4 / Day 9 follow-up automation.
+End-to-end automated California conservation grant underwriting, Tier-1 prospect qualification, 1-page cold-outreach pitch generation, California UETA / ESIGN e-signature execution (`2 CFR § 200.459` compliant), "Sign-to-Unlock" County Resource Conservation District (RCD) / USDA NRCS submission packaging, persistent PostgreSQL storage, primary custom domain routing (`https://grants.zysgoldfields.pro`), and warm-up rate-limited Day 4 / Day 9 follow-up automation.
 
 ## Production Hardening Upgrades
 
@@ -16,13 +16,14 @@ End-to-end automated California conservation grant underwriting, Tier-1 prospect
    - **Persistent Backup Webhook**: Optional HMAC-SHA256 signed JSON webhook (`X-ZYS-Signature: sha256=<hex>`) to Make / Zapier / n8n / Google Apps Script.
    - **24/7 Keep-Alive Endpoint (`/healthz`)** and **Diagnostic Check (`/api/health`, `/api/test-email`)**: Fast zero-DB `GET`/`HEAD /healthz` plus rich health diagnostics reporting database backend persistence, active `BASE_URL`, `DAILY_SEND_LIMIT`, and email readiness.
 
-3. **Custom Domain Support & 1-Click Magic Links (`models.py`, `matcher.py`, `prospect_hunter.py`, `intake_app.py`)**:
-   - **Configurable `BASE_URL`**: Set `BASE_URL=https://portal.zysgoldfields.pro` in Render Environment (falls back cleanly to `https://zys-goldfields-intake.onrender.com` until DNS CNAME is pointed). Dynamically updates all `/claim?prospect_id=...` magic links, outreach batches, canonical `<link>` tags, and portal metadata.
+3. **Custom Domain Support, CORS, Session Cookies & Proxy Caching (`models.py`, `matcher.py`, `prospect_hunter.py`, `intake_app.py`)**:
+   - **Primary Domain `https://grants.zysgoldfields.pro`**: `BASE_URL` defaults cleanly to `https://grants.zysgoldfields.pro` across all `/claim?prospect_id=...` magic links, generated templates, outreach batches, and canonical `<link>` tags.
+   - **CORS, Cookie/Session & Cloudflare/Proxy Headers**: Supports `OPTIONS` preflight and `Access-Control-Allow-*` / `Vary: Origin` CORS headers scoped to `https://grants.zysgoldfields.pro` and `https://zys-goldfields-intake.onrender.com`, issues signed `HttpOnly; SameSite=Lax; Secure` session cookies over reverse-proxy HTTPS, extracts client IPs via `CF-Connecting-IP` / `X-Forwarded-For`, and emits `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` + `CDN-Cache-Control: no-store` on dynamic HTML and API routes.
    - **1-Click Pre-Filled Experience (`/claim?prospect_id=CA-T1-###`)**: Pre-fills Organization Name, County, EIN, Acreage, Conservation Focus, and Top Matched Grant from PostgreSQL/`california_prospects.csv`. Prospects verify their parcel APN, e-sign, and unlock their RCD filing packet in 1 click.
 
 4. **Automated Day 4 & Day 9 Outreach Scheduler + Warm-Up Rate Limiting (`outreach_scheduler.py`, `.github/workflows/outreach_cron.yml`)**:
    - **Protected Cron Endpoint (`/api/cron/run-outreach`)**: Strictly secured by `ADMIN_API_TOKEN` (`Authorization: Bearer ...`), triggered daily at `16:00 UTC` (8 AM PST / 9 AM PDT) via GitHub Actions with Render cold-start retries.
-   - **Safe Domain Warm-Up Rate Limiting (`DAILY_SEND_LIMIT`)**: Caps total daily combined Day 0 / Day 4 / Day 9 emails (default `8`/day) and tracks exact per-day UTC send volume in `outreach_send_log`.
+   - **Safe Domain Warm-Up Rate Limiting (`DAILY_SEND_LIMIT`)**: Caps total daily combined Day 0 / Day 4 / Day 9 emails (default `5`/day) and tracks exact per-day UTC send volume in `outreach_send_log`.
    - **Priority Cadence, Idempotency & Suppression**: Processes `Day 9 Follow-Up` -> `Day 4 Follow-Up` -> `Day 0 Initial Brief`, enforces atomic `(prospect_id, sequence_step)` database locks so no prospect is ever emailed twice for the same cadence step, and automatically suppresses any prospect who claims/signs on the portal or unsubscribes (`/api/outreach/mark`).
 
 5. **Statutory Tiering, Land Trust Segmentation & CAN-SPAM Compliance (`matcher.py`, `legal_agreement.py`)**:
@@ -36,7 +37,7 @@ flowchart TD
     B --> C["california_prospects & prospect_outreach_status"]
     D["GitHub Actions Daily Cron (16:00 UTC)"] -->|"POST /api/cron/run-outreach (Bearer Token)"| E["outreach_scheduler.py (DAILY_SEND_LIMIT Warm-Up)"]
     E -->|"Day 0 / Day 4 / Day 9 via Resend"| F["Prospect Inbox (Magic Link /claim?prospect_id=...)"]
-    F -->|"1-Click Visit"| G["Digital Intake Portal (intake_app.py)"]
+    F -->|"1-Click Visit"| G["Digital Intake Portal (grants.zysgoldfields.pro)"]
     G -->|"Stage A: Unsigned"| H["Locked Client Preview Summary"]
     G -->|"Stage B: CA UETA E-Signature"| I["Unlocked RCD Packet & Signed Agreement"]
     I -->|"Suppresses Follow-Ups + Persists"| B
@@ -50,10 +51,10 @@ Copy `.env.example` to `.env` for local testing or configure these variables in 
 | Variable | Description | Example / Default |
 | :--- | :--- | :--- |
 | `PUBLIC_MODE` | Enables production security on admin API routes | `1` |
-| `BASE_URL` | Canonical portal URL for magic links (`portal.zysgoldfields.pro` once DNS is active) | `https://zys-goldfields-intake.onrender.com` |
+| `BASE_URL` | Primary custom domain URL for magic links and canonical metadata | `https://grants.zysgoldfields.pro` |
 | `DATABASE_URL` | Persistent PostgreSQL connection string (Neon / Supabase); omit locally for SQLite | `postgresql://...?sslmode=require` |
 | `ADMIN_API_TOKEN` | Bearer token protecting `/api/cron/run-outreach`, `/api/outreach-status`, `/api/intakes`, `/api/audits` | `zys_admin_...` |
-| `DAILY_SEND_LIMIT` | Safe daily domain warm-up cap across Day 0/4/9 batches | `8` |
+| `DAILY_SEND_LIMIT` | Safe daily domain warm-up cap across Day 0/4/9 batches | `5` |
 | `NOTIFICATION_PROVIDER` | Email provider (`resend`, `smtp`, or `auto`) | `resend` |
 | `RESEND_API_KEY` | Resend HTTPS API key | `re_...` |
 | `ADMIN_NOTIFICATION_EMAIL` | Destination admin inbox | `Ksandzhar@gmail.com` |

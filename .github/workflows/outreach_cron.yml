@@ -28,8 +28,8 @@ jobs:
     name: Trigger Warm-Up & Day 4/9 Follow-Up Batch
     runs-on: ubuntu-latest
     env:
-      # Set GitHub Variable PORTAL_BASE_URL=https://portal.zysgoldfields.pro after pointing Porkbun CNAME DNS.
-      PORTAL_BASE_URL: ${{ vars.PORTAL_BASE_URL || secrets.PORTAL_BASE_URL || 'https://zys-goldfields-intake.onrender.com' }}
+      # Uses primary domain https://grants.zysgoldfields.pro by default (override via GitHub Variable PORTAL_BASE_URL if needed).
+      PORTAL_BASE_URL: ${{ vars.PORTAL_BASE_URL || secrets.PORTAL_BASE_URL || 'https://grants.zysgoldfields.pro' }}
       ADMIN_API_TOKEN: ${{ secrets.ADMIN_API_TOKEN }}
       DRY_RUN_INPUT: ${{ inputs.dry_run || 'false' }}
       MAX_SENDS_INPUT: ${{ inputs.max_sends || '' }}

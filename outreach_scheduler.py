@@ -3,9 +3,9 @@
 Implements:
 1. Template parsing from `outreach_pitches.md` (Day 0 Initial Brief) and
    `followup_templates.md` (Day 4 & Day 9 follow-ups), dynamically rewriting
-   magic links to the configured `BASE_URL` (e.g. https://portal.zysgoldfields.pro)
+   magic links to the configured `BASE_URL` (default: https://grants.zysgoldfields.pro)
    and unescaping KaTeX dollar signs (`\$` -> `$`) into crisp plain-text & HTML emails.
-2. Safe domain warm-up batch rate limiting via `DAILY_SEND_LIMIT` (default: 8/day).
+2. Safe domain warm-up batch rate limiting via `DAILY_SEND_LIMIT` (default: 5/day).
 3. Automated Day 4 (>= 92h after Day 0) and Day 9 (>= 212h after Day 0 & >= 72h after Day 4)
    progression with priority ordering (Day 9 -> Day 4 -> Day 0), max 1 email per prospect/run.
 4. Claimed/signed/unsubscribed suppression via `client_intakes` and `prospect_outreach_status`,

@@ -12,11 +12,11 @@ services:
       - key: PUBLIC_MODE
         value: "1"
       - key: BASE_URL
-        value: https://zys-goldfields-intake.onrender.com
+        value: https://grants.zysgoldfields.pro
       - key: DATABASE_URL
         sync: false
       - key: DAILY_SEND_LIMIT
-        value: "8"
+        value: "5"
       - key: NOTIFICATION_PROVIDER
         value: resend
       - key: RESEND_API_KEY

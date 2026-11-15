@@ -39,7 +39,7 @@ from matcher import (
     load_matcher_config,
     run_matcher,
 )
-from models import ClientIntake, build_claim_url, resolve_base_url, rewrite_portal_urls
+from models import ClientIntake, build_claim_url, resolve_base_url, resolve_daily_send_limit, rewrite_portal_urls
 from outreach_scheduler import get_outreach_dashboard_summary, run_outreach_batch
 from prospect_hunter import (
     CA_COUNTIES,
@@ -59,6 +59,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
 
     old_db_url = os.environ.get("DATABASE_URL")
     old_base_url = os.environ.get("BASE_URL")
+    old_daily_limit = os.environ.get("DAILY_SEND_LIMIT")
     try:
         os.environ.pop("DATABASE_URL", None)
         assert get_database_url(DEFAULT_DB_PATH) is None
@@ -73,23 +74,32 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
         assert pg_info["host"] == "ep-cool-oak.us-west-2.aws.neon.tech"
         os.environ.pop("DATABASE_URL", None)
 
-        # 2. Custom domain BASE_URL resolution & URL rewriting
+        # 2. Primary custom domain BASE_URL & DAILY_SEND_LIMIT resolution + URL rewriting
         os.environ.pop("BASE_URL", None)
+        os.environ.pop("DAILY_SEND_LIMIT", None)
         cfg_default = load_matcher_config(DEFAULT_CONFIG_PATH)
-        assert resolve_base_url(cfg_default) == "https://zys-goldfields-intake.onrender.com"
-        assert build_claim_url("CA-T1-001", cfg_default) == "https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001"
+        assert resolve_base_url(cfg_default) == "https://grants.zysgoldfields.pro"
+        assert build_claim_url("CA-T1-001", cfg_default) == "https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+        assert resolve_daily_send_limit(cfg_default) == 5, f"Expected default limit 5, got {resolve_daily_send_limit(cfg_default)}"
 
-        os.environ["BASE_URL"] = "https://portal.zysgoldfields.pro/"
+        os.environ["BASE_URL"] = "https://staging.zysgoldfields.pro/"
         cfg_custom = load_matcher_config(DEFAULT_CONFIG_PATH)
-        assert cfg_custom.public_intake_url == "https://portal.zysgoldfields.pro"
-        assert resolve_base_url(cfg_custom) == "https://portal.zysgoldfields.pro"
-        assert build_claim_url("CA-T1-001", cfg_custom) == "https://portal.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+        assert resolve_base_url(cfg_custom) == "https://staging.zysgoldfields.pro"
+        assert build_claim_url("CA-T1-001", cfg_custom) == "https://staging.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+        os.environ.pop("BASE_URL", None)
+
         rewritten = rewrite_portal_urls(
-            "Verify parcel: https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001",
-            "https://portal.zysgoldfields.pro",
-            cfg=cfg_custom,
+            (
+                "Verify parcel: https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001 | "
+                "Alt: https://portal.zysgoldfields.pro/claim?prospect_id=CA-T1-002"
+            ),
+            "https://grants.zysgoldfields.pro",
+            cfg=cfg_default,
         )
-        assert rewritten == "Verify parcel: https://portal.zysgoldfields.pro/claim?prospect_id=CA-T1-001"
+        assert rewritten == (
+            "Verify parcel: https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001 | "
+            "Alt: https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-002"
+        ), rewritten
 
         # 3. Isolated outreach scheduler cadence, warm-up rate limit, idempotency & claim suppression
         sample_prospects = fetch_all_prospects(DEFAULT_DB_PATH)[:10]
@@ -118,7 +128,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
             ) -> tuple[str, str]:
                 assert r"\$" not in text_body, f"Found unescaped '\\$' in plain-text outreach email to {to_email}"
                 assert r"\$" not in html_body, f"Found unescaped '\\$' in HTML outreach email to {to_email}"
-                assert "https://portal.zysgoldfields.pro/claim?prospect_id=" in text_body
+                assert "https://grants.zysgoldfields.pro/claim?prospect_id=" in text_body
                 assert headers and "List-Unsubscribe" in headers
                 msg_id = f"mock_msg_{len(sent_log) + 1:03d}"
                 sent_log.append({"to": to_email, "subject": subject, "id": msg_id})
@@ -133,7 +143,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
                 followup_path=DEFAULT_FOLLOWUP_PATH,
                 daily_limit=3,
                 now_utc=t0,
-                base_url_override="https://portal.zysgoldfields.pro",
+                base_url_override="https://grants.zysgoldfields.pro",
                 email_sender=fake_sender,
             )
             assert r1["status"] == "ok"
@@ -154,7 +164,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
                 followup_path=DEFAULT_FOLLOWUP_PATH,
                 daily_limit=3,
                 now_utc=t0 + timedelta(hours=2),
-                base_url_override="https://portal.zysgoldfields.pro",
+                base_url_override="https://grants.zysgoldfields.pro",
                 email_sender=fake_sender,
             )
             assert r1_dup["status"] == "quota_exhausted"
@@ -193,7 +203,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
                 daily_limit=3,
                 max_sends=1,
                 now_utc=t0 + timedelta(hours=80),
-                base_url_override="https://portal.zysgoldfields.pro",
+                base_url_override="https://grants.zysgoldfields.pro",
                 email_sender=fake_sender,
             )
             assert r_early["sent_this_run"] == 1
@@ -210,7 +220,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
                 daily_limit=3,
                 max_sends=2,
                 now_utc=t0 + timedelta(hours=96),
-                base_url_override="https://portal.zysgoldfields.pro",
+                base_url_override="https://grants.zysgoldfields.pro",
                 email_sender=fake_sender,
             )
             assert r_day4["sent_this_run"] == 2
@@ -227,7 +237,7 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
                 followup_path=DEFAULT_FOLLOWUP_PATH,
                 daily_limit=2,
                 now_utc=t0 + timedelta(hours=216),
-                base_url_override="https://portal.zysgoldfields.pro",
+                base_url_override="https://grants.zysgoldfields.pro",
                 email_sender=fake_sender,
             )
             assert r_day9["sent_this_run"] == 2
@@ -252,6 +262,10 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
             os.environ.pop("BASE_URL", None)
         else:
             os.environ["BASE_URL"] = old_base_url
+        if old_daily_limit is None:
+            os.environ.pop("DAILY_SEND_LIMIT", None)
+        else:
+            os.environ["DAILY_SEND_LIMIT"] = old_daily_limit
 
 
 def verify_intake_portal_and_packager() -> None:
@@ -305,45 +319,89 @@ def verify_intake_portal_and_packager() -> None:
         assert healthz_get.status_code == 200, f"Expected 200 on GET /healthz, got {healthz_get.status_code}"
         assert healthz_get.text == "ok\n", f"Unexpected /healthz body: {healthz_get.text}"
 
-        # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001 (and /claim/ + /?prospect_id=)
+        # 1b. Verify 1-click pre-filled magic link /claim?prospect_id=CA-T1-001 (and proxy HTTPS cookies + CDN no-cache)
+        proxy_https_headers = {
+            "Host": "grants.zysgoldfields.pro",
+            "X-Forwarded-Proto": "https",
+            "CF-Connecting-IP": "198.51.100.77",
+        }
         for claim_path in ("/claim?prospect_id=CA-T1-001", "/claim/?prospect_id=CA-T1-001", "/?prospect_id=CA-T1-001"):
-            claim_resp = requests.get(f"{base_url}{claim_path}", timeout=5)
+            claim_resp = requests.get(f"{base_url}{claim_path}", headers=proxy_https_headers, timeout=5)
             assert claim_resp.status_code == 200, f"Expected 200 on {claim_path}, got {claim_resp.status_code}"
             assert "no-cache" in claim_resp.headers.get("Cache-Control", "")
             assert "no-store" in claim_resp.headers.get("Cache-Control", "")
+            assert claim_resp.headers.get("CDN-Cache-Control") == "no-store"
+            assert claim_resp.headers.get("Cloudflare-CDN-Cache-Control") == "no-store"
+            assert "Strict-Transport-Security" in claim_resp.headers
+            set_cookie_hdr = claim_resp.headers.get("Set-Cookie", "")
+            assert "zys_portal_session=" in set_cookie_hdr, f"Missing zys_portal_session cookie on {claim_path}"
+            assert "zys_claim_prospect=CA-T1-001" in set_cookie_hdr, f"Missing zys_claim_prospect cookie on {claim_path}"
+            assert "HttpOnly" in set_cookie_hdr and "SameSite=Lax" in set_cookie_hdr and "Secure" in set_cookie_hdr
+            assert 'href="https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001"' in claim_resp.text
             for token in ("Paicines Ranch", "Pre-Screened Grant Allocation", "CA-T1-001", "83-3255248", "San Benito"):
                 assert token in claim_resp.text, f"Missing token '{token}' in {claim_path} HTML"
 
-        # 1c. Verify /intake_portal.html direct routing and no-cache headers
+        # 1c. Verify CORS preflight (OPTIONS) for grants.zysgoldfields.pro & untrusted origin rejection
+        cors_ok = requests.options(
+            f"{base_url}/api/intake",
+            headers={
+                "Origin": "https://grants.zysgoldfields.pro",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+            timeout=5,
+        )
+        assert cors_ok.status_code == 204, f"Expected 204 on CORS OPTIONS, got {cors_ok.status_code}"
+        assert cors_ok.headers.get("Access-Control-Allow-Origin") == "https://grants.zysgoldfields.pro"
+        assert cors_ok.headers.get("Access-Control-Allow-Credentials") == "true"
+        assert "POST" in cors_ok.headers.get("Access-Control-Allow-Methods", "")
+        assert "Origin" in cors_ok.headers.get("Vary", "")
+
+        cors_bad = requests.options(
+            f"{base_url}/api/intake",
+            headers={"Origin": "https://evil.example.com", "Access-Control-Request-Method": "POST"},
+            timeout=5,
+        )
+        assert cors_bad.status_code == 403, f"Expected 403 on untrusted CORS Origin, got {cors_bad.status_code}"
+        assert "Access-Control-Allow-Origin" not in cors_bad.headers
+
+        # 1d. Verify /intake_portal.html direct routing and no-cache headers
         portal_resp = requests.get(f"{base_url}/intake_portal.html", timeout=5)
         assert portal_resp.status_code == 200, f"Expected 200 on /intake_portal.html, got {portal_resp.status_code}"
         assert "no-cache" in portal_resp.headers.get("Cache-Control", "")
         assert "input-signer-name" in portal_resp.text
         assert "input-signer-title" in portal_resp.text
 
-        # 1d. Verify HEAD requests on /, /claim, /claim/, and /intake_portal.html emit no-cache headers
+        # 1e. Verify HEAD requests on /, /claim, /claim/, and /intake_portal.html emit no-cache headers
         for path in ("/", "/claim", "/claim/", "/intake_portal.html"):
             h_resp = requests.head(f"{base_url}{path}", timeout=5)
             assert h_resp.status_code == 200, f"Expected 200 on HEAD {path}, got {h_resp.status_code}"
             assert "no-cache" in h_resp.headers.get("Cache-Control", ""), f"Missing no-cache header on HEAD {path}"
 
-        # 1e. Verify root intake_portal.html file exists on disk and contains aligned fields
+        # 1f. Verify root intake_portal.html file exists on disk and contains aligned fields + canonical primary domain
         static_html_file = Path(__file__).resolve().parent / "intake_portal.html"
         assert static_html_file.exists(), f"Static file {static_html_file} does not exist"
         static_html_text = static_html_file.read_text(encoding="utf-8")
         assert "input-signer-name" in static_html_text
         assert "input-signer-title" in static_html_text
+        assert "https://grants.zysgoldfields.pro/" in static_html_text
 
-        # 1c. Verify GET /api/health and GET /api/prospects
+        # 1g. Verify GET /api/health and GET /api/prospects
         os.environ.pop("ADMIN_API_TOKEN", None)
-        health_resp = requests.get(f"{base_url}/api/health", timeout=5)
+        health_resp = requests.get(
+            f"{base_url}/api/health",
+            headers={"Origin": "https://grants.zysgoldfields.pro"},
+            timeout=5,
+        )
         assert health_resp.status_code == 200
+        assert health_resp.headers.get("Access-Control-Allow-Origin") == "https://grants.zysgoldfields.pro"
         health_json = health_resp.json()
         assert health_json["status"] == "healthy"
         assert "notifications" in health_json
         assert health_json["database"]["backend"] in ("sqlite", "postgresql")
-        assert health_json["base_url"].startswith("https://")
-        assert health_json["daily_send_limit"] >= 1
+        assert health_json["base_url"] == "https://grants.zysgoldfields.pro"
+        assert "https://grants.zysgoldfields.pro" in health_json.get("cors_allowed_origins", [])
+        assert health_json["daily_send_limit"] == 5
 
         prospects_resp = requests.get(f"{base_url}/api/prospects", timeout=5)
         assert prospects_resp.status_code == 200
@@ -476,7 +534,11 @@ def verify_intake_portal_and_packager() -> None:
         # 4. Verify Stage B: Submit Elena & Marcus Vance E-Signature to unlock full RCD Filing Dossier
         custom_headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 ZYS-Vance-Verification/2.0",
-            "X-Forwarded-For": "198.51.100.45",
+            "CF-Connecting-IP": "198.51.100.45",
+            "X-Forwarded-For": "10.0.0.1, 198.51.100.45",
+            "X-Forwarded-Proto": "https",
+            "Host": "grants.zysgoldfields.pro",
+            "Origin": "https://grants.zysgoldfields.pro",
         }
         vance_signed_payload = {
             "name": "Elena & Marcus Vance",
@@ -509,6 +571,10 @@ def verify_intake_portal_and_packager() -> None:
             timeout=10,
         )
         assert ok_resp.status_code == 200, f"Expected 200 on signed intake, got {ok_resp.status_code}: {ok_resp.text}"
+        assert ok_resp.headers.get("Access-Control-Allow-Origin") == "https://grants.zysgoldfields.pro"
+        assert "zys_portal_session=" in ok_resp.headers.get("Set-Cookie", "")
+        assert "zys_claim_prospect=CA-T1-002" in ok_resp.headers.get("Set-Cookie", "")
+        assert "Secure" in ok_resp.headers.get("Set-Cookie", "")
         body = ok_resp.json()
         assert body["status"] == "ok"
         assert body["stage"] == "unlocked_filing_dossier"
@@ -717,8 +783,7 @@ def verify_outputs(
         assert "@" in row["contact_email"] and "." in row["contact_email"].split("@")[-1], f"Invalid email in {row}"
         assert row["county"] in ca_county_set, f"Non-California county {row['county']} in {row}"
         assert row["state"] == "CA"
-        assert row["personalized_intake_url"].startswith("https://")
-        assert "/claim?prospect_id=" in row["personalized_intake_url"]
+        assert row["personalized_intake_url"].startswith("https://grants.zysgoldfields.pro/claim?prospect_id=")
         assert row["outreach_segment"] in ("Direct_Client", "Channel_Partner")
         if row["category"] == "Land Trust":
             assert row["outreach_segment"] == "Channel_Partner", f"Land Trust {row['organization_name']} not Channel_Partner"
@@ -736,7 +801,9 @@ def verify_outputs(
     assert cfg.firm_name in md_text, "Missing ZYS GoldFields PRO LLC signature in outreach_pitches.md"
     assert cfg.firm_subtitle in md_text, "Missing Conservation & Agricultural Grant Advisory subtitle"
     assert "Tier-1 Statutory Eligibility Match (4/4 Core Criteria Met)" in md_text
-    assert "/claim?prospect_id=" in md_text
+    assert "https://grants.zysgoldfields.pro/claim?prospect_id=" in md_text
+    assert "zys-goldfields-intake.onrender.com/claim" not in md_text
+    assert "portal.zysgoldfields.pro/claim" not in md_text
     assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in md_text
     assert "This is a commercial message (advertisement)" in md_text
     assert "8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624" in md_text
@@ -744,7 +811,9 @@ def verify_outputs(
     followup_md = (root_dir / "followup_templates.md").read_text(encoding="utf-8")
     assert "Day 4 Follow-Up Email" in followup_md
     assert "Day 9 Follow-Up Email" in followup_md
-    assert "/claim?prospect_id=" in followup_md
+    assert "https://grants.zysgoldfields.pro/claim?prospect_id=" in followup_md
+    assert "zys-goldfields-intake.onrender.com/claim" not in followup_md
+    assert "portal.zysgoldfields.pro/claim" not in followup_md
     assert "Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded)" in followup_md
     assert "This is a commercial message (advertisement)" in followup_md
     assert "8698 Elk Grove Blvd Ste 1-279 Elk Grove CA 95624" in followup_md

@@ -1,13 +1,13 @@
 # ZYS GoldFields PRO LLC — Tier-1 Conservation Grant Outreach Briefs
 
 - **Advisory Practice:** **ZYS GoldFields PRO LLC** — *Conservation & Agricultural Grant Advisory*
-- **Generated:** `2026-11-14 05:43`
+- **Generated:** `2026-11-15 01:30`
 - **Active Filter & Cutoff Config (`config.json`):** State=`CA`, Counties=`All Eligible California Counties`, Acreage=`5–5000 ac`, Min Grant=`$25,000`, **Internal Score Cutoff=`75/100`**
 - **Active Grants Indexed in `grants.db`:** `50` live federal & California Climate Investments opportunities
 - **Tier-1 Qualification Funnel:** `56` qualified Tier-1 candidates retained (`score >= 75/100`) out of `70` evaluated leads (all `< 75/100` and statutory non-compliant leads excluded)
 - **Underwriting & Pitch Engine:** 4-Pillar Statutory Eligibility & Scoring Engine (`min_probability_score >= 75/100`)
 - **Commercial Terms:** 7% Deferred Administrative Origination & Packaging Fee (100% Waived if Grant is Not Awarded) (\$0 upfront) · 1-click digital magic link onboarding (zero phone calls)
-- **Active Portal Base URL (`BASE_URL`):** `https://zys-goldfields-intake.onrender.com`
+- **Active Portal Base URL (`BASE_URL`):** `https://grants.zysgoldfields.pro`
 - **Compliance:** Governed by California UETA, Federal ESIGN Act, and 2 CFR § 200.459 · Full CAN-SPAM opt-out disclosures included
 
 ## Internal Underwriting & Candidate Ranking (Not Client-Facing)
@@ -87,7 +87,7 @@
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -115,7 +115,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Paicines Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-001)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Paicines Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-001)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -146,7 +146,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-002](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-002) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-002](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-002) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -174,7 +174,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Performing Animal Welfare Society (PAWS ARK 2000 Sanctuary)) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-002)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Performing Animal Welfare Society (PAWS ARK 2000 Sanctuary)) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-002)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -205,7 +205,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-004](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-004) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-004](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-004) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -233,7 +233,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (White Buffalo Land Trust — Jalama Canyon Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-004)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (White Buffalo Land Trust — Jalama Canyon Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-004)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -264,7 +264,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-003](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-003) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-003](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-003) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -292,7 +292,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Las Cumbres Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-003)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Las Cumbres Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-003)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -323,7 +323,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-005](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-005) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-005](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-005) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -351,7 +351,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Animal Place Sanctuary) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-005)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Animal Place Sanctuary) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-005)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -382,7 +382,7 @@ Sincerely,
 | **Available Funding** | **\$250,000 - \$5,000,000 per award** |
 | **Application Deadline** | **2026-11-19** |
 | **Filing Pathway** | Direct 501(c)(3) Nonprofit or County RCD / Land Trust Co-Sponsored Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-006](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-006) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-006](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-006) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/363920](https://www.grants.gov/search-results-detail/363920) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -410,7 +410,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Yolo Basin Foundation) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-006)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Yolo Basin Foundation) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-006)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -441,7 +441,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-007](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-007) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-007](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-007) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -469,7 +469,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (California Rangeland Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-007)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (California Rangeland Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-007)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -500,7 +500,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-008](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-008) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-008](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-008) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -528,7 +528,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Richards Regenerative Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-008)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Richards Regenerative Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-008)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -559,7 +559,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-009](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-009) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-009](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-009) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -587,7 +587,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Stemple Creek Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-009)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Stemple Creek Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-009)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -618,7 +618,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-010](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-010) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-010](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-010) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -646,7 +646,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (California Farmland Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-010)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (California Farmland Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-010)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -677,7 +677,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-012](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-012) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-012](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-012) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -705,7 +705,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Tejon Ranch Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-012)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Tejon Ranch Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-012)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -736,7 +736,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-011](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-011) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-011](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-011) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -764,7 +764,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Freestone Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-011)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Freestone Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-011)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -795,7 +795,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-013](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-013) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-013](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-013) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -823,7 +823,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Markegard Family Grass-Fed Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-013)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Markegard Family Grass-Fed Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-013)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -854,7 +854,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-014](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-014) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-014](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-014) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -882,7 +882,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Marin Agricultural Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-014)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Marin Agricultural Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-014)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -913,7 +913,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$488,760, \$498,075; \$110.7M CCI cumulative program funding (56 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the California State Coastal Conservancy’s website for grant opportunities .)** |
 | **Filing Pathway** | Direct 501(c)(3) Nonprofit or County RCD / Land Trust Co-Sponsored Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-015](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-015) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-015](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-015) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation](https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -941,7 +941,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Redwood Coast Land Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-015)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Redwood Coast Land Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-015)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -972,7 +972,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-016](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-016) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-016](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-016) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -1000,7 +1000,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sanctuary Forest) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-016)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sanctuary Forest) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-016)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1031,7 +1031,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-017](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-017) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-017](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-017) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -1059,7 +1059,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Tablas Creek Vineyard & Regenerative Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-017)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Tablas Creek Vineyard & Regenerative Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-017)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1090,7 +1090,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-018](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-018) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-018](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-018) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -1118,7 +1118,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Burroughs Family Farms) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-018)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Burroughs Family Farms) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-018)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1149,7 +1149,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-021](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-021) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-021](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-021) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1177,7 +1177,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (San Benito Agricultural Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-021)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (San Benito Agricultural Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-021)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1208,7 +1208,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-020](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-020) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-020](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-020) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1236,7 +1236,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Agri-Culture) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-020)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Agri-Culture) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-020)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1267,7 +1267,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-019](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-019) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-019](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-019) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1295,7 +1295,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Ag Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-019)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Ag Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-019)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1326,7 +1326,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-025](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-025) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-025](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-025) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1354,7 +1354,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (The Land Conservancy of San Luis Obispo County) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-025)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (The Land Conservancy of San Luis Obispo County) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-025)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1385,7 +1385,7 @@ Sincerely,
 | **Available Funding** | **\$250,000 - \$5,000,000 per award** |
 | **Application Deadline** | **2026-11-19** |
 | **Filing Pathway** | Direct 501(c)(3) Nonprofit or County RCD / Land Trust Co-Sponsored Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-024](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-024) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-024](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-024) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/363920](https://www.grants.gov/search-results-detail/363920) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1413,7 +1413,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sutter Buttes Regional Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-024)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sutter Buttes Regional Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-024)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1444,7 +1444,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-023](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-023) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-023](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-023) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1472,7 +1472,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sonoma Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-023)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sonoma Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-023)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1503,7 +1503,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-022](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-022) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-022](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-022) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1531,7 +1531,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Northern California Regional Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-022)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Northern California Regional Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-022)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1562,7 +1562,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-027](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-027) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-027](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-027) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -1590,7 +1590,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (San Diego Habitat Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-027)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (San Diego Habitat Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-027)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1621,7 +1621,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-026](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-026) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-026](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-026) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -1649,7 +1649,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Quail Ridge Wilderness Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-026)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Quail Ridge Wilderness Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-026)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1680,7 +1680,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-031](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-031) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-031](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-031) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1708,7 +1708,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Solano Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-031)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Solano Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-031)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1739,7 +1739,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-030](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-030) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-030](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-030) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1767,7 +1767,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sierra Foothill Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-030)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sierra Foothill Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-030)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1798,7 +1798,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$488,760, \$498,075; \$110.7M CCI cumulative program funding (56 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the California State Coastal Conservancy’s website for grant opportunities .)** |
 | **Filing Pathway** | Direct 501(c)(3) Nonprofit or County RCD / Land Trust Co-Sponsored Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-029](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-029) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-029](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-029) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation](https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1826,7 +1826,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Northcoast Regional Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-029)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Northcoast Regional Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-029)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1857,7 +1857,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$488,760, \$498,075; \$110.7M CCI cumulative program funding (56 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the California State Coastal Conservancy’s website for grant opportunities .)** |
 | **Filing Pathway** | Direct 501(c)(3) Nonprofit or County RCD / Land Trust Co-Sponsored Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-028](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-028) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-028](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-028) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation](https://www.caclimateinvestments.ca.gov/climate-ready-program-adaptation) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1885,7 +1885,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Big Sur Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-028)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Big Sur Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-028)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1916,7 +1916,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-039](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-039) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-039](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-039) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -1944,7 +1944,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Yolo Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-039)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Yolo Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-039)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -1975,7 +1975,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-038](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-038) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-038](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-038) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2003,7 +2003,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Tuolumne County Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-038)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Tuolumne County Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-038)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2034,7 +2034,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-037](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-037) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-037](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-037) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2062,7 +2062,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sequoia Riverlands Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-037)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sequoia Riverlands Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-037)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2093,7 +2093,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-036](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-036) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-036](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-036) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2121,7 +2121,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Sacramento Valley Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-036)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Sacramento Valley Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-036)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2152,7 +2152,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-035](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-035) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-035](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-035) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2180,7 +2180,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Placer Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-035)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Placer Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-035)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2211,7 +2211,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-034](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-034) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-034](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-034) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2239,7 +2239,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Mother Lode Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-034)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Mother Lode Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-034)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2270,7 +2270,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-033](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-033) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-033](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-033) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2298,7 +2298,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Land Trust for Santa Barbara County) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-033)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Land Trust for Santa Barbara County) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-033)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2329,7 +2329,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-032](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-032) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-032](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-032) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2357,7 +2357,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Eastern Sierra Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-032)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Eastern Sierra Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-032)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2388,7 +2388,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-040](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-040) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-040](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-040) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -2416,7 +2416,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Tara Firma Farms) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-040)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Tara Firma Farms) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-040)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2447,7 +2447,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-045](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-045) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-045](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-045) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2475,7 +2475,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Ventura Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-045)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Ventura Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-045)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2506,7 +2506,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-044](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-044) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-044](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-044) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2534,7 +2534,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Ojai Valley Land Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-044)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Ojai Valley Land Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-044)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2565,7 +2565,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-043](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-043) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-043](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-043) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2593,7 +2593,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Mendocino Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-043)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Mendocino Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-043)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2624,7 +2624,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-042](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-042) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-042](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-042) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2652,7 +2652,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Lassen Land and Trails Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-042)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Lassen Land and Trails Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-042)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2683,7 +2683,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-041](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-041) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-041](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-041) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2711,7 +2711,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Lake County Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-041)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Lake County Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-041)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2742,7 +2742,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-047](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-047) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-047](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-047) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2770,7 +2770,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Siskiyou Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-047)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Siskiyou Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-047)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2801,7 +2801,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-046](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-046) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-046](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-046) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2829,7 +2829,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Bear Yuba Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-046)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Bear Yuba Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-046)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2860,7 +2860,7 @@ Sincerely,
 | **Available Funding** | **Up to \$1,000,000 per award; \$15,000,000 total program funding** |
 | **Application Deadline** | **2027-04-30** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-050](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-050) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-050](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-050) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/363699](https://www.grants.gov/search-results-detail/363699) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2888,7 +2888,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Feather River Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-050)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Feather River Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-050)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2919,7 +2919,7 @@ Sincerely,
 | **Available Funding** | **Up to \$1,000,000 per award; \$15,000,000 total program funding** |
 | **Application Deadline** | **2027-04-30** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-049](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-049) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-049](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-049) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/363699](https://www.grants.gov/search-results-detail/363699) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -2947,7 +2947,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Anderson Valley Land Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-049)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Anderson Valley Land Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-049)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -2978,7 +2978,7 @@ Sincerely,
 | **Available Funding** | **Up to \$1,000,000 per award; \$15,000,000 total program funding** |
 | **Application Deadline** | **2027-04-30** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-048](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-048) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-048](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-048) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/363699](https://www.grants.gov/search-results-detail/363699) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -3006,7 +3006,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (American River Conservancy) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-048)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (American River Conservancy) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-048)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3037,7 +3037,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-051](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-051) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-051](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-051) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -3065,7 +3065,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Blackberry Creek Farm Animal Sanctuary) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-051)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Blackberry Creek Farm Animal Sanctuary) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-051)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3096,7 +3096,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$5.6 million, \$780,000; \$217.6M CCI cumulative program funding (144 projects)** |
 | **Application Deadline** | **Open Solicitation (Check the program website for updated timeline information.)** |
 | **Filing Pathway** | 501(c)(3) Land Trust / Resource Conservation District (RCD) Agricultural Easement Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-052](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-052) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-052](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-052) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/salc](https://www.caclimateinvestments.ca.gov/salc) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -3124,7 +3124,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Frog Hollow Farm) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-052)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Frog Hollow Farm) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-052)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3155,7 +3155,7 @@ Sincerely,
 | **Available Funding** | **75% - 90% state cost-share assistance for forest management & reforestation; \$7.1M CCI cumulative program funding (79 projects)** |
 | **Application Deadline** | **2027-01-02 (Quarterly cycle: Jan 2, Apr 1, Jul 1, Oct 1)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-053](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-053) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-053](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-053) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/california-forest-improvement-program](https://www.caclimateinvestments.ca.gov/california-forest-improvement-program) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -3183,7 +3183,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Children's Nature Retreat / Alpine Acres Sanctuary) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-053)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Children's Nature Retreat / Alpine Acres Sanctuary) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-053)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3214,7 +3214,7 @@ Sincerely,
 | **Available Funding** | **Varies by cooperative agreement / project scope (see NOFO)** |
 | **Application Deadline** | **2029-03-07** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-054](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-054) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-054](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-054) |
 | **Official Solicitation** | [https://www.grants.gov/search-results-detail/352845](https://www.grants.gov/search-results-detail/352845) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -3242,7 +3242,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Herd & Flock Animal Sanctuary) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-054)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Herd & Flock Animal Sanctuary) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-054)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3273,7 +3273,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-055](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-055) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-055](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-055) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (Land Trust Co-Sponsorship Match)
@@ -3301,7 +3301,7 @@ Land trust staff time is heavily constrained during competitive grant cycles. Ou
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Pacific Forest Trust) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-055)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Pacific Forest Trust) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-055)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 
@@ -3332,7 +3332,7 @@ Sincerely,
 | **Available Funding** | **Featured awards: \$400,000, \$512,000; \$85.5M CCI cumulative program funding (57 projects)** |
 | **Application Deadline** | **Rolling (Open Solicitation - applications accepted continuously)** |
 | **Filing Pathway** | Direct Private Landowner / Agricultural Producer / Fee-Title Nonprofit Application |
-| **1-Click Pre-Filled Intake** | [https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-056](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-056) |
+| **1-Click Pre-Filled Intake** | [https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-056](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-056) |
 | **Official Solicitation** | [https://www.caclimateinvestments.ca.gov/adaptation-easements](https://www.caclimateinvestments.ca.gov/adaptation-easements) |
 
 ### Cold-Outreach Letter (1-Page Tier-1 Brief)
@@ -3360,7 +3360,7 @@ Public conservation grants leave millions of dollars unclaimed each cycle becaus
 **Next Step (1-Click Verification & Packet Unlock):**
 Verify your parcel APN, e-sign, and unlock your complete filing packet in one click (no phone calls or meetings required).
 
-👉 **[Verify Parcel APN & Unlock Filing Dossier (Pie Ranch) →](https://zys-goldfields-intake.onrender.com/claim?prospect_id=CA-T1-056)**
+👉 **[Verify Parcel APN & Unlock Filing Dossier (Pie Ranch) →](https://grants.zysgoldfields.pro/claim?prospect_id=CA-T1-056)**
 
 *(Pre-filled with your organization credentials, matched grant, and engineered budget summary)*
 

@@ -9,8 +9,8 @@ from typing import Optional
 from urllib.parse import urlencode
 from pydantic import BaseModel, Field, field_validator
 
-DEFAULT_FALLBACK_BASE_URL = "https://zys-goldfields-intake.onrender.com"
-DEFAULT_CUSTOM_DOMAIN_URL = "https://portal.zysgoldfields.pro"
+DEFAULT_FALLBACK_BASE_URL = "https://grants.zysgoldfields.pro"
+DEFAULT_CUSTOM_DOMAIN_URL = "https://grants.zysgoldfields.pro"
 
 
 def _clean_text(value: str) -> str:
@@ -33,7 +33,7 @@ def resolve_base_url(
     cfg: "MatcherConfig | None" = None,
     override_base_url: str | None = None,
 ) -> str:
-    """Resolve active public portal BASE_URL from env override -> config.json -> Render fallback."""
+    """Resolve active public portal BASE_URL from env override -> config.json -> primary domain default."""
     if override_base_url and override_base_url.strip():
         return normalize_base_url(override_base_url)
     env_url = (
@@ -68,12 +68,19 @@ def rewrite_portal_urls(text: str, active_base_url: str, cfg: "MatcherConfig | N
         DEFAULT_FALLBACK_BASE_URL.replace("https://", "http://"),
         DEFAULT_CUSTOM_DOMAIN_URL,
         DEFAULT_CUSTOM_DOMAIN_URL.replace("https://", "http://"),
+        "https://zys-goldfields-intake.onrender.com",
+        "http://zys-goldfields-intake.onrender.com",
+        "https://portal.zysgoldfields.pro",
+        "http://portal.zysgoldfields.pro",
     ]
     if cfg is not None:
         for attr in ("public_intake_url", "custom_domain_url"):
             val = getattr(cfg, attr, "").strip()
             if val:
-                known_hosts.append(normalize_base_url(val))
+                norm = normalize_base_url(val)
+                known_hosts.append(norm)
+                if norm.startswith("https://"):
+                    known_hosts.append(norm.replace("https://", "http://", 1))
     out = text
     for host in dict.fromkeys(known_hosts):
         if host and host != target:
@@ -92,8 +99,8 @@ def resolve_daily_send_limit(cfg: "MatcherConfig | None" = None) -> int:
         except ValueError:
             pass
     if cfg is not None:
-        return max(1, int(getattr(cfg, "daily_send_limit", 8)))
-    return 8
+        return max(1, int(getattr(cfg, "daily_send_limit", 5)))
+    return 5
 
 
 class NotificationSettings(BaseModel):
@@ -143,10 +150,10 @@ class MatcherConfig(BaseModel):
     )
     custom_domain_url: str = Field(
         default=DEFAULT_CUSTOM_DOMAIN_URL,
-        description="Target custom domain HTTPS URL once Porkbun DNS CNAME is pointed to Render",
+        description="Primary custom domain HTTPS URL for the Zero-Call Intake Portal",
     )
     daily_send_limit: int = Field(
-        default=8,
+        default=5,
         ge=1,
         le=500,
         description="Default daily domain warm-up cap for automated outreach batches",
