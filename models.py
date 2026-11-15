@@ -58,11 +58,22 @@ def load_env_files(base_dir: Path | str | None = None, *, force: bool = False) -
     return merged
 
 
+def _unwrap_url(raw: str | None) -> str:
+    """Strip quotes, angle brackets, or accidental Markdown link wrappers ([url](url))."""
+    cleaned = (raw or "").strip().strip('"').strip("'").strip()
+    md_match = re.match(r"^\[[^\]]+\]\((https?://[^)\s]+)\)$", cleaned)
+    if md_match:
+        cleaned = md_match.group(1).strip()
+    if cleaned.startswith("<") and cleaned.endswith(">"):
+        cleaned = cleaned[1:-1].strip()
+    return cleaned.rstrip("/")
+
+
 def resolve_neon_auth_urls() -> tuple[str, str, str]:
     """Return (NEON_AUTH_BASE_URL, NEON_AUTH_JWKS_URL, issuer_origin) with empty defaults if unconfigured."""
     load_env_files()
-    base_url = os.environ.get("NEON_AUTH_BASE_URL", "").strip().rstrip("/")
-    jwks_url = os.environ.get("NEON_AUTH_JWKS_URL", "").strip()
+    base_url = _unwrap_url(os.environ.get("NEON_AUTH_BASE_URL"))
+    jwks_url = _unwrap_url(os.environ.get("NEON_AUTH_JWKS_URL"))
     if base_url and not jwks_url:
         jwks_url = f"{base_url}/.well-known/jwks.json"
     issuer_origin = ""
@@ -81,7 +92,7 @@ def _clean_text(value: str) -> str:
 
 def normalize_base_url(url: str | None) -> str:
     """Ensure a canonical base URL without trailing slash."""
-    cleaned = (url or "").strip().rstrip("/")
+    cleaned = _unwrap_url(url)
     if not cleaned:
         return DEFAULT_FALLBACK_BASE_URL
     if not (cleaned.startswith("http://") or cleaned.startswith("https://")):

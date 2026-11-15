@@ -117,6 +117,15 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
         assert issuer_origin == "https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech", issuer_origin
         assert neon_auth_status()["configured"] is True
 
+        os.environ["NEON_AUTH_BASE_URL"] = (
+            "[https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech/neondb/auth]"
+            "(https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech/neondb/auth)"
+        )
+        md_auth_base, md_jwks_url, md_issuer = resolve_neon_auth_urls()
+        assert md_auth_base == auth_base, md_auth_base
+        assert md_jwks_url == jwks_url, md_jwks_url
+        assert md_issuer == issuer_origin, md_issuer
+
         raw_set_cookie = "__Secure-neon-auth.session_token=abc123; Domain=upstream.neon.tech; HttpOnly; Secure; SameSite=None; Partitioned; Path=/neondb/auth"
         http_cookie = _rewrite_upstream_set_cookie(raw_set_cookie, is_https=False)
         assert "__Secure-" not in http_cookie and "Secure" not in http_cookie and "Partitioned" not in http_cookie
