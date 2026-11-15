@@ -4,13 +4,73 @@ from __future__ import annotations
 
 import html
 import os
+from pathlib import Path
 import re
 from typing import Optional
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from pydantic import BaseModel, Field, field_validator
 
 DEFAULT_FALLBACK_BASE_URL = "https://grants.zysgoldfields.pro"
 DEFAULT_CUSTOM_DOMAIN_URL = "https://grants.zysgoldfields.pro"
+_DOTENV_LOADED = False
+
+
+def load_env_files(base_dir: Path | str | None = None, *, force: bool = False) -> dict[str, str]:
+    """Load .env and .env.local into os.environ without overriding explicit shell variables.
+
+    Precedence: existing process env > .env.local > .env.
+    Set ZYS_SKIP_DOTENV=1 in test harnesses to bypass local .env/.env.local files.
+    """
+    global _DOTENV_LOADED
+    if os.environ.get("ZYS_SKIP_DOTENV") == "1":
+        return {}
+    if _DOTENV_LOADED and not force:
+        return {}
+    root = Path(base_dir) if base_dir is not None else Path(__file__).resolve().parent
+    merged: dict[str, str] = {}
+    for fname in (".env", ".env.local"):
+        fpath = root / fname
+        if not fpath.is_file():
+            continue
+        try:
+            content = fpath.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[7:].strip()
+            if "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip()
+            if not key:
+                continue
+            if len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
+                val = val[1:-1]
+            merged[key] = val
+    for key, val in merged.items():
+        os.environ.setdefault(key, val)
+    _DOTENV_LOADED = True
+    return merged
+
+
+def resolve_neon_auth_urls() -> tuple[str, str, str]:
+    """Return (NEON_AUTH_BASE_URL, NEON_AUTH_JWKS_URL, issuer_origin) with empty defaults if unconfigured."""
+    load_env_files()
+    base_url = os.environ.get("NEON_AUTH_BASE_URL", "").strip().rstrip("/")
+    jwks_url = os.environ.get("NEON_AUTH_JWKS_URL", "").strip()
+    if base_url and not jwks_url:
+        jwks_url = f"{base_url}/.well-known/jwks.json"
+    issuer_origin = ""
+    if base_url:
+        parsed = urlparse(base_url)
+        if parsed.scheme and parsed.netloc:
+            issuer_origin = f"{parsed.scheme}://{parsed.netloc}"
+    return base_url, jwks_url, issuer_origin
 
 
 def _clean_text(value: str) -> str:

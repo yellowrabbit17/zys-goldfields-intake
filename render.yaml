@@ -15,6 +15,10 @@ services:
         value: https://grants.zysgoldfields.pro
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_URL_POOLED
+        sync: false
+      - key: NEON_AUTH_BASE_URL
+        sync: false
       - key: DAILY_SEND_LIMIT
         value: "5"
       - key: NOTIFICATION_PROVIDER

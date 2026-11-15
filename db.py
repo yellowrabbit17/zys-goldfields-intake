@@ -1,4 +1,4 @@
-"""Dual-backend database layer supporting persistent PostgreSQL (DATABASE_URL) with SQLite fallback (grants.db)."""
+"""Dual-backend database layer supporting Lakebase Postgres on Neon (pooled/direct + TCP/HTTP) with SQLite fallback."""
 
 from __future__ import annotations
 
@@ -10,9 +10,18 @@ from pathlib import Path
 import sqlite3
 import threading
 from typing import Any, Iterable, Iterator
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
+import requests
+from requests.adapters import HTTPAdapter
 
-from models import ClientIntake, ESignatureAuditRecord, GrantRecord, LandownerProfile, ProspectRecord
+from models import (
+    ClientIntake,
+    ESignatureAuditRecord,
+    GrantRecord,
+    LandownerProfile,
+    ProspectRecord,
+    load_env_files,
+)
 
 try:
     import psycopg2
@@ -25,6 +34,11 @@ logger = logging.getLogger("db")
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "grants.db"
 _INIT_LOCK = threading.Lock()
 _INITIALIZED_TARGETS: set[str] = set()
+_TCP_BLOCKED_ENDPOINTS: set[str] = set()
+_DRIVER_LOCK = threading.Lock()
+_LAST_ACTIVE_DRIVER: str = ""
+_HTTP_SQL_SESSION = requests.Session()
+_HTTP_SQL_SESSION.mount("https://", HTTPAdapter(pool_connections=16, pool_maxsize=32))
 
 
 def _normalize_postgres_dsn(dsn: str) -> str:
@@ -34,55 +48,102 @@ def _normalize_postgres_dsn(dsn: str) -> str:
     return cleaned
 
 
-def get_database_url(db_path: Path | str = DEFAULT_DB_PATH) -> str | None:
-    """Return normalized PostgreSQL DSN when configured via DATABASE_URL (for default DB target).
+def _strip_pooler_host(dsn: str) -> str:
+    """Convert a '-pooler' Neon hostname into the corresponding direct compute hostname."""
+    parsed = urlparse(dsn)
+    host = parsed.hostname or ""
+    if "-pooler." not in host:
+        return dsn
+    direct_host = host.replace("-pooler.", ".", 1)
+    netloc = parsed.netloc.replace(host, direct_host, 1)
+    return urlunparse(parsed._replace(netloc=netloc))
 
-    If caller explicitly passes a custom non-default file path (e.g. a temporary pytest/unittest SQLite path),
-    respect that local SQLite path cleanly instead of hijacking it to Postgres. If caller passes a Postgres URI
-    directly as db_path, use it.
+
+def _is_neon_host(hostname: str | None) -> bool:
+    return bool(hostname and hostname.lower().endswith(".neon.tech"))
+
+
+def get_database_url(db_path: Path | str = DEFAULT_DB_PATH, *, direct: bool = False) -> str | None:
+    """Return normalized PostgreSQL DSN when configured (supporting pooled app vs direct migration URLs).
+
+    - Application queries (`direct=False`): prefers `DATABASE_URL_POOLED`, then `DATABASE_URL`.
+    - Schema migrations (`direct=True`): prefers `DATABASE_URL_UNPOOLED`, then unpooled `DATABASE_URL`.
+    - Explicitly passed custom SQLite paths bypass Postgres cleanly so isolated tests keep using SQLite.
     """
+    load_env_files(Path(__file__).resolve().parent)
     if isinstance(db_path, str):
         raw_str = db_path.strip()
         if raw_str.startswith("postgres://") or raw_str.startswith("postgresql://"):
-            return _normalize_postgres_dsn(raw_str)
+            norm = _normalize_postgres_dsn(raw_str)
+            return _strip_pooler_host(norm) if direct else norm
     try:
         is_default_target = Path(db_path).resolve() == DEFAULT_DB_PATH.resolve()
     except OSError:
         is_default_target = str(db_path) == str(DEFAULT_DB_PATH)
-    if is_default_target:
-        env_dsn = os.environ.get("DATABASE_URL", "").strip()
-        if env_dsn:
-            return _normalize_postgres_dsn(env_dsn)
+    if not is_default_target:
+        return None
+
+    env_pooled = os.environ.get("DATABASE_URL_POOLED", "").strip()
+    env_unpooled = os.environ.get("DATABASE_URL_UNPOOLED", "").strip()
+    env_url = os.environ.get("DATABASE_URL", "").strip()
+
+    if direct:
+        for candidate in (env_unpooled, env_url, env_pooled):
+            if candidate:
+                return _strip_pooler_host(_normalize_postgres_dsn(candidate))
+        return None
+
+    for candidate in (env_pooled, env_url, env_unpooled):
+        if candidate:
+            return _normalize_postgres_dsn(candidate)
     return None
 
 
 def database_backend_info(db_path: Path | str = DEFAULT_DB_PATH) -> dict[str, Any]:
     """Return non-sensitive database backend metadata safe for /api/health and diagnostics."""
-    dsn = get_database_url(db_path)
+    dsn = get_database_url(db_path, direct=False)
     if dsn:
+        direct_dsn = get_database_url(db_path, direct=True) or dsn
         parsed = urlparse(dsn)
+        direct_parsed = urlparse(direct_dsn)
         db_name = parsed.path.lstrip("/") or "postgres"
+        driver = _LAST_ACTIVE_DRIVER
+        if not driver:
+            mode = os.environ.get("NEON_SQL_TRANSPORT", "auto").strip().lower()
+            if mode == "http" or (parsed.hostname or "") in _TCP_BLOCKED_ENDPOINTS:
+                driver = "neon-serverless-http"
+            else:
+                driver = "psycopg2-tcp"
         return {
             "backend": "postgresql",
             "persistent": True,
+            "driver": driver,
+            "pooled": "-pooler" in (parsed.hostname or ""),
+            "direct_migrations": "-pooler" not in (direct_parsed.hostname or ""),
             "host": parsed.hostname or "managed-postgres",
+            "migration_host": direct_parsed.hostname or parsed.hostname or "managed-postgres",
             "database": db_name,
         }
     return {
         "backend": "sqlite",
         "persistent": False,
+        "driver": "sqlite3",
+        "pooled": False,
+        "direct_migrations": True,
         "host": "local-filesystem",
+        "migration_host": "local-filesystem",
         "database": Path(db_path).name,
     }
 
 
-def _adapt_sql(sql: str, is_postgres: bool) -> str:
-    """Convert SQLite '?' positional placeholders outside single-quoted string literals to '%s' for Postgres."""
+def _adapt_sql(sql: str, is_postgres: bool, *, positional: bool = False) -> str:
+    """Convert SQLite '?' placeholders outside single-quoted string literals to '%s' or '$1..$N' for Postgres."""
     if not is_postgres:
         return sql
     out: list[str] = []
     in_single_quote = False
     i = 0
+    param_idx = 0
     n = len(sql)
     while i < n:
         ch = sql[i]
@@ -94,11 +155,114 @@ def _adapt_sql(sql: str, is_postgres: bool) -> str:
                 continue
             in_single_quote = not in_single_quote
         elif ch == "?" and not in_single_quote:
-            out.append("%s")
+            param_idx += 1
+            out.append(f"${param_idx}" if positional else "%s")
         else:
             out.append(ch)
         i += 1
     return "".join(out)
+
+
+def _coerce_neon_field_value(value: Any, data_type_id: int) -> Any:
+    if value is None:
+        return None
+    if data_type_id in (20, 21, 23):  # int8, int2, int4
+        return int(value) if not isinstance(value, bool) else int(value)
+    if data_type_id in (700, 701, 1700):  # float4, float8, numeric
+        return float(value)
+    if data_type_id == 16:  # bool
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in ("t", "true", "1")
+    return value
+
+
+class _NeonHttpCursor:
+    """Cursor-like wrapper over Neon Serverless HTTP /sql JSON results."""
+
+    def __init__(self, rows: list[dict[str, Any]], rowcount: int) -> None:
+        self._rows = rows
+        self.rowcount = rowcount
+        raw_id = rows[0].get("id") if rows else None
+        try:
+            self.lastrowid = int(raw_id) if raw_id is not None and not isinstance(raw_id, bool) else 0
+        except (ValueError, TypeError):
+            self.lastrowid = 0
+
+    def fetchone(self) -> dict[str, Any] | None:
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self) -> list[dict[str, Any]]:
+        return list(self._rows)
+
+
+class _NeonHttpSession:
+    """HTTPS /sql session matching _DBSession interface for proxied/serverless environments."""
+
+    is_postgres = True
+
+    def __init__(self, dsn: str, timeout: float = 20.0) -> None:
+        parsed = urlparse(dsn)
+        if not parsed.hostname:
+            raise ValueError("Invalid Postgres DSN: missing hostname")
+        self.dsn = dsn
+        self.endpoint = f"https://{parsed.hostname}/sql"
+        self.timeout = timeout
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "Neon-Connection-String": self.dsn,
+            "Content-Type": "application/json",
+            "User-Agent": "ZYS-GoldFields-NeonHTTP/1.0",
+        }
+
+    @staticmethod
+    def _parse_result(payload: dict[str, Any]) -> _NeonHttpCursor:
+        fields = payload.get("fields") or []
+        oid_map = {str(f.get("name")): int(f.get("dataTypeID") or 25) for f in fields if f.get("name")}
+        converted_rows: list[dict[str, Any]] = []
+        for raw_row in payload.get("rows") or []:
+            row_dict: dict[str, Any] = {}
+            for col_name, raw_val in raw_row.items():
+                row_dict[col_name] = _coerce_neon_field_value(raw_val, oid_map.get(col_name, 25))
+            converted_rows.append(row_dict)
+        rowcount = int(payload.get("rowCount") if payload.get("rowCount") is not None else len(converted_rows))
+        return _NeonHttpCursor(converted_rows, rowcount)
+
+    def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> _NeonHttpCursor:
+        adapted = _adapt_sql(sql, True, positional=True)
+        resp = _HTTP_SQL_SESSION.post(
+            self.endpoint,
+            headers=self._headers(),
+            json={"query": adapted, "params": list(params)},
+            timeout=self.timeout,
+        )
+        if resp.status_code >= 400:
+            raise RuntimeError(f"Neon HTTP /sql error {resp.status_code}: {resp.text[:400]}")
+        return self._parse_result(resp.json())
+
+    def executemany(self, sql: str, seq_of_params: list[tuple[Any, ...]]) -> None:
+        if not seq_of_params:
+            return
+        adapted = _adapt_sql(sql, True, positional=True)
+        batch_size = 50
+        for idx in range(0, len(seq_of_params), batch_size):
+            chunk = seq_of_params[idx : idx + batch_size]
+            queries = [{"query": adapted, "params": list(p)} for p in chunk]
+            resp = _HTTP_SQL_SESSION.post(
+                self.endpoint,
+                headers=self._headers(),
+                json={"queries": queries},
+                timeout=self.timeout,
+            )
+            if resp.status_code >= 400:
+                raise RuntimeError(f"Neon HTTP /sql batch error {resp.status_code}: {resp.text[:400]}")
+
+    def insert_returning_id(self, sql: str, params: tuple[Any, ...]) -> int:
+        adapted = _adapt_sql(sql, True, positional=True).rstrip().rstrip(";") + " RETURNING id"
+        cur = self.execute(adapted, params)
+        row = cur.fetchone()
+        return int(row["id"]) if row and row.get("id") is not None else 0
 
 
 class _DBSession:
@@ -109,7 +273,7 @@ class _DBSession:
         self.is_postgres = is_postgres
 
     def execute(self, sql: str, params: tuple[Any, ...] | list[Any] = ()) -> Any:
-        adapted = _adapt_sql(sql, self.is_postgres)
+        adapted = _adapt_sql(sql, self.is_postgres, positional=False)
         if self.is_postgres:
             cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute(adapted, params)
@@ -119,7 +283,7 @@ class _DBSession:
     def executemany(self, sql: str, seq_of_params: list[tuple[Any, ...]]) -> None:
         if not seq_of_params:
             return
-        adapted = _adapt_sql(sql, self.is_postgres)
+        adapted = _adapt_sql(sql, self.is_postgres, positional=False)
         if self.is_postgres:
             with self.conn.cursor() as cur:
                 psycopg2.extras.execute_batch(cur, adapted, seq_of_params, page_size=100)
@@ -128,26 +292,64 @@ class _DBSession:
 
     def insert_returning_id(self, sql: str, params: tuple[Any, ...]) -> int:
         if self.is_postgres:
-            adapted = _adapt_sql(sql, True).rstrip().rstrip(";") + " RETURNING id"
+            adapted = _adapt_sql(sql, True, positional=False).rstrip().rstrip(";") + " RETURNING id"
             with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(adapted, params)
                 row = cur.fetchone()
                 return int(row["id"])
-        cur = self.conn.execute(_adapt_sql(sql, False), params)
+        cur = self.conn.execute(_adapt_sql(sql, False, positional=False), params)
         return int(cur.lastrowid or 0)
 
 
 @contextmanager
-def _open_session(db_path: Path | str = DEFAULT_DB_PATH) -> Iterator[_DBSession]:
-    """Open a managed SQLite or PostgreSQL transaction that always closes its connection cleanly."""
-    dsn = get_database_url(db_path)
+def _open_session(
+    db_path: Path | str = DEFAULT_DB_PATH,
+    *,
+    direct: bool = False,
+) -> Iterator[_DBSession | _NeonHttpSession]:
+    """Open a managed SQLite or PostgreSQL (TCP or Neon Serverless HTTP /sql) session."""
+    global _LAST_ACTIVE_DRIVER
+    dsn = get_database_url(db_path, direct=direct)
     if dsn:
+        parsed = urlparse(dsn)
+        hostname = parsed.hostname or ""
+        transport_pref = os.environ.get("NEON_SQL_TRANSPORT", "auto").strip().lower()
+        use_http_directly = (
+            transport_pref == "http"
+            or (transport_pref == "auto" and hostname in _TCP_BLOCKED_ENDPOINTS)
+            or psycopg2 is None
+        )
+        if use_http_directly and _is_neon_host(hostname):
+            with _DRIVER_LOCK:
+                _LAST_ACTIVE_DRIVER = "neon-serverless-http"
+            yield _NeonHttpSession(dsn)
+            return
+
         if psycopg2 is None:
             raise RuntimeError(
                 "DATABASE_URL is configured for PostgreSQL, but psycopg2-binary is not installed. "
                 "Install it with: pip install psycopg2-binary"
             )
-        conn = psycopg2.connect(dsn, connect_timeout=15)
+        try:
+            conn = psycopg2.connect(dsn, connect_timeout=8)
+        except psycopg2.OperationalError as exc:
+            if transport_pref != "tcp" and _is_neon_host(hostname):
+                with _DRIVER_LOCK:
+                    first_switch = hostname not in _TCP_BLOCKED_ENDPOINTS
+                    _TCP_BLOCKED_ENDPOINTS.add(hostname)
+                    _LAST_ACTIVE_DRIVER = "neon-serverless-http"
+                if first_switch:
+                    logger.info(
+                        "TCP PostgreSQL port 5432 unreachable for %s (%s); using Neon Serverless HTTPS /sql transport.",
+                        hostname,
+                        exc,
+                    )
+                yield _NeonHttpSession(dsn)
+                return
+            raise
+
+        with _DRIVER_LOCK:
+            _LAST_ACTIVE_DRIVER = "psycopg2-tcp"
         try:
             session = _DBSession(conn, is_postgres=True)
             yield session
@@ -179,8 +381,8 @@ def get_connection(db_path: Path | str = DEFAULT_DB_PATH) -> sqlite3.Connection:
 
 
 def init_db(db_path: Path | str = DEFAULT_DB_PATH, force: bool = False) -> None:
-    """Create and migrate all portal, audit, prospect, and outreach scheduler tables."""
-    dsn = get_database_url(db_path)
+    """Create and migrate all portal, audit, prospect, and outreach scheduler tables (uses direct unpooled DSN for Postgres DDL)."""
+    dsn = get_database_url(db_path, direct=True)
     cache_key = dsn if dsn else f"sqlite:{Path(db_path).resolve()}"
     if not force:
         with _INIT_LOCK:
@@ -191,7 +393,7 @@ def init_db(db_path: Path | str = DEFAULT_DB_PATH, force: bool = False) -> None:
     pk_col = "SERIAL PRIMARY KEY" if is_pg else "INTEGER PRIMARY KEY AUTOINCREMENT"
     real_type = "DOUBLE PRECISION" if is_pg else "REAL"
 
-    with _open_session(db_path) as s:
+    with _open_session(db_path, direct=True) as s:
         s.execute(
             """
             CREATE TABLE IF NOT EXISTS grants (

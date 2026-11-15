@@ -21,3 +21,8 @@ backups/
 !.env.example
 *.db-journal
 *.db-wal
+.neon
+node_modules/
+.npm/
+.config/
+.agents/

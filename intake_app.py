@@ -34,6 +34,7 @@ import os
 from pathlib import Path
 import re
 import secrets
+import sqlite3
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 import zipfile
@@ -62,6 +63,7 @@ from db import (
     init_db,
     mark_prospect_outreach_state,
     sync_outreach_status_from_prospects,
+    upsert_grants,
     upsert_prospects,
 )
 from legal_agreement import (
@@ -73,12 +75,19 @@ from legal_agreement import (
 from matcher import DEFAULT_CONFIG_PATH, load_matcher_config
 from models import (
     ClientIntake,
+    GrantRecord,
     MatcherConfig,
     ProspectRecord,
     build_claim_url,
     eligibility_tier_label,
+    load_env_files,
     resolve_base_url,
     resolve_daily_send_limit,
+)
+from neon_auth import (
+    authenticate_request,
+    neon_auth_status,
+    proxy_auth_request,
 )
 from notifier import (
     dispatch_intake_backup,
@@ -90,22 +99,11 @@ from outreach_scheduler import get_outreach_dashboard_summary, run_outreach_batc
 
 
 def _load_dotenv_if_present(dotenv_path: Path | None = None) -> None:
-    """Populate os.environ from local .env file without overriding process environment variables."""
-    target = dotenv_path or (Path(__file__).resolve().parent / ".env")
-    if not target.exists():
+    """Populate os.environ from .env / .env.local without overriding process environment variables."""
+    if dotenv_path is not None and dotenv_path.exists():
+        load_env_files(dotenv_path.parent, force=True)
         return
-    try:
-        for raw_line in target.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, val = line.split("=", 1)
-            k = key.strip()
-            v = val.strip().strip('"').strip("'")
-            if k and k not in os.environ:
-                os.environ[k] = v
-    except OSError:
-        pass
+    load_env_files(Path(__file__).resolve().parent)
 
 
 _load_dotenv_if_present()
@@ -201,6 +199,30 @@ def _bootstrap_prospects_from_csv(
     return records
 
 
+def _bootstrap_grants_from_sqlite(db_path: Path | str = DEFAULT_DB_PATH) -> int:
+    """Seed Postgres grants table from bundled grants.db if live web scrape is offline."""
+    seed_sqlite = DEFAULT_DB_PATH
+    if not seed_sqlite.exists():
+        return 0
+    rows: list[GrantRecord] = []
+    try:
+        conn = sqlite3.connect(str(seed_sqlite))
+        conn.row_factory = sqlite3.Row
+        try:
+            for r in conn.execute(
+                "SELECT id, title, agency, funding_amount, deadline, eligibility_text, url FROM grants"
+            ).fetchall():
+                rows.append(GrantRecord(**dict(r)))
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("Could not read bundled seed grants.db: %s", exc)
+        return 0
+    if not rows:
+        return 0
+    return upsert_grants(rows, db_path=db_path)
+
+
 def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
     """Run startup schema migrations and bootstrap grants/prospects/statuses on cold databases."""
     init_db(db_path, force=True)
@@ -216,6 +238,10 @@ def ensure_database_ready(db_path: Path | str = DEFAULT_DB_PATH) -> None:
             ingest_all_grants(db_path=db_path)
         except Exception as exc:
             logger.warning("Grant ingestion on cold startup encountered an error: %s", exc)
+        grants = fetch_all_grants(db_path)
+        if not grants and backend["backend"] == "postgresql":
+            seeded = _bootstrap_grants_from_sqlite(db_path=db_path)
+            logger.info("Bootstrapped %d grants into Postgres from bundled catalog.", seeded)
 
     profiles = fetch_all_profiles(db_path)
     if not profiles:
@@ -1153,7 +1179,7 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
     </main>
 
     <footer class="site-footer">
-      &copy; {cfg.firm_name} &middot; {cfg.firm_subtitle} &middot; California UETA &amp; ESIGN Compliant ({template_sha256[:16]}…)
+      &copy; {cfg.firm_name} &middot; {cfg.firm_subtitle} &middot; California UETA &amp; ESIGN Compliant ({template_sha256[:16]}…) &middot; <a href="/auth" style="color:inherit;text-decoration:underline;">Advisory Staff Portal</a>
     </footer>
   </div>
 
@@ -1411,6 +1437,207 @@ def render_portal_html(prospect: dict[str, Any] | None = None) -> str:
 </body>
 </html>
 """
+
+
+def render_auth_portal_html() -> str:
+    """Render the Advisory Staff Neon Auth Sign-In, Sign-Up & Protected Console UI (/auth, /admin)."""
+    cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+    auth_info = neon_auth_status()
+    template = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>__FIRM_NAME__ — Advisory Staff Sign-In &amp; Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-canvas: #f8f7f3; --bg-surface: #ffffff; --bg-subtle: #f1f0ea;
+      --ink-forest: #173827; --ink-body: #252b27; --ink-muted: #5a635c;
+      --gold-accent: #b88b32; --border: #dad8cf;
+      --ok-bg: #eef7f1; --ok-ink: #173827;
+      --err-bg: #fdf0ef; --err-ink: #8b2020;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg-canvas); color: var(--ink-body); line-height: 1.55; }
+    .wrap { max-width: 920px; margin: 36px auto; padding: 0 20px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .brand { font-family: 'Newsreader', serif; font-size: 1.55rem; color: var(--ink-forest); font-weight: 600; }
+    .navlink { color: var(--ink-forest); font-weight: 600; text-decoration: none; font-size: 0.9rem; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; background: var(--bg-surface); }
+    .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; margin-bottom: 20px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+    .tab-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-subtle); cursor: pointer; font-weight: 600; color: var(--ink-body); }
+    .tab-btn.active { background: var(--ink-forest); color: #fff; border-color: var(--ink-forest); }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--ink-forest); }
+    input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; font-size: 0.95rem; font-family: inherit; }
+    button.primary { background: var(--ink-forest); color: #fff; border: 0; padding: 11px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+    button.secondary { background: var(--bg-subtle); color: var(--ink-forest); border: 1px solid var(--border); padding: 9px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .banner { padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; display: none; }
+    .banner.err { display: block; background: var(--err-bg); color: var(--err-ink); border: 1px solid #ecc6c6; }
+    .banner.ok { display: block; background: var(--ok-bg); color: var(--ok-ink); border: 1px solid #bddac8; }
+    pre { background: #141c17; color: #e8efe9; padding: 14px; border-radius: 8px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; max-height: 360px; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.83rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="brand">__FIRM_NAME__ — Advisory Staff Portal</div>
+        <div style="font-size:0.86rem;color:var(--ink-muted);">Powered by Neon Managed Better Auth &amp; Lakebase Postgres</div>
+      </div>
+      <a href="/" class="navlink">&larr; Landowner Intake Portal</a>
+    </div>
+
+    <div id="status-box" class="banner"></div>
+
+    <div id="auth-card" class="card">
+      <div class="tabs">
+        <button type="button" id="tab-signin" class="tab-btn active">Sign In</button>
+        <button type="button" id="tab-signup" class="tab-btn">Create Staff Account</button>
+      </div>
+      <form id="auth-form">
+        <div id="name-wrap" style="display:none;">
+          <label for="auth-name">Full Name</label>
+          <input id="auth-name" type="text" placeholder="e.g., ZYS Grant Advisor" />
+        </div>
+        <label for="auth-email">Work Email</label>
+        <input id="auth-email" type="email" required placeholder="advisor@zysgoldfields.pro" />
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" required minlength="8" placeholder="Minimum 8 characters" />
+        <button type="submit" id="auth-submit" class="primary">Sign In with Neon Auth</button>
+      </form>
+      <p class="mono" style="color:var(--ink-muted);margin-top:16px;margin-bottom:0;">
+        Auth Backend: __AUTH_STATE__
+      </p>
+    </div>
+
+    <div id="session-card" class="card" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <div>
+          <h2 style="margin:0;color:var(--ink-forest);font-size:1.2rem;">Authenticated Advisory Session</h2>
+          <div id="user-summary" class="mono" style="color:var(--ink-muted);margin-top:4px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" id="btn-load-intakes" class="secondary">Load Protected Intakes</button>
+          <button type="button" id="btn-test-jwt" class="secondary">Verify EdDSA JWT</button>
+          <button type="button" id="btn-signout" class="secondary">Sign Out</button>
+        </div>
+      </div>
+      <pre id="protected-output">Select an action above to inspect live Neon Postgres &amp; Neon Auth records.</pre>
+    </div>
+  </div>
+  <script>
+    let mode = 'signin';
+    const statusBox = document.getElementById('status-box');
+    const authCard = document.getElementById('auth-card');
+    const sessCard = document.getElementById('session-card');
+    const tabIn = document.getElementById('tab-signin');
+    const tabUp = document.getElementById('tab-signup');
+    const nameWrap = document.getElementById('name-wrap');
+    const submitBtn = document.getElementById('auth-submit');
+    const outEl = document.getElementById('protected-output');
+
+    function setMsg(text, kind) {
+      statusBox.textContent = text;
+      statusBox.className = 'banner ' + (kind === 'err' ? 'err' : 'ok');
+    }
+    function clearMsg() { statusBox.className = 'banner'; statusBox.textContent = ''; }
+
+    tabIn.addEventListener('click', () => {
+      mode = 'signin'; tabIn.classList.add('active'); tabUp.classList.remove('active');
+      nameWrap.style.display = 'none'; submitBtn.textContent = 'Sign In with Neon Auth'; clearMsg();
+    });
+    tabUp.addEventListener('click', () => {
+      mode = 'signup'; tabUp.classList.add('active'); tabIn.classList.remove('active');
+      nameWrap.style.display = 'block'; submitBtn.textContent = 'Create Account with Neon Auth'; clearMsg();
+    });
+
+    async function refreshSession() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'same-origin' });
+        if (!res.ok) {
+          authCard.style.display = 'block';
+          sessCard.style.display = 'none';
+          return null;
+        }
+        const data = await res.json();
+        authCard.style.display = 'none';
+        sessCard.style.display = 'block';
+        document.getElementById('user-summary').textContent =
+          `${data.user.name || 'Staff User'} <${data.user.email}> · Method: ${data.auth_method}`;
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      clearMsg();
+      submitBtn.disabled = true;
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const name = document.getElementById('auth-name').value.trim() || email.split('@')[0];
+      const endpoint = mode === 'signup' ? '/api/auth/sign-up/email' : '/api/auth/sign-in/email';
+      const body = mode === 'signup' ? { email, password, name } : { email, password };
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.message || data.error || ('Authentication failed (HTTP ' + res.status + ')'));
+        }
+        setMsg(mode === 'signup' ? 'Account created and signed in.' : 'Signed in successfully.', 'ok');
+        await refreshSession();
+      } catch (err) {
+        setMsg(err.message, 'err');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('btn-signout').addEventListener('click', async () => {
+      clearMsg();
+      await fetch('/api/auth/sign-out', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: '{}'
+      });
+      await refreshSession();
+      setMsg('Signed out.', 'ok');
+    });
+
+    document.getElementById('btn-load-intakes').addEventListener('click', async () => {
+      outEl.textContent = 'Loading protected intakes from Lakebase Postgres...';
+      const res = await fetch('/api/intakes', { credentials: 'same-origin' });
+      const data = await res.json();
+      outEl.textContent = JSON.stringify(data, null, 2);
+    });
+
+    document.getElementById('btn-test-jwt').addEventListener('click', async () => {
+      outEl.textContent = 'Minting EdDSA JWT via /api/auth/token and verifying via /api/me...';
+      const tokRes = await fetch('/api/auth/token', { credentials: 'same-origin' });
+      const tokData = await tokRes.json();
+      if (!tokData.token) { outEl.textContent = JSON.stringify(tokData, null, 2); return; }
+      const meRes = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + tokData.token } });
+      outEl.textContent = JSON.stringify(await meRes.json(), null, 2);
+    });
+
+    refreshSession();
+  </script>
+</body>
+</html>"""
+    state_label = (
+        f"Configured ({auth_info['base_url']})" if auth_info["configured"] else "Unconfigured (set NEON_AUTH_BASE_URL)"
+    )
+    return template.replace("__FIRM_NAME__", html.escape(cfg.firm_name)).replace("__AUTH_STATE__", html.escape(state_label))
 
 
 CALIFORNIA_COUNTIES = {
@@ -2078,7 +2305,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if allowed_origin:
             self.send_header("Access-Control-Allow-Origin", allowed_origin)
             self.send_header("Access-Control-Allow-Credentials", "true")
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
             self.send_header(
                 "Access-Control-Allow-Headers",
                 "Content-Type, Authorization, X-Admin-Token, X-Requested-With, Accept, Origin",
@@ -2102,15 +2329,48 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
         if not is_public and not token:
             return True
         presented = self._extract_presented_token()
-        return bool(token and presented and hmac.compare_digest(presented, token))
+        if token and presented and hmac.compare_digest(presented, token):
+            return True
+        return authenticate_request(self.headers) is not None
 
     def _check_cron_auth(self) -> bool:
-        """Strictly require valid ADMIN_API_TOKEN (fails closed even when PUBLIC_MODE=0)."""
+        """Strictly require valid ADMIN_API_TOKEN or verified Neon Auth session/JWT (fails closed)."""
         token = os.environ.get("ADMIN_API_TOKEN", "").strip()
-        if not token:
-            return False
         presented = self._extract_presented_token()
-        return bool(presented and hmac.compare_digest(presented, token))
+        if token and presented and hmac.compare_digest(presented, token):
+            return True
+        return authenticate_request(self.headers) is not None
+
+    def _read_request_body(self) -> bytes:
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        return self.rfile.read(length) if length > 0 else b""
+
+    def _handle_auth_proxy(self, method: str, raw_body: bytes = b"") -> None:
+        parsed = urlparse(self.path)
+        cfg = load_matcher_config(DEFAULT_CONFIG_PATH)
+        req_origin = _extract_origin(self.headers.get("Origin", ""))
+        if req_origin and not self._is_origin_allowed(req_origin, cfg):
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Origin not allowed for /api/auth proxy."})
+            return
+        subpath = parsed.path[len("/api/auth") :] or "/"
+        status_code, content_type, set_cookies, resp_body = proxy_auth_request(
+            method=method,
+            subpath=subpath,
+            query=parsed.query,
+            req_headers=self.headers,
+            req_body=raw_body,
+            is_https=self._is_https_request(),
+        )
+        self.send_response(status_code)
+        self.send_header("Content-Type", content_type or "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(resp_body)))
+        self._write_cors_and_security_headers(is_api=True, cfg=cfg)
+        for cookie_hdr in set_cookies:
+            self.send_header("Set-Cookie", cookie_hdr)
+        self._write_no_cache_headers()
+        self.end_headers()
+        if method.upper() != "HEAD":
+            self.wfile.write(resp_body)
 
     def _regenerate_missing_archive(self, intake_id: int, kind: str) -> Path | None:
         """Rebuild packet/preview/agreement Markdown on ephemeral filesystems from persisted PostgreSQL row."""
@@ -2246,7 +2506,19 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html", "/healthz", "/claim", "/claim/", "/intake_portal.html", "/submit"):
+        if parsed.path in (
+            "/",
+            "/index.html",
+            "/healthz",
+            "/claim",
+            "/claim/",
+            "/intake_portal.html",
+            "/submit",
+            "/auth",
+            "/auth/",
+            "/admin",
+            "/admin/",
+        ):
             self.send_response(HTTPStatus.OK)
             if parsed.path == "/healthz":
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
@@ -2262,6 +2534,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
         if parsed.path in (
             "/api/health",
+            "/api/me",
             "/api/test-email",
             "/api/latest-delivery",
             "/api/cron/run-outreach",
@@ -2292,6 +2565,29 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
             )
             return
 
+        if parsed.path in ("/auth", "/auth/", "/admin", "/admin/"):
+            self._send_html(
+                HTTPStatus.OK,
+                render_auth_portal_html(),
+                set_cookies=False,
+            )
+            return
+
+        if parsed.path == "/api/auth" or parsed.path.startswith("/api/auth/"):
+            self._handle_auth_proxy("GET")
+            return
+
+        if parsed.path == "/api/me":
+            auth_ctx = authenticate_request(self.headers)
+            if auth_ctx is None:
+                self._send_json(
+                    HTTPStatus.UNAUTHORIZED,
+                    {"authenticated": False, "error": "Not authenticated.", "auth": neon_auth_status()},
+                )
+                return
+            self._send_json(HTTPStatus.OK, auth_ctx)
+            return
+
         if parsed.path == "/healthz":
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
@@ -2315,6 +2611,7 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                     "cors_allowed_origins": sorted(_allowed_cors_origins(cfg)),
                     "daily_send_limit": resolve_daily_send_limit(cfg),
                     "database": database_backend_info(DEFAULT_DB_PATH),
+                    "auth": neon_auth_status(),
                     "notifications": notification_status(cfg),
                     "render_git_commit": os.environ.get("RENDER_GIT_COMMIT", ""),
                 },
@@ -2424,18 +2721,24 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
                 "legal_agreement.py",
                 "matcher.py",
                 "models.py",
+                "neon.ts",
+                "neon_auth.py",
                 "notifier.py",
                 "outreach_pitches.md",
                 "outreach_scheduler.py",
+                "package-lock.json",
+                "package.json",
                 "prospect_hunter.py",
                 "render.yaml",
                 "requirements.txt",
                 "run_pipeline.py",
                 "runtime.txt",
                 "scraper.py",
+                "scripts/build.mjs",
                 "seed_profiles.py",
                 "signed_advisory_agreement.md",
                 "start_public_tunnel.sh",
+                "tsconfig.json",
             )
             buf = io.BytesIO()
             with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -2563,10 +2866,13 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
-        length = int(self.headers.get("Content-Length", "0") or "0")
-        raw_bytes = self.rfile.read(length) if length > 0 else b""
+        raw_bytes = self._read_request_body()
         client_ip = self._extract_client_ip()
         user_agent = self._extract_user_agent()
+
+        if parsed.path == "/api/auth" or parsed.path.startswith("/api/auth/"):
+            self._handle_auth_proxy("POST", raw_bytes)
+            return
 
         if parsed.path == "/api/intake":
             try:
@@ -2702,6 +3008,30 @@ class IntakePortalHandler(BaseHTTPRequestHandler):
 
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})
 
+    def do_PUT(self) -> None:
+        parsed = urlparse(self.path)
+        raw_bytes = self._read_request_body()
+        if parsed.path == "/api/auth" or parsed.path.startswith("/api/auth/"):
+            self._handle_auth_proxy("PUT", raw_bytes)
+            return
+        self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})
+
+    def do_PATCH(self) -> None:
+        parsed = urlparse(self.path)
+        raw_bytes = self._read_request_body()
+        if parsed.path == "/api/auth" or parsed.path.startswith("/api/auth/"):
+            self._handle_auth_proxy("PATCH", raw_bytes)
+            return
+        self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})
+
+    def do_DELETE(self) -> None:
+        parsed = urlparse(self.path)
+        raw_bytes = self._read_request_body()
+        if parsed.path == "/api/auth" or parsed.path.startswith("/api/auth/"):
+            self._handle_auth_proxy("DELETE", raw_bytes)
+            return
+        self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})
+
 
 def save_portal_static_html(output_path: Path | None = None) -> Path:
     """Render and save the static intake_portal.html file."""
@@ -2732,6 +3062,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run ZYS GoldFields PRO Zero-Call Digital Client Intake Portal.")
     parser.add_argument("--host", default=DEFAULT_HOST, help="Bind host (default 0.0.0.0)")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Bind port (defaults to $PORT or 8080)")
+    parser.add_argument("--serve", action="store_true", help="Start the portal HTTP server (default action)")
     parser.add_argument("--build-html", action="store_true", help="Generate static intake_portal.html and exit")
     args = parser.parse_args()
     if args.build_html:

@@ -15,6 +15,8 @@ from pathlib import Path
 
 import requests
 
+os.environ.setdefault("ZYS_SKIP_DOTENV", "1")
+
 from admin_packager import DEFAULT_PACKET_PATH, DEFAULT_PREVIEW_PATH
 from db import (
     DEFAULT_DB_PATH,
@@ -39,7 +41,19 @@ from matcher import (
     load_matcher_config,
     run_matcher,
 )
-from models import ClientIntake, build_claim_url, resolve_base_url, resolve_daily_send_limit, rewrite_portal_urls
+from models import (
+    ClientIntake,
+    build_claim_url,
+    resolve_base_url,
+    resolve_daily_send_limit,
+    resolve_neon_auth_urls,
+    rewrite_portal_urls,
+)
+from neon_auth import (
+    _normalize_cookies_for_upstream,
+    _rewrite_upstream_set_cookie,
+    neon_auth_status,
+)
 from outreach_scheduler import get_outreach_dashboard_summary, run_outreach_batch
 from prospect_hunter import (
     CA_COUNTIES,
@@ -51,28 +65,75 @@ from seed_profiles import run_seed
 
 
 def verify_persistence_domain_and_outreach_scheduler() -> None:
-    """Verify PostgreSQL SQL adapter/backend resolution, dynamic BASE_URL magic links, and outreach cadence."""
-    # 1. PostgreSQL SQL placeholder & DSN adapter tests
+    """Verify PostgreSQL SQL adapter/backend resolution, Neon Auth helpers, dynamic BASE_URL, and outreach cadence."""
+    # 1. PostgreSQL SQL placeholder & DSN adapter tests (psycopg2 %s and Neon HTTP $1..$N)
     sample_sql = "SELECT '?' AS literal_q, status FROM grants WHERE id = ? AND note = 'it''s ?'"
     pg_sql = _adapt_sql(sample_sql, is_postgres=True)
     assert pg_sql == "SELECT '?' AS literal_q, status FROM grants WHERE id = %s AND note = 'it''s ?'", pg_sql
+    pg_pos_sql = _adapt_sql(sample_sql, is_postgres=True, positional=True)
+    assert pg_pos_sql == "SELECT '?' AS literal_q, status FROM grants WHERE id = $1 AND note = 'it''s ?'", pg_pos_sql
 
     old_db_url = os.environ.get("DATABASE_URL")
+    old_db_pooled = os.environ.get("DATABASE_URL_POOLED")
+    old_db_unpooled = os.environ.get("DATABASE_URL_UNPOOLED")
+    old_auth_url = os.environ.get("NEON_AUTH_BASE_URL")
+    old_auth_jwks = os.environ.get("NEON_AUTH_JWKS_URL")
     old_base_url = os.environ.get("BASE_URL")
     old_daily_limit = os.environ.get("DAILY_SEND_LIMIT")
     try:
-        os.environ.pop("DATABASE_URL", None)
+        for env_key in (
+            "DATABASE_URL",
+            "DATABASE_URL_POOLED",
+            "DATABASE_URL_UNPOOLED",
+            "NEON_AUTH_BASE_URL",
+            "NEON_AUTH_JWKS_URL",
+        ):
+            os.environ.pop(env_key, None)
+
         assert get_database_url(DEFAULT_DB_PATH) is None
         assert database_backend_info(DEFAULT_DB_PATH)["backend"] == "sqlite"
 
         os.environ["DATABASE_URL"] = "postgres://zys_user:secret@ep-cool-oak.us-west-2.aws.neon.tech/neondb?sslmode=require"
-        norm_dsn = get_database_url(DEFAULT_DB_PATH)
-        assert norm_dsn is not None and norm_dsn.startswith("postgresql://"), norm_dsn
+        os.environ["DATABASE_URL_POOLED"] = (
+            "postgresql://zys_user:secret@ep-cool-oak-pooler.us-west-2.aws.neon.tech/neondb?sslmode=require"
+        )
+        app_dsn = get_database_url(DEFAULT_DB_PATH, direct=False)
+        direct_dsn = get_database_url(DEFAULT_DB_PATH, direct=True)
+        assert app_dsn is not None and "-pooler." in app_dsn and app_dsn.startswith("postgresql://"), app_dsn
+        assert direct_dsn is not None and "-pooler." not in direct_dsn and direct_dsn.startswith("postgresql://"), direct_dsn
+
         pg_info = database_backend_info(DEFAULT_DB_PATH)
         assert pg_info["backend"] == "postgresql"
         assert pg_info["persistent"] is True
-        assert pg_info["host"] == "ep-cool-oak.us-west-2.aws.neon.tech"
-        os.environ.pop("DATABASE_URL", None)
+        assert pg_info["pooled"] is True
+        assert pg_info["direct_migrations"] is True
+        assert pg_info["host"] == "ep-cool-oak-pooler.us-west-2.aws.neon.tech"
+        assert pg_info["migration_host"] == "ep-cool-oak.us-west-2.aws.neon.tech"
+
+        os.environ["NEON_AUTH_BASE_URL"] = "https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech/neondb/auth/"
+        auth_base, jwks_url, issuer_origin = resolve_neon_auth_urls()
+        assert auth_base == "https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech/neondb/auth", auth_base
+        assert jwks_url == "https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech/neondb/auth/.well-known/jwks.json", jwks_url
+        assert issuer_origin == "https://ep-cool-oak.neonauth.us-west-2.aws.neon.tech", issuer_origin
+        assert neon_auth_status()["configured"] is True
+
+        raw_set_cookie = "__Secure-neon-auth.session_token=abc123; Domain=upstream.neon.tech; HttpOnly; Secure; SameSite=None; Partitioned; Path=/neondb/auth"
+        http_cookie = _rewrite_upstream_set_cookie(raw_set_cookie, is_https=False)
+        assert "__Secure-" not in http_cookie and "Secure" not in http_cookie and "Partitioned" not in http_cookie
+        assert "Domain=" not in http_cookie and "Path=/" in http_cookie and "SameSite=Lax" in http_cookie
+        https_cookie = _rewrite_upstream_set_cookie(raw_set_cookie, is_https=True)
+        assert "__Secure-neon-auth.session_token=abc123" in https_cookie and "Domain=" not in https_cookie and "Path=/" in https_cookie
+        restored = _normalize_cookies_for_upstream("neon-auth.session_token=abc123; zys_portal_session=xyz")
+        assert "__Secure-neon-auth.session_token=abc123" in restored
+
+        for env_key in (
+            "DATABASE_URL",
+            "DATABASE_URL_POOLED",
+            "DATABASE_URL_UNPOOLED",
+            "NEON_AUTH_BASE_URL",
+            "NEON_AUTH_JWKS_URL",
+        ):
+            os.environ.pop(env_key, None)
 
         # 2. Primary custom domain BASE_URL & DAILY_SEND_LIMIT resolution + URL rewriting
         os.environ.pop("BASE_URL", None)
@@ -254,18 +315,19 @@ def verify_persistence_domain_and_outreach_scheduler() -> None:
             assert summary["status_counts"].get("unsubscribed", 0) >= 1
             assert summary["status_counts"].get("completed", 0) >= 1
     finally:
-        if old_db_url is None:
-            os.environ.pop("DATABASE_URL", None)
-        else:
-            os.environ["DATABASE_URL"] = old_db_url
-        if old_base_url is None:
-            os.environ.pop("BASE_URL", None)
-        else:
-            os.environ["BASE_URL"] = old_base_url
-        if old_daily_limit is None:
-            os.environ.pop("DAILY_SEND_LIMIT", None)
-        else:
-            os.environ["DAILY_SEND_LIMIT"] = old_daily_limit
+        for env_key, old_val in (
+            ("DATABASE_URL", old_db_url),
+            ("DATABASE_URL_POOLED", old_db_pooled),
+            ("DATABASE_URL_UNPOOLED", old_db_unpooled),
+            ("NEON_AUTH_BASE_URL", old_auth_url),
+            ("NEON_AUTH_JWKS_URL", old_auth_jwks),
+            ("BASE_URL", old_base_url),
+            ("DAILY_SEND_LIMIT", old_daily_limit),
+        ):
+            if old_val is None:
+                os.environ.pop(env_key, None)
+            else:
+                os.environ[env_key] = old_val
 
 
 def verify_intake_portal_and_packager() -> None:
@@ -372,11 +434,22 @@ def verify_intake_portal_and_packager() -> None:
         assert "input-signer-name" in portal_resp.text
         assert "input-signer-title" in portal_resp.text
 
-        # 1e. Verify HEAD requests on /, /claim, /claim/, and /intake_portal.html emit no-cache headers
-        for path in ("/", "/claim", "/claim/", "/intake_portal.html"):
+        # 1e. Verify HEAD requests on /, /claim, /claim/, /intake_portal.html, /auth, /admin, /api/me emit no-cache headers
+        for path in ("/", "/claim", "/claim/", "/intake_portal.html", "/auth", "/admin", "/api/me"):
             h_resp = requests.head(f"{base_url}{path}", timeout=5)
             assert h_resp.status_code == 200, f"Expected 200 on HEAD {path}, got {h_resp.status_code}"
             assert "no-cache" in h_resp.headers.get("Cache-Control", ""), f"Missing no-cache header on HEAD {path}"
+
+        # 1e-2. Verify /auth, /admin, unauthenticated /api/me -> 401, and fail-safe unconfigured /api/auth/* -> 503
+        for staff_path in ("/auth", "/admin"):
+            staff_resp = requests.get(f"{base_url}{staff_path}", timeout=5)
+            assert staff_resp.status_code == 200, f"Expected 200 on GET {staff_path}, got {staff_resp.status_code}"
+            assert "Advisory Staff Portal" in staff_resp.text
+            assert "/api/auth/sign-in/email" in staff_resp.text
+            assert "no-cache" in staff_resp.headers.get("Cache-Control", "")
+        me_unauth = requests.get(f"{base_url}/api/me", timeout=5)
+        assert me_unauth.status_code == 401, f"Expected 401 on unauthenticated /api/me, got {me_unauth.status_code}"
+        assert me_unauth.json()["authenticated"] is False
 
         # 1f. Verify root intake_portal.html file exists on disk and contains aligned fields + canonical primary domain
         static_html_file = Path(__file__).resolve().parent / "intake_portal.html"
@@ -398,6 +471,7 @@ def verify_intake_portal_and_packager() -> None:
         health_json = health_resp.json()
         assert health_json["status"] == "healthy"
         assert "notifications" in health_json
+        assert "auth" in health_json and health_json["auth"]["provider"] == "neon-auth"
         assert health_json["database"]["backend"] in ("sqlite", "postgresql")
         assert health_json["base_url"] == "https://grants.zysgoldfields.pro"
         assert "https://grants.zysgoldfields.pro" in health_json.get("cors_allowed_origins", [])
@@ -718,6 +792,11 @@ def verify_outputs(
     assert (root_dir / "legal_agreement.py").exists(), "Missing legal_agreement.py"
     assert (root_dir / "notifier.py").exists(), "Missing notifier.py"
     assert (root_dir / "outreach_scheduler.py").exists(), "Missing outreach_scheduler.py"
+    assert (root_dir / "neon_auth.py").exists(), "Missing neon_auth.py"
+    assert (root_dir / "neon.ts").exists(), "Missing neon.ts"
+    assert (root_dir / "package.json").exists(), "Missing package.json"
+    assert (root_dir / "tsconfig.json").exists(), "Missing tsconfig.json"
+    assert (root_dir / "scripts" / "build.mjs").exists(), "Missing scripts/build.mjs"
     assert (root_dir / ".env.example").exists(), "Missing .env.example"
     assert (root_dir / ".github" / "workflows" / "outreach_cron.yml").exists(), "Missing outreach_cron.yml"
     assert (root_dir / "followup_templates.md").exists(), "Missing followup_templates.md"
@@ -859,27 +938,44 @@ def verify_outputs(
 
 
 def main() -> None:
-    ingest_all_grants()
-    run_seed()
-    build_california_prospects_dataset()
-    run_matcher()
-    # Reset client_intakes, esignature_audit_log, outreach tracking, and stale packet archives before clean verification run
-    with sqlite3.connect(str(DEFAULT_DB_PATH)) as conn:
-        conn.execute("DELETE FROM client_intakes")
-        conn.execute("DELETE FROM esignature_audit_log")
-        conn.execute("DELETE FROM prospect_outreach_status")
-        conn.execute("DELETE FROM outreach_send_log")
-        conn.commit()
-    packets_dir = DEFAULT_DB_PATH.parent / "packets"
-    if packets_dir.exists():
-        for old_pkt in packets_dir.glob("*.md"):
-            old_pkt.unlink()
-    backup_file = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
-    if backup_file.exists():
-        backup_file.unlink()
-    verify_persistence_domain_and_outreach_scheduler()
-    verify_intake_portal_and_packager()
-    verify_outputs()
+    saved_env: dict[str, str | None] = {}
+    isolated_keys = (
+        "DATABASE_URL",
+        "DATABASE_URL_POOLED",
+        "DATABASE_URL_UNPOOLED",
+        "NEON_AUTH_BASE_URL",
+        "NEON_AUTH_JWKS_URL",
+    )
+    for key in isolated_keys:
+        saved_env[key] = os.environ.pop(key, None)
+    try:
+        ingest_all_grants()
+        run_seed()
+        build_california_prospects_dataset()
+        run_matcher()
+        # Reset client_intakes, esignature_audit_log, outreach tracking, and stale packet archives before clean verification run
+        with sqlite3.connect(str(DEFAULT_DB_PATH)) as conn:
+            conn.execute("DELETE FROM client_intakes")
+            conn.execute("DELETE FROM esignature_audit_log")
+            conn.execute("DELETE FROM prospect_outreach_status")
+            conn.execute("DELETE FROM outreach_send_log")
+            conn.commit()
+        packets_dir = DEFAULT_DB_PATH.parent / "packets"
+        if packets_dir.exists():
+            for old_pkt in packets_dir.glob("*.md"):
+                old_pkt.unlink()
+        backup_file = DEFAULT_DB_PATH.parent / "backups" / "submissions.jsonl"
+        if backup_file.exists():
+            backup_file.unlink()
+        verify_persistence_domain_and_outreach_scheduler()
+        verify_intake_portal_and_packager()
+        verify_outputs()
+    finally:
+        for key, prev_val in saved_env.items():
+            if prev_val is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = prev_val
 
 
 if __name__ == "__main__":
